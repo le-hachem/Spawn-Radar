@@ -3,7 +3,7 @@
 	"package": "cc.hachem.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
-		"ExampleClientMixin"
+      "GameRendererMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
