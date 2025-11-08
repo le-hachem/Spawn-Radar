@@ -1,7 +1,6 @@
 package cc.hachem;
 
-import java.util.OptionalDouble;
-import java.util.OptionalInt;
+import java.util.*;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
@@ -43,7 +42,7 @@ public class BlockHighlightRenderer
     private static BufferBuilder buffer;
     private static MappableRingBuffer vertexBuffer;
 
-    public static void draw(WorldRenderContext context, BlockPos position, float r, float g, float b)
+    public static void draw(WorldRenderContext context, BlockPos position, float r, float g, float b, float a)
     {
         MatrixStack matrices = context.matrices();
         Vec3d camera = context.worldState().cameraRenderState.pos;
@@ -66,9 +65,42 @@ public class BlockHighlightRenderer
         matrices.pop();
     }
 
+    public static void fillRegionMesh(WorldRenderContext context, List<BlockPos> region, float r, float g, float b, float a)
+    {
+        if (region.isEmpty())
+            return;
+
+        Set<BlockPos> blocks = new HashSet<>(region);
+
+        MatrixStack matrices = context.matrices();
+        Vec3d camera = context.worldState().cameraRenderState.pos;
+        matrices.push();
+        matrices.translate(-camera.x, -camera.y, -camera.z);
+
+        if (buffer == null)
+            buffer = new BufferBuilder(ALLOCATOR, FILLED_THROUGH_WALLS.getVertexFormatMode(), FILLED_THROUGH_WALLS.getVertexFormat());
+
+        for (BlockPos pos : region)
+        {
+            float x = pos.getX();
+            float y = pos.getY();
+            float z = pos.getZ();
+
+            if (!blocks.contains(pos.add(1, 0, 0)))  VertexRendering.drawFilledBox(matrices, buffer, x + 1, y,     z,     x + 1, y + 1, z + 1, r, g, b, a);
+            if (!blocks.contains(pos.add(-1, 0, 0))) VertexRendering.drawFilledBox(matrices, buffer, x,     y,     z,     x,     y + 1, z + 1, r, g, b, a); // -X
+            if (!blocks.contains(pos.add(0, 1, 0)))  VertexRendering.drawFilledBox(matrices, buffer, x,     y + 1, z,     x + 1, y + 1, z + 1, r, g, b, a); // +Y
+            if (!blocks.contains(pos.add(0, -1, 0))) VertexRendering.drawFilledBox(matrices, buffer, x,     y,     z,     x + 1, y,     z + 1, r, g, b, a); // -Y
+            if (!blocks.contains(pos.add(0, 0, 1)))  VertexRendering.drawFilledBox(matrices, buffer, x,     y,     z + 1, x + 1, y + 1, z + 1, r, g, b, a); // +Z
+            if (!blocks.contains(pos.add(0, 0, -1))) VertexRendering.drawFilledBox(matrices, buffer, x,     y,     z,     x + 1, y + 1, z,     r, g, b, a); // -Z
+        }
+
+        matrices.pop();
+    }
+
     public static void submit(MinecraftClient client)
     {
-        if (buffer == null) return;
+        if (buffer == null)
+            return;
 
         BuiltBuffer builtBuffer = buffer.end();
         BuiltBuffer.DrawParameters drawParams = builtBuffer.getDrawParameters();

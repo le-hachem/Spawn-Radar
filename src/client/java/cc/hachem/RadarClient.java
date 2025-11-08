@@ -19,6 +19,9 @@ public class RadarClient implements ClientModInitializer
 
 	public static void scanForSpawners(FabricClientCommandSource source, int chunkRadius)
 	{
+		ClusterManager.getClusters().clear();
+		BlockBank.clear();
+
 		source.sendFeedback(Text.of("Searching for spawners..."));
 
 		new Thread(() ->
@@ -72,8 +75,10 @@ public class RadarClient implements ClientModInitializer
 
 	private void onRender(WorldRenderContext context)
 	{
-		for (BlockPos pos : BlockBank.getAll())
-			BlockHighlightRenderer.draw(context, pos, 0, 1, 0);
+		for (BlockPos pos : ClusterManager.getHighlights())
+			BlockHighlightRenderer.draw(context, pos, 0, 1, 0, 0.5f);
+		List<BlockPos> intersection = ClusterManager.getHighlightedIntersectionRegion();
+		BlockHighlightRenderer.fillRegionMesh(context, intersection, 0f, 0f, 1f, 0.3f);
 		BlockHighlightRenderer.submit(MinecraftClient.getInstance());
 	}
 
