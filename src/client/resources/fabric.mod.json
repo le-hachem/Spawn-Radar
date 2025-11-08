@@ -1,0 +1,36 @@
+{
+	"schemaVersion": 1,
+	"id": "radar",
+	"version": "${version}",
+	"name": "Radar",
+	"description": "Will-Eye-Am <3",
+	"authors": [
+		"hachem"
+	],
+	"contact": {
+		"homepage": "https://github.com/le-hachem",
+		"sources": "https://github.com/le-hachem/radar"
+	},
+	"license": "MIT",
+	"icon": "assets/radar/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"client": [
+			"cc.hachem.RadarClient"
+		]
+	},
+	"mixins": [
+		{
+			"config": "radar.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.17.3",
+		"minecraft": "~1.21.10",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"suggests": {
+	}
+}
