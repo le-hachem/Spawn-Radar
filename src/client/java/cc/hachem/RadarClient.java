@@ -75,7 +75,6 @@ public class RadarClient implements ClientModInitializer
 			});
 		}).start();
 	}
-
 	private void onRender(WorldRenderContext context)
 	{
 		for (BlockPos pos : ClusterManager.getHighlights())

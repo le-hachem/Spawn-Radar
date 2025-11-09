@@ -15,6 +15,7 @@ import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public class CommandManager
 {
@@ -56,7 +57,7 @@ public class CommandManager
 				}
 
 				List<SpawnerCluster> clusters = SpawnerCluster.findClusters(context.getSource(), spawners, 16.0);
-				ClusterManager.setClusters(clusters);
+                ClusterManager.setClusters(clusters);
 
 				if (clusters.isEmpty())
 				{
