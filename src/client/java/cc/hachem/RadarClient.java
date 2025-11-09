@@ -8,6 +8,8 @@ import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +18,7 @@ public class RadarClient implements ClientModInitializer
 {
 	public static final String MOD_ID = "radar";
 	public static final int DEFAULT_SCAN_RADIUS = 64;
+	public static Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
 	public static void scanForSpawners(FabricClientCommandSource source, int chunkRadius)
 	{

@@ -1,8 +1,11 @@
 package cc.hachem;
 
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 public record SpawnerCluster(List<BlockPos> spawners, List<BlockPos> intersectionRegion)
@@ -26,60 +29,109 @@ public record SpawnerCluster(List<BlockPos> spawners, List<BlockPos> intersectio
         return dx * dx + dy * dy + dz * dz <= radius * radius;
     }
 
-    public static List<SpawnerCluster> findClusters(List<BlockPos> spawners, double activationRadius)
+    public static List<SpawnerCluster> findClusters(FabricClientCommandSource source, List<BlockPos> spawners, double activationRadius)
     {
+        source.sendFeedback(Text.of("Generating clusters, this might take a minute."));
+        int n = spawners.size();
         List<SpawnerCluster> clusters = new ArrayList<>();
-        List<String> seenClusters = new ArrayList<>();
-
-        for (int i = 0; i < spawners.size(); i++)
+        RadarClient.LOGGER.info("=== CLUSTER GENERATION ==");
+        RadarClient.LOGGER.info("Step 0: Precomputing pairwise in-range...");
+        boolean[][] inRange = new boolean[n][n];
+        for (int i = 0; i < n; i++)
         {
-            BlockPos a = spawners.get(i);
-            List<BlockPos> cluster = new ArrayList<>();
-            cluster.add(a);
-
-            for (int j = 0; j < spawners.size(); j++)
+            for (int j = i + 1; j < n; j++)
             {
-                if (i == j) continue;
-                BlockPos b = spawners.get(j);
-                if (spheresIntersect(a, b, activationRadius)) cluster.add(b);
+                inRange[i][j] = spheresIntersect(spawners.get (i), spawners.get (j), activationRadius);
+                inRange[j][i] = inRange[i][j];
             }
-
-            boolean expanded;
-            do
+        }
+        RadarClient.LOGGER.info("Step 1: Generating subsets and computing intersections...");
+        for (int mask = 1; mask < (1 << n); mask++)
+        {
+            List<BlockPos> subset = new ArrayList<>();
+            List<Integer> indices = new ArrayList<>();
+            for (int i = 0; i < n; i++)
             {
-                expanded = false;
-                for (BlockPos s1 : new ArrayList<>(cluster))
+                if ((mask & (1 << i)) != 0)
                 {
-                    for (BlockPos s2 : spawners)
+                    subset.add(spawners.get(i));
+                    indices.add(i);
+                }
+            }
+            boolean canIntersect = true;
+            for (int i = 0; i < indices.size(); i++)
+            {
+                for (int j = i + 1; j < indices.size (); j++)
+                {
+                    if (!inRange[indices.get(i)][indices.get(j)])
                     {
-                        if (!cluster.contains(s2) && spheresIntersect(s1, s2, activationRadius))
-                        {
-                            cluster.add(s2);
-                            expanded = true;
-                        }
+                        canIntersect = false;
+                        break;
                     }
                 }
-            } while (expanded);
-
-            cluster.sort((p1, p2) ->
+                if (!canIntersect)
+                    break;
+            }
+            if (!canIntersect)
             {
-                int cmpX = Integer.compare(p1.getX(), p2.getX());
-                if (cmpX != 0) return cmpX;
-                int cmpY = Integer.compare(p1.getY(), p2.getY());
-                if (cmpY != 0) return cmpY;
-                return Integer.compare(p1.getZ(), p2.getZ());
+                RadarClient.LOGGER.info("Skipping subset (pairwise not in range): {}", subset);
+                continue;
+            }
+            subset.sort ((p1, p2) ->
+            {
+                int cmpX = Integer.compare (p1.getX (), p2.getX ());
+                if (cmpX != 0)
+                    return cmpX;
+                int cmpY = Integer.compare (p1.getY (), p2.getY ());
+                return Integer.compare (p1.getZ (), p2.getZ ());
             });
-
-            String key = cluster.stream().map(p -> p.getX() + "," + p.getY() + "," + p.getZ())
-                             .reduce((s1, s2) -> s1 + ";" + s2).orElse("");
-            if (seenClusters.contains(key)) continue;
-            seenClusters.add(key);
-
-            List<BlockPos> intersection = computeIntersectionRegion(cluster, activationRadius);
-            clusters.add(new SpawnerCluster(cluster, intersection));
+            List<BlockPos> intersection = computeIntersectionRegion (subset, activationRadius);
+            if (!intersection.isEmpty())
+            {
+                RadarClient.LOGGER.info("Adding cluster: {} (intersection size: {})", subset, intersection.size());
+                clusters.add (new SpawnerCluster (subset, intersection));
+            }
+            else
+                RadarClient.LOGGER.info("Skipping subset (empty intersection): {}", subset);
         }
-
-        return clusters;
+        RadarClient.LOGGER.info ("Step 2: Filtering strict subsets...");
+        clusters.sort((c1, c2) -> Integer.compare (c2.spawners().size(), c1.spawners().size()));
+        List<SpawnerCluster> filtered = new ArrayList<>();
+        for (int i = 0; i < clusters.size(); i++)
+        {
+            SpawnerCluster current = clusters.get(i);
+            boolean isSubset = false;
+            for (int j = 0; j < clusters.size(); j++)
+            {
+                if (i == j)
+                    continue;
+                SpawnerCluster other = clusters.get (j);
+                if (other.spawners().size() <= current.spawners().size())
+                    continue;
+                if (new HashSet<>(other.spawners()).containsAll(current.spawners ()))
+                {
+                    isSubset = true;
+                    RadarClient.LOGGER.info("Removing subset: {} is contained in {}", current.spawners (), other.spawners ());
+                    break;
+                }
+            }
+            if (!isSubset)
+                filtered.add (current);
+        }
+        RadarClient.LOGGER.info ("Step 3: Adding singletons...");
+        for (BlockPos spawner : spawners)
+        {
+            boolean inCluster = filtered.stream ().anyMatch( c -> c.spawners ().contains (spawner));
+            if (!inCluster)
+            {
+                RadarClient.LOGGER.info("Adding singleton: {}", spawner);
+                filtered.add(
+                    new SpawnerCluster(List.of (spawner), List.of (spawner)));
+            }
+        }
+        RadarClient.LOGGER.info("Finished. Total clusters: {}", filtered.size ());
+        source.sendFeedback(Text.of("done."));
+        return filtered;
     }
 
     private static List<BlockPos> computeIntersectionRegion(List<BlockPos> cluster, double radius)

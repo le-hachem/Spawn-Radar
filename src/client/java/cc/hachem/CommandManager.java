@@ -45,7 +45,7 @@ public class CommandManager
 			)
 		);
 
-		dispatcher.register(ClientCommandManager.literal("show_clusters")
+		dispatcher.register(ClientCommandManager.literal("generate_clusters")
 			.executes(context ->
 			{
 				List<BlockPos> spawners = BlockBank.getAll();
@@ -55,7 +55,7 @@ public class CommandManager
 					return 0;
 				}
 
-				List<SpawnerCluster> clusters = SpawnerCluster.findClusters(spawners, 16.0);
+				List<SpawnerCluster> clusters = SpawnerCluster.findClusters(context.getSource(), spawners, 16.0);
 				ClusterManager.setClusters(clusters);
 
 				if (clusters.isEmpty())
@@ -95,12 +95,11 @@ public class CommandManager
 									.withHoverEvent(new HoverEvent.ShowText(Text.literal("Click to teleport to this spawner")))
 							);
 
-							context.getSource().getPlayer().sendMessage(spawnerText, false);
-							sid++;
-						}
+						context.getSource().getPlayer().sendMessage(spawnerText, false);
+						sid++;
+					}
 
-						id++;
-						context.getSource().getPlayer().sendMessage(Text.empty(), false);
+					id++;
 				}
 
 				return Command.SINGLE_SUCCESS;
@@ -111,7 +110,7 @@ public class CommandManager
 			.then(ClientCommandManager.argument("id", IntegerArgumentType.integer(0))
 			.executes(context ->
 			{
-				int id = IntegerArgumentType.getInteger(context, "id");
+				int id = IntegerArgumentType.getInteger(context, "id")-1;
 			  	List<SpawnerCluster> clusters = ClusterManager.getClusters();
 			  	if (id < 0 || id >= clusters.size())
 				{
@@ -119,8 +118,9 @@ public class CommandManager
 				  	return 0;
 			  	}
 
-			  	ClusterManager.highlightCluster(id-1);
-			  	context.getSource().sendFeedback(Text.literal("Toggled highlight for Cluster #" + (id)));
+			  	ClusterManager.highlightCluster(id);
+				context.getSource().sendFeedback(Text.literal(String.format("Intersection size: %d", ClusterManager.getHighlightedIntersectionRegion().size())));
+			  	context.getSource().sendFeedback(Text.literal("Toggled highlight for Cluster #" + id+1));
 			  	return Command.SINGLE_SUCCESS;
 			}))
 		);
@@ -136,6 +136,7 @@ public class CommandManager
 		dispatcher.register(ClientCommandManager.literal("reset_spawners")
 			.executes(context ->
 			{
+				ClusterManager.clearHighlights();
 				ClusterManager.getClusters().clear();
 				BlockBank.clear();
 				return Command.SINGLE_SUCCESS;
