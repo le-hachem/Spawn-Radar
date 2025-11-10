@@ -1,11 +1,11 @@
 {
 	"schemaVersion": 1,
 	"id": "radar",
-	"version": "${version}",
+	"version": "1.0",
 	"name": "Radar",
-	"description": "Will-Eye-Am <3",
+	"description": "A mod designed to locate spawners.",
 	"authors": [
-		"hachem"
+		"le_hachem"
 	],
 	"contact": {
 		"homepage": "https://github.com/le-hachem",
