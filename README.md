@@ -29,7 +29,6 @@ Radar is a minecraft fabric mod, that helps you locate spawners and group them i
 
 ## Demos
 ![clip1](Branding/clip1.mp4)
-![clip2](Branding/clip2.mp4)
 
 ## License
 This project is licensed under the [MIT LICENSE](License). You are free to use, modify, distribute the mod as long as the original license and copyright notice are included.
