@@ -67,14 +67,11 @@ public class RadarClient implements ClientModInitializer
 				if (spawnersFound == 0)
 					source.sendFeedback(Text.of("No spawners found."));
 				else
-				{
 					source.sendFeedback(Text.of("Found " + spawnersFound + " spawners:"));
-					for (BlockPos pos : foundSpawners)
-						source.sendFeedback(Text.of(String.format("  - Spawner @ [%d, %d, %d]", pos.getX(), pos.getY(), pos.getZ())));
-				}
 			});
 		}).start();
 	}
+
 	private void onRender(WorldRenderContext context)
 	{
 		for (BlockPos pos : ClusterManager.getHighlights())

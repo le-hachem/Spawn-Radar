@@ -1,14 +1,14 @@
 package cc.hachem;
 
-import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
-
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.text.Text;
+import net.minecraft.util.math.BlockPos;
 
 public record SpawnerCluster(List<BlockPos> spawners, List<BlockPos> intersectionRegion)
 {
@@ -32,15 +32,69 @@ public record SpawnerCluster(List<BlockPos> spawners, List<BlockPos> intersectio
         return dx * dx + dy * dy + dz * dz <= radius * radius;
     }
 
-    public static List<SpawnerCluster> findClusters(
-        FabricClientCommandSource source,
-        List<BlockPos> spawners,
-        double activationRadius
-    )
+    public static List<SpawnerCluster> filterStrictSubsets(List<SpawnerCluster> clusters)
+    {
+        clusters.sort((c1, c2) -> Integer.compare(c2.spawners().size(), c1.spawners().size()));
+
+        List<SpawnerCluster> filtered = new ArrayList<>();
+        for (int i = 0; i < clusters.size(); i++)
+        {
+            SpawnerCluster current = clusters.get(i);
+            boolean isSubset = false;
+
+            for (int j = 0; j < clusters.size(); j++)
+            {
+                if (i == j)
+                    continue;
+                SpawnerCluster other = clusters.get(j);
+
+                if (other.spawners().size() <= current.spawners().size())
+                    continue;
+
+                if (new HashSet<>(other.spawners()).containsAll(current.spawners()))
+                {
+                    isSubset = true;
+                    break;
+                }
+            }
+
+            if (!isSubset)
+                filtered.add(current);
+        }
+
+        return filtered;
+    }
+
+    public static void sortClustersByPlayerProximity(ClientPlayerEntity player, List<SpawnerCluster> clusters)
+    {
+        final double px = player.getX();
+        final double py = player.getY();
+        final double pz = player.getZ();
+
+        for (SpawnerCluster cluster : clusters)
+        {
+            List<BlockPos> sortedSpawners = cluster.spawners().stream().sorted(Comparator.comparingDouble(pos -> distanceSquared(pos, px, py, pz))).collect(Collectors.toList());
+            List<BlockPos> sortedIntersection = cluster.intersectionRegion().stream().sorted(Comparator.comparingDouble(pos -> distanceSquared(pos, px, py, pz))).collect(Collectors.toList());
+
+            clusters.set(clusters.indexOf(cluster), new SpawnerCluster(sortedSpawners, sortedIntersection));
+        }
+
+        clusters.sort(Comparator.comparingDouble(c -> distanceSquared(c.spawners().getFirst(), px, py, pz)));
+    }
+
+    private static double distanceSquared(BlockPos pos, double px, double py, double pz)
+    {
+        double dx = pos.getX() - px;
+        double dy = pos.getY() - py;
+        double dz = pos.getZ() - pz;
+        return dx * dx + dy * dy + dz * dz;
+    }
+
+    public static List<SpawnerCluster> findClustersExhaustive(FabricClientCommandSource source, List<BlockPos> spawners, double activationRadius)
     {
         source.sendFeedback(Text.of("Generating clusters (up to size " + MAX_SUBSET_SIZE + "), this might take a minute."));
 
-        long startTime = System.nanoTime(); // Start timer
+        long startTime = System.nanoTime();
 
         int n = spawners.size();
         Set<String> seen = Collections.synchronizedSet(new HashSet<>());
@@ -63,7 +117,7 @@ public record SpawnerCluster(List<BlockPos> spawners, List<BlockPos> intersectio
                 for (int mask = 1; mask < (1 << n); mask++)
                 {
                     if (Integer.bitCount(mask) != k)
-                        continue; // only subsets of size k
+                        continue;
 
                     List<BlockPos> subset = new ArrayList<>();
                     for (int i = 0; i < n; i++)
@@ -72,24 +126,21 @@ public record SpawnerCluster(List<BlockPos> spawners, List<BlockPos> intersectio
                             subset.add(spawners.get(i));
                     }
 
-                    // Sort subset for canonical comparison
                     subset.sort((p1, p2) ->
                     {
                         int cmpX = Integer.compare(p1.getX(), p2.getX());
-                        if (cmpX != 0) return cmpX;
+                        if (cmpX != 0)
+                            return cmpX;
                         int cmpY = Integer.compare(p1.getY(), p2.getY());
                         return Integer.compare(p1.getZ(), p2.getZ());
                     });
 
-                    String key = subset.stream()
-                                     .map(p -> p.getX() + "," + p.getY() + "," + p.getZ())
-                                     .collect(Collectors.joining(";"));
+                    String key = subset.stream().map(p -> p.getX() + "," + p.getY() + "," + p.getZ()).collect(Collectors.joining(";"));
                     if (!seen.add(key))
                         continue;
 
                     if (++logCounter % 1000 == 0)
                         RadarClient.LOGGER.info("Processed {} subsets of size {} in thread...", logCounter, k);
-
                     RadarClient.LOGGER.info("Generated subset (size {}): {}", subset.size(), subset);
 
                     boolean shouldComputeIntersection = subset.size() == 1;
@@ -129,21 +180,18 @@ public record SpawnerCluster(List<BlockPos> spawners, List<BlockPos> intersectio
             }));
         }
 
-        for (Future<List<SpawnerCluster>> future : futures)
-            try
-            {
-                clusters.addAll(future.get());
-            }
-            catch (Exception e)
-            {
-                RadarClient.LOGGER.error(e.toString());
-            }
+        for (Future<List<SpawnerCluster>> future : futures) try
+        {
+            clusters.addAll(future.get());
+        } catch (Exception e)
+        {
+            RadarClient.LOGGER.error(e.toString());
+        }
 
         executor.shutdown();
 
-        // Step 2: Filter strict subsets
         RadarClient.LOGGER.info("Step 2: Filtering strict subsets...");
-        clusters.sort((c1, c2) -> Integer.compare(c2.spawners().size(), c1.spawners().size())); // largest first
+        clusters.sort((c1, c2) -> Integer.compare(c2.spawners().size(), c1.spawners().size()));
         List<SpawnerCluster> filtered = new ArrayList<>();
 
         for (int i = 0; i < clusters.size(); i++)
@@ -153,7 +201,8 @@ public record SpawnerCluster(List<BlockPos> spawners, List<BlockPos> intersectio
 
             for (int j = 0; j < clusters.size(); j++)
             {
-                if (i == j) continue;
+                if (i == j)
+                    continue;
                 SpawnerCluster other = clusters.get(j);
 
                 if (other.spawners().size() <= current.spawners().size())
@@ -174,7 +223,6 @@ public record SpawnerCluster(List<BlockPos> spawners, List<BlockPos> intersectio
             }
         }
 
-        // Step 3: Add singletons for any missing spawners
         RadarClient.LOGGER.info("Step 3: Adding singletons...");
         for (BlockPos spawner : spawners)
         {
@@ -187,8 +235,7 @@ public record SpawnerCluster(List<BlockPos> spawners, List<BlockPos> intersectio
         }
 
         RadarClient.LOGGER.info("========== CLUSTER SUMMARY ==========");
-        for (SpawnerCluster cluster : filtered)
-            RadarClient.LOGGER.info("Cluster ({} spawners): {}", cluster.spawners().size(), cluster.spawners());
+        for (SpawnerCluster cluster : filtered) RadarClient.LOGGER.info("Cluster ({} spawners): {}", cluster.spawners().size(), cluster.spawners());
         RadarClient.LOGGER.info("=====================================");
 
         long endTime = System.nanoTime();
@@ -196,6 +243,120 @@ public record SpawnerCluster(List<BlockPos> spawners, List<BlockPos> intersectio
         RadarClient.LOGGER.info("Finished. Total clusters: {}. Clustering took {} seconds", filtered.size(), elapsedSeconds);
 
         return filtered;
+    }
+
+    public static List<SpawnerCluster> findClustersRadialIncremental(FabricClientCommandSource source, List<BlockPos> spawners, double activationRadius)
+    {
+        source.sendFeedback(Text.of("Generating radial clusters with incremental intersection check..."));
+        long startTime = System.nanoTime();
+
+        List<SpawnerCluster> clusters = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        int n = spawners.size();
+
+        RadarClient.LOGGER.info("Starting radial incremental clustering with volume: {} spawners, activationRadius = {}", n, activationRadius);
+
+        for (int idx = 0; idx < n; idx++)
+        {
+            BlockPos center = spawners.get(idx);
+
+            List<BlockPos> others = new ArrayList<>(spawners);
+            others.remove(center);
+
+            final long cx = center.getX(), cy = center.getY(), cz = center.getZ();
+            others.sort((p1, p2) ->
+            {
+                long dx1 = p1.getX() - cx, dy1 = p1.getY() - cy, dz1 = p1.getZ() - cz;
+                long dx2 = p2.getX() - cx, dy2 = p2.getY() - cy, dz2 = p2.getZ() - cz;
+                long d1 = dx1 * dx1 + dy1 * dy1 + dz1 * dz1;
+                long d2 = dx2 * dx2 + dy2 * dy2 + dz2 * dz2;
+                return Long.compare(d1, d2);
+            });
+
+            List<BlockPos> cluster = new ArrayList<>();
+            cluster.add(center);
+
+            List<BlockPos> currentIntersection = generateSphere(center, activationRadius);
+
+            for (BlockPos other : others)
+            {
+                if (!SpawnerCluster.spheresIntersect(center, other, activationRadius))
+                {
+                    RadarClient.LOGGER.debug("Center {}: {} not in range, stopping search.", center, other);
+                    break;
+                }
+
+                List<BlockPos> newIntersection = computeIntersectionRegionWithExistingVolume(other, currentIntersection, activationRadius);
+                if (newIntersection.isEmpty())
+                {
+                    RadarClient.LOGGER.debug("Center {}: {} does not intersect current volume -> stopping", center, other);
+                    break;
+                }
+
+                cluster.add(other);
+                currentIntersection = newIntersection;
+                RadarClient.LOGGER.debug("Center {}: added neighbor {} -> intersection size {}", center, other, currentIntersection.size());
+            }
+
+            if (cluster.size() <= 1)
+                continue;
+
+            cluster.sort((p1, p2) ->
+            {
+                int cmpX = Integer.compare(p1.getX(), p2.getX());
+                if (cmpX != 0)
+                    return cmpX;
+                int cmpY = Integer.compare(p1.getY(), p2.getY());
+                return Integer.compare(p1.getZ(), p2.getZ());
+            });
+
+            String key = cluster.stream().map(p -> p.getX() + "," + p.getY() + "," + p.getZ()).collect(Collectors.joining(";"));
+            if (seen.contains(key))
+                continue;
+            seen.add(key);
+
+            clusters.add(new SpawnerCluster(cluster, currentIntersection));
+            RadarClient.LOGGER.info("Added cluster centered at {}: {} (volume size {})", center, cluster, currentIntersection.size());
+        }
+
+        for (BlockPos spawner : spawners)
+        {
+            boolean inAny = clusters.stream().anyMatch(c -> c.spawners().contains(spawner));
+            if (!inAny)
+                clusters.add(new SpawnerCluster(List.of(spawner), List.of(spawner)));
+        }
+
+        long endTime = System.nanoTime();
+        double elapsedSeconds = (endTime - startTime) / 1_000_000_000.0;
+        RadarClient.LOGGER.info("Radial incremental clustering finished: {} clusters, took {} s", clusters.size(), elapsedSeconds);
+
+        return filterStrictSubsets(clusters);
+    }
+
+    private static List<BlockPos> generateSphere(BlockPos center, double radius)
+    {
+        List<BlockPos> volume = new ArrayList<>();
+        int r = (int) Math.ceil(radius);
+        for (int x = center.getX() - r; x <= center.getX() + r; x++) {
+            for (int y = center.getY() - r; y <= center.getY() + r; y++) {
+                for (int z = center.getZ() - r; z <= center.getZ() + r; z++) {
+                    BlockPos pos = new BlockPos(x, y, z);
+                    if (SpawnerCluster.inSphere(center, pos, radius)) {
+                        volume.add(pos);
+                    }
+                }
+            }
+        }
+        return volume;
+    }
+
+    private static List<BlockPos> computeIntersectionRegionWithExistingVolume(BlockPos other, List<BlockPos> existingVolume, double radius)
+    {
+        List<BlockPos> result = new ArrayList<>();
+        for (BlockPos pos : existingVolume)
+            if (SpawnerCluster.inSphere(other, pos, radius))
+                result.add(pos);
+        return result;
     }
 
     private static List<BlockPos> computeIntersectionRegion(List<BlockPos> cluster, double radius)
@@ -219,9 +380,7 @@ public record SpawnerCluster(List<BlockPos> spawners, List<BlockPos> intersectio
         maxZ += (int) radius;
 
         for (int x = minX; x <= maxX; x++)
-        {
             for (int y = minY; y <= maxY; y++)
-            {
                 for (int z = minZ; z <= maxZ; z++)
                 {
                     BlockPos pos = new BlockPos(x, y, z);
@@ -234,10 +393,9 @@ public record SpawnerCluster(List<BlockPos> spawners, List<BlockPos> intersectio
                             break;
                         }
                     }
-                    if (insideAll) intersection.add(pos);
+                    if (insideAll)
+                        intersection.add(pos);
                 }
-            }
-        }
 
         return intersection;
     }
@@ -246,8 +404,7 @@ public record SpawnerCluster(List<BlockPos> spawners, List<BlockPos> intersectio
     public String toString()
     {
         StringBuilder sb = new StringBuilder("SpawnerCluster[");
-        for (BlockPos pos : spawners)
-            sb.append(String.format("(%d,%d,%d), ", pos.getX(), pos.getY(), pos.getZ()));
+        for (BlockPos pos : spawners) sb.append(String.format("(%d,%d,%d), ", pos.getX(), pos.getY(), pos.getZ()));
         if (!spawners.isEmpty())
             sb.setLength(sb.length() - 2);
         sb.append("]");
