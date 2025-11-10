@@ -1,5 +1,10 @@
 package cc.hachem;
 
+import cc.hachem.core.BlockBank;
+import cc.hachem.core.ClusterManager;
+import cc.hachem.core.CommandManager;
+import cc.hachem.renderer.BlockHighlightRenderer;
+import cc.hachem.renderer.TextRenderer;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -83,9 +88,26 @@ public class RadarClient implements ClientModInitializer
 	private void onRender(WorldRenderContext context)
 	{
 		for (BlockPos pos : ClusterManager.getHighlights())
+		{
 			BlockHighlightRenderer.draw(context, pos, 0, 1, 0, 0.5f);
+
+			List<Integer> ids = ClusterManager.getClusterIDAt(pos);
+			if (!ids.isEmpty())
+			{
+				StringBuilder label = new StringBuilder();
+
+				for (int id : ids)
+				{
+					label.append("Cluster #").append(id);
+					if (id != ids.getLast())
+						label.append("\n");
+				}
+				TextRenderer.renderBlockNametag(context, pos, label.toString());
+			}
+		}
+
 		List<BlockPos> intersection = ClusterManager.getHighlightedIntersectionRegion();
-		BlockHighlightRenderer.fillRegionMesh(context, intersection, 0f, 0f, 1f, 0.3f);
+		BlockHighlightRenderer.fillRegionMesh(context, intersection, 1f, 0f, 0f, 0.3f);
 		BlockHighlightRenderer.submit(MinecraftClient.getInstance());
 	}
 

@@ -1,5 +1,6 @@
-package cc.hachem;
+package cc.hachem.core;
 
+import cc.hachem.RadarClient;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -30,19 +31,6 @@ public class CommandManager
 
 	private static void registerCommands(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess)
 	{
-		dispatcher.register(ClientCommandManager.literal("locate_spawners")
-			.executes(context ->
-			{
-				RadarClient.scanForSpawners(context.getSource(), RadarClient.DEFAULT_SCAN_RADIUS);
-				return Command.SINGLE_SUCCESS;
-			})
-			.then(ClientCommandManager.argument("radius", IntegerArgumentType.integer(1, 256)).executes(context ->
-			{
-				int radius = IntegerArgumentType.getInteger(context, "radius");
-				RadarClient.scanForSpawners(context.getSource(), radius);
-				return Command.SINGLE_SUCCESS;
-			})));
-
 		SuggestionProvider<FabricClientCommandSource> CLUSTER_TYPE_SUGGESTER = (context, builder) ->
 		{
 			FabricClientCommandSource source = context.getSource();
@@ -50,6 +38,19 @@ public class CommandManager
 			builder.suggest("radial_incremental");
 			return builder.buildFuture();
 		};
+
+		dispatcher.register(ClientCommandManager.literal("locate_spawners")
+			.executes(context ->
+			{
+				BlockBank.scanForSpawners(context.getSource(), RadarClient.DEFAULT_SCAN_RADIUS);
+				return Command.SINGLE_SUCCESS;
+			})
+			.then(ClientCommandManager.argument("radius", IntegerArgumentType.integer(1, 256)).executes(context ->
+			{
+				int radius = IntegerArgumentType.getInteger(context, "radius");
+				BlockBank.scanForSpawners(context.getSource(), radius);
+				return Command.SINGLE_SUCCESS;
+			})));
 
 		dispatcher.register(ClientCommandManager.literal("generate_clusters")
 			.then(ClientCommandManager.argument("type", StringArgumentType.word())

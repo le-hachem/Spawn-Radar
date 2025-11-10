@@ -1,4 +1,4 @@
-package cc.hachem;
+package cc.hachem.core;
 
 import net.minecraft.util.math.BlockPos;
 
@@ -10,6 +10,16 @@ public class ClusterManager
     private static final List<BlockPos> activeHighlights = new ArrayList<>();
     private static List<SpawnerCluster> clusters = new ArrayList<>();
     private static int highlightedClusterId = -1;
+
+    public static List<Integer> getClusterIDAt(BlockPos pos)
+    {
+        List<Integer> ids = new ArrayList<>();
+        List<SpawnerCluster> clusters = ClusterManager.getClusters();
+        for (int i = 0; i < clusters.size(); i++)
+            if (clusters.get(i).spawners().contains(pos))
+                ids.add(i);
+        return ids;
+    }
 
     public static void setClusters(List<SpawnerCluster> list)
     {

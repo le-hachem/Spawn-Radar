@@ -1,7 +1,8 @@
-package cc.hachem;
+package cc.hachem.renderer;
 
 import java.util.*;
 
+import cc.hachem.RadarClient;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.DepthTestFunction;
