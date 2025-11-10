@@ -170,9 +170,7 @@ public class CommandManager
 		dispatcher.register(ClientCommandManager.literal("reset_spawners")
 			.executes(context ->
 			{
-				ClusterManager.clearHighlights();
-				ClusterManager.getClusters().clear();
-				BlockBank.clear();
+				RadarClient.reset();
 				return Command.SINGLE_SUCCESS;
 			}));
 	}

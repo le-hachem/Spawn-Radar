@@ -2,6 +2,7 @@ package cc.hachem;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.block.Blocks;
@@ -72,6 +73,13 @@ public class RadarClient implements ClientModInitializer
 		}).start();
 	}
 
+	public static void reset()
+	{
+		ClusterManager.clearHighlights();
+		ClusterManager.getClusters().clear();
+		BlockBank.clear();
+	}
+
 	private void onRender(WorldRenderContext context)
 	{
 		for (BlockPos pos : ClusterManager.getHighlights())
@@ -87,5 +95,6 @@ public class RadarClient implements ClientModInitializer
 		CommandManager.init();
 
 		WorldRenderEvents.BEFORE_TRANSLUCENT.register(this::onRender);
+		ClientPlayConnectionEvents.JOIN.register(((handler, sender, client) -> reset()));
 	}
 }
