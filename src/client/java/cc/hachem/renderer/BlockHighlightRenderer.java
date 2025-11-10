@@ -31,7 +31,7 @@ public class BlockHighlightRenderer
 {
     private static final RenderPipeline FILLED_THROUGH_WALLS = RenderPipelines.register(
         RenderPipeline.builder(RenderPipelines.POSITION_COLOR_SNIPPET)
-            .withLocation(Identifier.of(RadarClient.MOD_ID, "pipeline/debug_filled_box_through_walls"))
+            .withLocation(Identifier.of(RadarClient.MOD_ID, "pipeline/highlights"))
             .withVertexFormat(VertexFormats.POSITION_COLOR, VertexFormat.DrawMode.TRIANGLE_STRIP)
             .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
             .build()
@@ -62,7 +62,7 @@ public class BlockHighlightRenderer
             x,   y,   z,
             x+1, y+1, z+1,
             r, g, b,
-            0.5f);
+            a);
         matrices.pop();
     }
 
@@ -108,7 +108,7 @@ public class BlockHighlightRenderer
         VertexFormat format = drawParams.format();
 
         GpuBuffer vertices = uploadToGPU(drawParams, format, builtBuffer);
-        drawPipeline(client, FILLED_THROUGH_WALLS, builtBuffer, drawParams, vertices, format);
+        drawPipeline(client, builtBuffer, drawParams, vertices);
 
         if (vertexBuffer != null)
             vertexBuffer.rotate();
@@ -138,11 +138,10 @@ public class BlockHighlightRenderer
         return vertexBuffer.getBlocking();
     }
 
-    private static void drawPipeline(MinecraftClient client, RenderPipeline pipeline, BuiltBuffer builtBuffer,
-                                     BuiltBuffer.DrawParameters drawParameters, GpuBuffer vertices, VertexFormat format)
+    private static void drawPipeline(MinecraftClient client, BuiltBuffer builtBuffer,
+                                     BuiltBuffer.DrawParameters drawParameters, GpuBuffer vertices)
     {
-
-        var shapeIndexBuffer = RenderSystem.getSequentialBuffer(pipeline.getVertexFormatMode());
+        var shapeIndexBuffer = RenderSystem.getSequentialBuffer(BlockHighlightRenderer.FILLED_THROUGH_WALLS.getVertexFormatMode());
         GpuBuffer indices = shapeIndexBuffer.getIndexBuffer(drawParameters.indexCount());
         VertexFormat.IndexType indexType = shapeIndexBuffer.getIndexType();
 
@@ -156,7 +155,7 @@ public class BlockHighlightRenderer
                                              client.getFramebuffer().getDepthAttachmentView(),
                                              OptionalDouble.empty()))
         {
-            renderPass.setPipeline(pipeline);
+            renderPass.setPipeline(BlockHighlightRenderer.FILLED_THROUGH_WALLS);
             RenderSystem.bindDefaultUniforms(renderPass);
             renderPass.setUniform("DynamicTransforms", dynamicTransforms);
             renderPass.setVertexBuffer(0, vertices);

@@ -73,11 +73,6 @@ public class BlockBank
             HIGHLIGHTED_BLOCKS.add(pos);
     }
 
-    public static void remove(BlockPos pos)
-    {
-        HIGHLIGHTED_BLOCKS.remove(pos);
-    }
-
     public static void clear()
     {
         HIGHLIGHTED_BLOCKS.clear();

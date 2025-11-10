@@ -98,7 +98,7 @@ public class RadarClient implements ClientModInitializer
 
 				for (int id : ids)
 				{
-					label.append("Cluster #").append(id);
+					label.append("Cluster #").append(id+1);
 					if (id != ids.getLast())
 						label.append("\n");
 				}
@@ -106,8 +106,13 @@ public class RadarClient implements ClientModInitializer
 			}
 		}
 
-		List<BlockPos> intersection = ClusterManager.getHighlightedIntersectionRegion();
-		BlockHighlightRenderer.fillRegionMesh(context, intersection, 1f, 0f, 0f, 0.3f);
+		List<List<BlockPos>> intersections = ClusterManager.getHighlightedIntersectionRegions();
+		for (List<BlockPos> region : intersections)
+		{
+			BlockHighlightRenderer.fillRegionMesh(context, region, 1f, 0f, 0f, 0.3f);
+			BlockHighlightRenderer.submit(MinecraftClient.getInstance());
+		}
+
 		BlockHighlightRenderer.submit(MinecraftClient.getInstance());
 	}
 

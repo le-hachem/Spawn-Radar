@@ -4,41 +4,19 @@ import cc.hachem.RadarClient;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.suggestion.SuggestionProvider;
 import java.util.List;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
-import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
-import org.jetbrains.annotations.Nullable;
 
 public class CommandManager
 {
-	@Nullable
-	private static BlockHitResult getTargetedBlock()
-	{
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client.crosshairTarget instanceof BlockHitResult hit)
-			return hit;
-		return null;
-	}
-
 	private static void registerCommands(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess)
 	{
-		SuggestionProvider<FabricClientCommandSource> CLUSTER_TYPE_SUGGESTER = (context, builder) ->
-		{
-			FabricClientCommandSource source = context.getSource();
-			builder.suggest("exhaustive");
-			builder.suggest("radial_incremental");
-			return builder.buildFuture();
-		};
-
 		dispatcher.register(ClientCommandManager.literal("locate_spawners")
 			.executes(context ->
 			{
@@ -53,69 +31,66 @@ public class CommandManager
 			})));
 
 		dispatcher.register(ClientCommandManager.literal("generate_clusters")
-			.then(ClientCommandManager.argument("type", StringArgumentType.word())
-			.suggests(CLUSTER_TYPE_SUGGESTER)
-			.executes(context ->
-		    {
-		    	String type = StringArgumentType.getString(context, "type").toLowerCase();
-		    	List<BlockPos> spawners = BlockBank.getAll();
-		    	if (spawners.isEmpty())
-		    	{
-		    		context.getSource().sendFeedback(Text.literal("No spawners in BlockBank."));
-		    		return 0;
-		    	}
-
-		    	List<SpawnerCluster> clusters;
-		    	switch (type)
+			.executes(context -> {
+				List<BlockPos> spawners = BlockBank.getAll();
+				if (spawners.isEmpty())
 				{
-		    		case "exhaustive":
-		    			clusters = SpawnerCluster.findClustersExhaustive(context.getSource(), spawners, 16.0);
-		    			break;
-		    		case "radial_incremental":
-		    			clusters = SpawnerCluster.findClustersRadialIncremental(context.getSource(), spawners, 16.0);
-		    			break;
-		    		default:
-		    			context.getSource().sendFeedback(Text.literal("Invalid clustering type. Options: exhaustive, radial_incremental."));
-		    			return 0;
-		    	}
+					context.getSource().sendFeedback(Text.literal("No spawners in BlockBank."));
+					return 0;
+				}
 
-		    	SpawnerCluster.sortClustersByPlayerProximity(context.getSource().getPlayer(), clusters);
-		    	ClusterManager.setClusters(clusters);
+				List<SpawnerCluster> clusters = SpawnerCluster.findClusters(context.getSource(), spawners, 16.0);
+				SpawnerCluster.sortClustersByPlayerProximity(context.getSource().getPlayer(), clusters);
+				ClusterManager.setClusters(clusters);
 
-		    	if (clusters.isEmpty())
+				if (clusters.isEmpty())
 				{
-		    		context.getSource().sendFeedback(Text.literal("No clusters found."));
-		    		return 0;
-		    	}
+					context.getSource().sendFeedback(Text.literal("No clusters found."));
+					return 0;
+				}
 
-		    	int id = 1;
-		    	for (SpawnerCluster cluster : clusters)
+				MutableText showAllButton = Text.literal("[Show All]").styled(style -> style
+					.withColor(Formatting.GREEN)
+					.withClickEvent(new ClickEvent.RunCommand("/highlight_all_clusters"))
+					.withHoverEvent(new HoverEvent.ShowText(Text.literal("Highlight all clusters"))));
+
+				MutableText hideAllButton = Text.literal("[Hide All]").styled(style -> style
+					.withColor(Formatting.RED)
+					.withClickEvent(new ClickEvent.RunCommand("/clear_highlights"))
+					.withHoverEvent(new HoverEvent.ShowText(Text.literal("Clear all highlights"))));
+
+				context.getSource().getPlayer().sendMessage(showAllButton.append(" ").append(hideAllButton), false);
+
+				int id = 1;
+				for (SpawnerCluster cluster : clusters)
 				{
-		    		int finalId = id;
+					int finalId = id;
 
-		    		double cx = cluster.spawners().stream().mapToDouble(BlockPos::getX).average().orElse(0);
-		    		double cy = cluster.spawners().stream().mapToDouble(BlockPos::getY).average().orElse(0);
-		    		double cz = cluster.spawners().stream().mapToDouble(BlockPos::getZ).average().orElse(0);
+					double cx = cluster.spawners().stream().mapToDouble(BlockPos::getX).average().orElse(0);
+					double cy = cluster.spawners().stream().mapToDouble(BlockPos::getY).average().orElse(0);
+					double cz = cluster.spawners().stream().mapToDouble(BlockPos::getZ).average().orElse(0);
 
-		    		MutableText clusterHeader = Text.literal("[(" + cluster.spawners().size() + ") Cluster #" + id + "]")
-													.styled(style -> style.withColor(Formatting.AQUA)
-																		  .withUnderline(true)
-																		  .withClickEvent(new ClickEvent.RunCommand(String.format("/highlight_cluster %d", finalId)))
-																		  .withHoverEvent(new HoverEvent.ShowText(Text.literal("Click to highlight this cluster"))));
-		    		MutableText teleportButton = Text.literal("[Teleport]").styled(style -> style.withColor(Formatting.GOLD)
-																								 .withClickEvent(new ClickEvent.RunCommand(String.format("/tp %.0f %.0f %.0f", cx, cy, cz)))
-																								 .withHoverEvent(new HoverEvent.ShowText(Text.literal("Teleport to cluster center"))));
-		    		MutableText showSpawnersButton = Text.literal("[Show Spawners]").styled(style -> style.withColor(Formatting.GREEN)
-																										  .withClickEvent(new ClickEvent.RunCommand(String.format("/show_cluster_spawners %d", finalId)))
-																										  .withHoverEvent(new HoverEvent.ShowText(Text.literal("Show all spawners in this cluster"))));
+					MutableText clusterHeader = Text.literal("[(" + cluster.spawners().size() + ") Cluster #" + id + "]")
+						.styled(style -> style.withColor(Formatting.AQUA)
+							.withUnderline(true)
+							.withClickEvent(new ClickEvent.RunCommand(String.format("/highlight_cluster %d", finalId)))
+							.withHoverEvent(new HoverEvent.ShowText(Text.literal("Click to highlight this cluster"))));
 
-		    		MutableText combined = clusterHeader.copy().append(" ").append(teleportButton).append(" ").append(showSpawnersButton);
-		    		context.getSource().getPlayer().sendMessage(combined, false);
-		    		id++;
-		    	}
+					MutableText teleportButton = Text.literal("[Teleport]").styled(style -> style.withColor(Formatting.GOLD)
+						.withClickEvent(new ClickEvent.RunCommand(String.format("/tp %.0f %.0f %.0f", cx, cy, cz)))
+						.withHoverEvent(new HoverEvent.ShowText(Text.literal("Teleport to cluster center"))));
 
-		    	return Command.SINGLE_SUCCESS;
-			})));
+					MutableText showSpawnersButton = Text.literal("[Show Spawners]").styled(style -> style.withColor(Formatting.GREEN)
+						.withClickEvent(new ClickEvent.RunCommand(String.format("/show_cluster_spawners %d", finalId)))
+						.withHoverEvent(new HoverEvent.ShowText(Text.literal("Show all spawners in this cluster"))));
+
+					MutableText combined = clusterHeader.copy().append(" ").append(teleportButton).append(" ").append(showSpawnersButton);
+					context.getSource().getPlayer().sendMessage(combined, false);
+					id++;
+				}
+
+				return Command.SINGLE_SUCCESS;
+			}));
 
 		dispatcher.register(ClientCommandManager.literal("show_cluster_spawners")
 			.then(ClientCommandManager.argument("id", IntegerArgumentType.integer(1))
@@ -160,6 +135,18 @@ public class CommandManager
 			    ClusterManager.highlightCluster(id);
 			    return Command.SINGLE_SUCCESS;
 			})));
+
+		dispatcher.register(ClientCommandManager.literal("highlight_all_clusters")
+			.executes(context -> {
+				List<SpawnerCluster> clusters = ClusterManager.getClusters();
+				if (clusters == null || clusters.isEmpty())
+				{
+					context.getSource().sendFeedback(Text.literal("No clusters to highlight."));
+					return 0;
+				}
+				ClusterManager.highlightAllClusters();
+				return Command.SINGLE_SUCCESS;
+			}));
 
 		dispatcher.register(ClientCommandManager.literal("clear_highlights")
 			.executes(context ->

@@ -1,7 +1,6 @@
 package cc.hachem.core;
 
 import net.minecraft.util.math.BlockPos;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,6 +45,14 @@ public class ClusterManager
         }
     }
 
+    public static void highlightAllClusters()
+    {
+        activeHighlights.clear();
+        for (SpawnerCluster cluster : clusters)
+            activeHighlights.addAll(cluster.spawners());
+        highlightedClusterId = -1;
+    }
+
     public static void clearHighlights()
     {
         activeHighlights.clear();
@@ -57,10 +64,16 @@ public class ClusterManager
         return activeHighlights.isEmpty() ? BlockBank.getAll() : activeHighlights;
     }
 
-    public static List<BlockPos> getHighlightedIntersectionRegion()
+    public static List<List<BlockPos>> getHighlightedIntersectionRegions()
     {
-        if (highlightedClusterId < 0 || highlightedClusterId >= clusters.size())
-            return List.of();
-        return clusters.get(highlightedClusterId).intersectionRegion();
+        List<List<BlockPos>> intersections = new ArrayList<>();
+
+        if (highlightedClusterId >= 0 && highlightedClusterId < clusters.size())
+            intersections.add(clusters.get(highlightedClusterId).intersectionRegion());
+        else if (!activeHighlights.isEmpty())
+            for (SpawnerCluster cluster : clusters)
+                intersections.add(cluster.intersectionRegion());
+
+        return intersections;
     }
 }

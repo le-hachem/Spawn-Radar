@@ -1,9 +1,6 @@
 package cc.hachem.core;
 
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import cc.hachem.RadarClient;
@@ -14,8 +11,6 @@ import net.minecraft.util.math.BlockPos;
 
 public record SpawnerCluster(List<BlockPos> spawners, List<BlockPos> intersectionRegion)
 {
-    private static final int MAX_SUBSET_SIZE = 4;
-
     public static boolean spheresIntersect(BlockPos a, BlockPos b, double activationRadius)
     {
         double dx = a.getX() - b.getX();
@@ -71,39 +66,6 @@ public record SpawnerCluster(List<BlockPos> spawners, List<BlockPos> intersectio
         return result;
     }
 
-    private static List<BlockPos> computeIntersectionRegion(List<BlockPos> cluster, double radius)
-    {
-        List<BlockPos> intersection = new ArrayList<>();
-        if (cluster.isEmpty()) return intersection;
-
-        int minX = cluster.stream().mapToInt(BlockPos::getX).min().getAsInt();
-        int minY = cluster.stream().mapToInt(BlockPos::getY).min().getAsInt();
-        int minZ = cluster.stream().mapToInt(BlockPos::getZ).min().getAsInt();
-        int maxX = cluster.stream().mapToInt(BlockPos::getX).max().getAsInt();
-        int maxY = cluster.stream().mapToInt(BlockPos::getY).max().getAsInt();
-        int maxZ = cluster.stream().mapToInt(BlockPos::getZ).max().getAsInt();
-
-        minX -= (int) radius; minY -= (int) radius; minZ -= (int) radius;
-        maxX += (int) radius; maxY += (int) radius; maxZ += (int) radius;
-
-        for (int x = minX; x <= maxX; x++)
-            for (int y = minY; y <= maxY; y++)
-                for (int z = minZ; z <= maxZ; z++)
-                {
-                    BlockPos pos = new BlockPos(x, y, z);
-                    boolean insideAll = true;
-                    for (BlockPos s : cluster)
-                        if (!inSphere(s, pos, radius))
-                        {
-                            insideAll = false;
-                            break;
-                        }
-                    if (insideAll) intersection.add(pos);
-                }
-
-        return intersection;
-    }
-
     public static List<SpawnerCluster> filterStrictSubsets(List<SpawnerCluster> clusters)
     {
         clusters.sort((c1, c2) -> Integer.compare(c2.spawners().size(), c1.spawners().size()));
@@ -133,105 +95,10 @@ public record SpawnerCluster(List<BlockPos> spawners, List<BlockPos> intersectio
         double px = player.getX(), py = player.getY(), pz = player.getZ();
         for (SpawnerCluster cluster : clusters)
             sortClusterSpawnersByProximity(cluster, px, py, pz, clusters);
-        clusters.sort(Comparator.comparingDouble(c -> distanceSquared(c.spawners().get(0), px, py, pz)));
+        clusters.sort(Comparator.comparingDouble(c -> distanceSquared(c.spawners().getFirst(), px, py, pz)));
     }
 
-    public static List<SpawnerCluster> findClustersExhaustive(FabricClientCommandSource source, List<BlockPos> spawners, double activationRadius)
-    {
-        source.sendFeedback(Text.of("Generating clusters (up to size " + MAX_SUBSET_SIZE + "), this might take a minute."));
-        long startTime = System.nanoTime();
-
-        int n = spawners.size();
-        Set<String> seen = Collections.synchronizedSet(new HashSet<>());
-        List<SpawnerCluster> clusters = Collections.synchronizedList(new ArrayList<>());
-
-        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        List<Future<List<SpawnerCluster>>> futures = new ArrayList<>();
-
-        for (int subsetSize = 1; subsetSize <= MAX_SUBSET_SIZE; subsetSize++)
-        {
-            final int k = subsetSize;
-            futures.add(executor.submit(() ->
-            {
-                List<SpawnerCluster> sizeClusters = new ArrayList<>();
-                int logCounter = 0;
-
-                for (int mask = 1; mask < (1 << n); mask++)
-                {
-                    if (Integer.bitCount(mask) != k) continue;
-
-                    List<BlockPos> subset = new ArrayList<>();
-                    for (int i = 0; i < n; i++)
-                        if ((mask & (1 << i)) != 0) subset.add(spawners.get(i));
-
-                    subset.sort(Comparator.comparingInt(BlockPos::getX)
-                                    .thenComparingInt(BlockPos::getY)
-                                    .thenComparingInt(BlockPos::getZ));
-
-                    String key = subset.stream().map(p -> p.getX() + "," + p.getY() + "," + p.getZ())
-                                     .collect(Collectors.joining(";"));
-                    if (!seen.add(key)) continue;
-
-                    if (++logCounter % 1000 == 0)
-                        RadarClient.LOGGER.info("Processed {} subsets of size {} in thread...", logCounter, k);
-                    RadarClient.LOGGER.info("Generated subset (size {}): {}", subset.size(), subset);
-
-                    boolean shouldComputeIntersection = subset.size() == 1;
-                    if (subset.size() > 1)
-                    {
-                        outer:
-                        for (int i = 0; i < subset.size(); i++)
-                            for (int j = i + 1; j < subset.size(); j++)
-                                if (spheresIntersect(subset.get(i), subset.get(j), activationRadius))
-                                {
-                                    shouldComputeIntersection = true;
-                                    break outer;
-                                }
-                        if (!shouldComputeIntersection)
-                            RadarClient.LOGGER.info("Skipping intersection for subset {} because no spawners are in range.", subset);
-                    }
-
-                    if (shouldComputeIntersection)
-                    {
-                        List<BlockPos> intersection = computeIntersectionRegion(subset, activationRadius);
-                        RadarClient.LOGGER.info("Intersection size: {}", intersection.size());
-                        if (!intersection.isEmpty())
-                        {
-                            RadarClient.LOGGER.info("Adding cluster: {}", subset);
-                            sizeClusters.add(new SpawnerCluster(subset, intersection));
-                        } else
-                            RadarClient.LOGGER.info("Skipping cluster due to empty intersection: {}", subset);
-                    }
-                }
-
-                return sizeClusters;
-            }));
-        }
-
-        for (Future<List<SpawnerCluster>> future : futures) try
-        {
-            clusters.addAll(future.get());
-        }
-        catch (Exception e)
-        {
-            RadarClient.LOGGER.error(e.toString());
-        }
-
-        executor.shutdown();
-        clusters = filterStrictSubsets(clusters);
-
-        for (BlockPos spawner : spawners)
-            if (clusters.stream().noneMatch(c -> c.spawners().contains(spawner)))
-                clusters.add(new SpawnerCluster(List.of(spawner), List.of(spawner)));
-
-        long endTime = System.nanoTime();
-        RadarClient.LOGGER.info("Exhaustive clustering finished: {} clusters, took {} s", clusters.size(),
-            (endTime - startTime) / 1_000_000_000.0);
-
-        return clusters;
-    }
-
-    public static List<SpawnerCluster> findClustersRadialIncremental(FabricClientCommandSource source, List<BlockPos> spawners, double activationRadius)
+    public static List<SpawnerCluster> findClusters(FabricClientCommandSource source, List<BlockPos> spawners, double activationRadius)
     {
         source.sendFeedback(Text.of("Generating radial clusters with incremental intersection check..."));
         long startTime = System.nanoTime();
