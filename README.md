@@ -1,5 +1,4 @@
-# Spawn Radar
-![logo](src/client/resources/assets/radar/icon.png)
+![logo](Branding/title.png)
 
 Spawn Radar is a minecraft fabric mod, that helps you locate spawners and group them into clusters. The mod visualizes the areas in which all spawners in a given cluster are active, which is extremely useful for designing efficient mob farms.
 
