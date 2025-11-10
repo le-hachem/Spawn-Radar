@@ -1,8 +1,8 @@
 {
 	"schemaVersion": 1,
-	"id": "radar",
+	"id": "spawn-radar",
 	"version": "1.0",
-	"name": "Radar",
+	"name": "Spawn Radar",
 	"description": "A mod designed to locate spawners.",
 	"authors": [
 		"le_hachem"

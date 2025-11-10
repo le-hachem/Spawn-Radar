@@ -22,7 +22,7 @@ loom {
 	splitEnvironmentSourceSets()
 
 	mods {
-		"radar" {
+		"spawn-radar" {
 			sourceSet sourceSets.client
 		}
 	}
