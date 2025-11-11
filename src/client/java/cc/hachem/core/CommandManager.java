@@ -17,7 +17,7 @@ public class CommandManager
 {
 	private static void registerCommands(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess)
 	{
-		dispatcher.register(ClientCommandManager.literal("locate_spawners")
+		dispatcher.register(ClientCommandManager.literal("radar:locate_spawners")
 			.executes(context ->
 			{
 				BlockBank.scanForSpawners(context.getSource(), RadarClient.DEFAULT_SCAN_RADIUS);
@@ -30,7 +30,7 @@ public class CommandManager
 				return Command.SINGLE_SUCCESS;
 			})));
 
-		dispatcher.register(ClientCommandManager.literal("generate_clusters")
+		dispatcher.register(ClientCommandManager.literal("radar:generate_clusters")
 			.executes(context -> {
 				List<BlockPos> spawners = BlockBank.getAll();
 				if (spawners.isEmpty())
@@ -51,12 +51,12 @@ public class CommandManager
 
 				MutableText showAllButton = Text.literal("[Show All]").styled(style -> style
 					.withColor(Formatting.GREEN)
-					.withClickEvent(new ClickEvent.RunCommand("/highlight_all_clusters"))
+					.withClickEvent(new ClickEvent.RunCommand("/radar:highlight_all_clusters"))
 					.withHoverEvent(new HoverEvent.ShowText(Text.literal("Highlight all clusters"))));
 
 				MutableText hideAllButton = Text.literal("[Hide All]").styled(style -> style
 					.withColor(Formatting.RED)
-					.withClickEvent(new ClickEvent.RunCommand("/clear_highlights"))
+					.withClickEvent(new ClickEvent.RunCommand("/radar:clear_highlights"))
 					.withHoverEvent(new HoverEvent.ShowText(Text.literal("Clear all highlights"))));
 
 				context.getSource().getPlayer().sendMessage(showAllButton.append(" ").append(hideAllButton), false);
@@ -73,7 +73,7 @@ public class CommandManager
 					MutableText clusterHeader = Text.literal("[(" + cluster.spawners().size() + ") Cluster #" + id + "]")
 						.styled(style -> style.withColor(Formatting.AQUA)
 							.withUnderline(true)
-							.withClickEvent(new ClickEvent.RunCommand(String.format("/highlight_cluster %d", finalId)))
+							.withClickEvent(new ClickEvent.RunCommand(String.format("/radar:highlight_cluster %d", finalId)))
 							.withHoverEvent(new HoverEvent.ShowText(Text.literal("Click to highlight this cluster"))));
 
 					MutableText teleportButton = Text.literal("[Teleport]").styled(style -> style.withColor(Formatting.GOLD)
@@ -81,7 +81,7 @@ public class CommandManager
 						.withHoverEvent(new HoverEvent.ShowText(Text.literal("Teleport to cluster center"))));
 
 					MutableText showSpawnersButton = Text.literal("[Show Spawners]").styled(style -> style.withColor(Formatting.GREEN)
-						.withClickEvent(new ClickEvent.RunCommand(String.format("/show_cluster_spawners %d", finalId)))
+						.withClickEvent(new ClickEvent.RunCommand(String.format("/radar:show_cluster_spawners %d", finalId)))
 						.withHoverEvent(new HoverEvent.ShowText(Text.literal("Show all spawners in this cluster"))));
 
 					MutableText combined = clusterHeader.copy().append(" ").append(teleportButton).append(" ").append(showSpawnersButton);
@@ -92,7 +92,7 @@ public class CommandManager
 				return Command.SINGLE_SUCCESS;
 			}));
 
-		dispatcher.register(ClientCommandManager.literal("show_cluster_spawners")
+		dispatcher.register(ClientCommandManager.literal("radar:show_spawners_in_cluster")
 			.then(ClientCommandManager.argument("id", IntegerArgumentType.integer(1))
 			.executes(context ->
 			{
@@ -120,7 +120,7 @@ public class CommandManager
 			    return Command.SINGLE_SUCCESS;
 		    })));
 
-		dispatcher.register(ClientCommandManager.literal("highlight_cluster")
+		dispatcher.register(ClientCommandManager.literal("radar:highlight_cluster")
 			.then(ClientCommandManager.argument("id", IntegerArgumentType.integer(0))
 			.executes(context ->
 			{
@@ -136,7 +136,7 @@ public class CommandManager
 			    return Command.SINGLE_SUCCESS;
 			})));
 
-		dispatcher.register(ClientCommandManager.literal("highlight_all_clusters")
+		dispatcher.register(ClientCommandManager.literal("radar:highlight_all_clusters")
 			.executes(context -> {
 				List<SpawnerCluster> clusters = ClusterManager.getClusters();
 				if (clusters == null || clusters.isEmpty())
@@ -148,16 +148,17 @@ public class CommandManager
 				return Command.SINGLE_SUCCESS;
 			}));
 
-		dispatcher.register(ClientCommandManager.literal("clear_highlights")
+		dispatcher.register(ClientCommandManager.literal("radar:clear_highlights")
 			.executes(context ->
 			{
 				ClusterManager.clearHighlights();
 				return Command.SINGLE_SUCCESS;
 			}));
 
-		dispatcher.register(ClientCommandManager.literal("reset_spawners")
+		dispatcher.register(ClientCommandManager.literal("radar:reset")
 			.executes(context ->
 			{
+				context.getSource().sendFeedback(Text.of("Reset all spawner and cluster banks."));
 				RadarClient.reset();
 				return Command.SINGLE_SUCCESS;
 			}));

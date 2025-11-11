@@ -1,6 +1,7 @@
 package cc.hachem;
 
 import cc.hachem.core.BlockBank;
+import cc.hachem.core.ChunkSnapshot;
 import cc.hachem.core.ClusterManager;
 import cc.hachem.core.CommandManager;
 import cc.hachem.renderer.BlockHighlightRenderer;
@@ -10,73 +11,27 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.chunk.Chunk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class RadarClient implements ClientModInitializer
 {
 	public static final String MOD_ID = "radar";
 	public static final int DEFAULT_SCAN_RADIUS = 64;
 	public static Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-
-	public static void scanForSpawners(FabricClientCommandSource source, int chunkRadius)
-	{
-		ClusterManager.getClusters().clear();
-		BlockBank.clear();
-
-		source.sendFeedback(Text.of("Searching for spawners..."));
-
-		new Thread(() ->
-		{
-			BlockPos playerPos = source.getPlayer().getBlockPos();
-			int playerChunkX = playerPos.getX() >> 4;
-			int playerChunkZ = playerPos.getZ() >> 4;
-
-			List<BlockPos> foundSpawners = new ArrayList<>();
-			for (int dx = -chunkRadius; dx <= chunkRadius; dx++)
-				for (int dz = -chunkRadius; dz <= chunkRadius; dz++)
-				{
-					int chunkX = playerChunkX + dx;
-					int chunkZ = playerChunkZ + dz;
-
-					if (!source.getWorld().isChunkLoaded(chunkX, chunkZ)) continue;
-
-					int baseX = chunkX << 4;
-					int baseZ = chunkZ << 4;
-
-					int minY = source.getWorld().getBottomY();
-					int maxY = source.getWorld().getHeight();
-
-					for (int y = minY; y < maxY; y++)
-						for (int x = 0; x < 16; x++)
-							for (int z = 0; z < 16; z++)
-							{
-								BlockPos pos = new BlockPos(baseX + x, y, baseZ + z);
-								if (source.getWorld().getBlockState(pos).isOf(Blocks.SPAWNER))
-								{
-									foundSpawners.add(pos);
-									BlockBank.add(pos);
-								}
-							}
-				}
-
-			int spawnersFound = foundSpawners.size();
-			source.getClient().execute(() ->
-			{
-				if (spawnersFound == 0)
-					source.sendFeedback(Text.of("No spawners found."));
-				else
-					source.sendFeedback(Text.of("Found " + spawnersFound + " spawners:"));
-			});
-		}).start();
-	}
 
 	public static void reset()
 	{
