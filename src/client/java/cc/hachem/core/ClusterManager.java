@@ -2,18 +2,19 @@ package cc.hachem.core;
 
 import net.minecraft.util.math.BlockPos;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ClusterManager
 {
     private static final List<BlockPos> activeHighlights = new ArrayList<>();
     private static List<SpawnerCluster> clusters = new ArrayList<>();
-    private static int highlightedClusterId = -1;
+    private static final Set<Integer> highlightedClusterIds = new HashSet<>();
 
     public static List<Integer> getClusterIDAt(BlockPos pos)
     {
         List<Integer> ids = new ArrayList<>();
-        List<SpawnerCluster> clusters = ClusterManager.getClusters();
         for (int i = 0; i < clusters.size(); i++)
             if (clusters.get(i).spawners().contains(pos))
                 ids.add(i);
@@ -30,33 +31,37 @@ public class ClusterManager
         return clusters;
     }
 
-    public static void highlightCluster(int clusterId)
+    public static void toggleHighlightCluster(int clusterId)
     {
-        if (highlightedClusterId == clusterId)
-        {
-            clearHighlights();
-            highlightedClusterId = -1;
-        } else
-        {
-            highlightedClusterId = clusterId;
-            activeHighlights.clear();
-            SpawnerCluster cluster = clusters.get(clusterId);
-            activeHighlights.addAll(cluster.spawners());
-        }
+        if (highlightedClusterIds.contains(clusterId))
+            highlightedClusterIds.remove(clusterId);
+        else
+            highlightedClusterIds.add(clusterId);
+
+        updateActiveHighlights();
     }
 
     public static void highlightAllClusters()
     {
-        activeHighlights.clear();
-        for (SpawnerCluster cluster : clusters)
-            activeHighlights.addAll(cluster.spawners());
-        highlightedClusterId = -1;
+        highlightedClusterIds.clear();
+        for (int i = 0; i < clusters.size(); i++)
+            highlightedClusterIds.add(i);
+
+        updateActiveHighlights();
     }
 
     public static void clearHighlights()
     {
+        highlightedClusterIds.clear();
+        updateActiveHighlights();
+    }
+
+    private static void updateActiveHighlights()
+    {
         activeHighlights.clear();
-        highlightedClusterId = -1;
+        for (int id : highlightedClusterIds)
+            if (id >= 0 && id < clusters.size())
+                activeHighlights.addAll(clusters.get(id).spawners());
     }
 
     public static List<BlockPos> getHighlights()
@@ -67,9 +72,12 @@ public class ClusterManager
     public static List<List<BlockPos>> getHighlightedIntersectionRegions()
     {
         List<List<BlockPos>> intersections = new ArrayList<>();
-
-        if (highlightedClusterId >= 0 && highlightedClusterId < clusters.size())
-            intersections.add(clusters.get(highlightedClusterId).intersectionRegion());
+        if (!highlightedClusterIds.isEmpty())
+        {
+            for (int id : highlightedClusterIds)
+                if (id >= 0 && id < clusters.size())
+                    intersections.add(clusters.get(id).intersectionRegion());
+        }
         else if (!activeHighlights.isEmpty())
             for (SpawnerCluster cluster : clusters)
                 intersections.add(cluster.intersectionRegion());
