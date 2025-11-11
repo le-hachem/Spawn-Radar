@@ -24,12 +24,13 @@ public class CommandManager
     {
         dispatcher.register(
             ClientCommandManager.literal("radar:scan")
+                .executes(context -> executeGenerate(context, DEFAULT_SCAN_RADIUS))
                 .then(ClientCommandManager.argument("sorting", StringArgumentType.word())
                     .suggests((context, builder) ->
                     {
                         builder.suggest("proximity");
                         builder.suggest("size");
-                        return builder.buildFuture();
+                        return builder. buildFuture();
                     })
                     .executes(context -> executeGenerate(context, DEFAULT_SCAN_RADIUS))
                     .then(ClientCommandManager.argument("radius", IntegerArgumentType.integer(1, 256))
@@ -124,85 +125,88 @@ public class CommandManager
     }
 
     private static int executeGenerate(CommandContext<FabricClientCommandSource> context, int radius)
-	{
-		BlockBank.scanForSpawners(context.getSource(), radius, () -> generateClusters(context));
-		return Command.SINGLE_SUCCESS;
-	}
-
-	private static void generateClusters(CommandContext<FabricClientCommandSource> context)
     {
-		FabricClientCommandSource source = context.getSource();
-		List<BlockPos> spawners = BlockBank.getAll();
+        BlockBank.scanForSpawners(context.getSource(), radius, () -> generateClusters(context));
+        return Command.SINGLE_SUCCESS;
+    }
 
-		if (spawners.isEmpty())
+    private static void generateClusters(CommandContext<FabricClientCommandSource> context)
+    {
+        FabricClientCommandSource source = context.getSource();
+        List<BlockPos> spawners = BlockBank.getAll();
+
+        if (spawners.isEmpty())
         {
-			source.sendFeedback(Text.literal("No spawners found in the scanned area."));
-			return;
-		}
+            source.sendFeedback(Text.literal("No spawners found in the scanned area."));
+            return;
+        }
 
-		String sorting = StringArgumentType.getString(context, "sorting").toLowerCase();
-		List<SpawnerCluster> clusters = SpawnerCluster.findClusters(source, spawners, 16.0);
+        String sorting = null;
+        try {
+            sorting = StringArgumentType.getString(context, "sorting").toLowerCase();
+        } catch (Exception ignored) {}
 
-		switch (sorting)
+        List<SpawnerCluster> clusters = SpawnerCluster.findClusters(source, spawners, 16.0);
+
+        if (sorting != null)
         {
-			case "proximity" -> SpawnerCluster.sortClustersByPlayerProximity(source.getPlayer(), clusters);
-			case "size" -> clusters.sort((a, b) -> Integer.compare(b.spawners().size(), a.spawners().size()));
-			default ->
+            switch (sorting)
             {
-				source.sendFeedback(Text.literal("Invalid sorting option. Use 'proximity' or 'size'."));
-				return;
-			}
-		}
+                case "proximity" -> SpawnerCluster.sortClustersByPlayerProximity(source.getPlayer(), clusters);
+                case "size" -> clusters.sort((a, b) -> Integer.compare(b.spawners().size(), a.spawners().size()));
+                default -> source.sendFeedback(Text.literal("Invalid sorting option. Use 'proximity' or 'size'."));
+            }
+        }
 
         clusters = clusters.reversed();
-		ClusterManager.setClusters(clusters);
+        ClusterManager.setClusters(clusters);
 
-		if (clusters.isEmpty())
+        if (clusters.isEmpty())
         {
-			source.sendFeedback(Text.literal("No clusters found."));
-			return;
-		}
+            source.sendFeedback(Text.literal("No clusters found."));
+            return;
+        }
 
-		MutableText showAllButton = Text.literal("[Show All]").styled(style -> style
-			.withColor(Formatting.GREEN)
-			.withClickEvent(new ClickEvent.RunCommand("/radar:highlight_all_clusters"))
-			.withHoverEvent(new HoverEvent.ShowText(Text.literal("Highlight all clusters"))));
+        MutableText showAllButton = Text.literal("[Show All]").styled(style -> style
+            .withColor(Formatting.GREEN)
+            .withClickEvent(new ClickEvent.RunCommand("/radar:highlight_all_clusters"))
+            .withHoverEvent(new HoverEvent.ShowText(Text.literal("Highlight all clusters"))));
 
-		MutableText hideAllButton = Text.literal("[Hide All]").styled(style -> style
-			.withColor(Formatting.RED)
-			.withClickEvent(new ClickEvent.RunCommand("/radar:clear_highlights"))
-			.withHoverEvent(new HoverEvent.ShowText(Text.literal("Clear all highlights"))));
+        MutableText hideAllButton = Text.literal("[Hide All]").styled(style -> style
+            .withColor(Formatting.RED)
+            .withClickEvent(new ClickEvent.RunCommand("/radar:clear_highlights"))
+            .withHoverEvent(new HoverEvent.ShowText(Text.literal("Clear all highlights"))));
 
-		source.getPlayer().sendMessage(showAllButton.append(" ").append(hideAllButton), false);
+        source.getPlayer().sendMessage(showAllButton.append(" ").append(hideAllButton), false);
 
-		int id = 1;
-		for (SpawnerCluster cluster : clusters)
+        int id = 1;
+        for (SpawnerCluster cluster : clusters)
         {
-			int finalId = id;
+            int finalId = id;
 
-			double cx = cluster.spawners().stream().mapToDouble(BlockPos::getX).average().orElse(0);
-			double cy = cluster.spawners().stream().mapToDouble(BlockPos::getY).average().orElse(0);
-			double cz = cluster.spawners().stream().mapToDouble(BlockPos::getZ).average().orElse(0);
+            double cx = cluster.spawners().stream().mapToDouble(BlockPos::getX).average().orElse(0);
+            double cy = cluster.spawners().stream().mapToDouble(BlockPos::getY).average().orElse(0);
+            double cz = cluster.spawners().stream().mapToDouble(BlockPos::getZ).average().orElse(0);
 
-			MutableText clusterHeader = Text.literal("[(" + cluster.spawners().size() + ") Cluster #" + id + "]")
-				.styled(style -> style.withColor(Formatting.AQUA)
-					.withUnderline(true)
-					.withClickEvent(new ClickEvent.RunCommand(String.format("/radar:highlight_cluster %d", finalId)))
-					.withHoverEvent(new HoverEvent.ShowText(Text.literal("Click to highlight this cluster"))));
+            MutableText clusterHeader = Text.literal("[(" + cluster.spawners().size() + ") Cluster #" + id + "]")
+                .styled(style -> style.withColor(Formatting.AQUA)
+                    .withUnderline(true)
+                    .withClickEvent(new ClickEvent.RunCommand(String.format("/radar:highlight_cluster %d", finalId)))
+                    .withHoverEvent(new HoverEvent.ShowText(Text.literal("Click to highlight this cluster"))));
 
-			MutableText teleportButton = Text.literal("[Teleport]").styled(style -> style.withColor(Formatting.GOLD)
-				.withClickEvent(new ClickEvent.RunCommand(String.format("/tp %.0f %.0f %.0f", cx, cy, cz)))
-				.withHoverEvent(new HoverEvent.ShowText(Text.literal("Teleport to cluster center"))));
+            MutableText teleportButton = Text.literal("[Teleport]").styled(style -> style.withColor(Formatting.GOLD)
+                .withClickEvent(new ClickEvent.RunCommand(String.format("/tp %.0f %.0f %.0f", cx, cy, cz)))
+                .withHoverEvent(new HoverEvent.ShowText(Text.literal("Teleport to cluster center"))));
 
-			MutableText showSpawnersButton = Text.literal("[Show Spawners]").styled(style -> style.withColor(Formatting.GREEN)
-				.withClickEvent(new ClickEvent.RunCommand(String.format("/radar:show_cluster_spawners %d", finalId)))
-				.withHoverEvent(new HoverEvent.ShowText(Text.literal("Show all spawners in this cluster"))));
+            MutableText showSpawnersButton = Text.literal("[Show Spawners]").styled(style -> style.withColor(Formatting.GREEN)
+                .withClickEvent(new ClickEvent.RunCommand(String.format("/radar:show_spawners_in_cluster %d", finalId)))
+                .withHoverEvent(new HoverEvent.ShowText(Text.literal("Show all spawners in this cluster"))));
 
-			MutableText combined = clusterHeader.copy().append(" ").append(teleportButton).append(" ").append(showSpawnersButton);
-			source.getPlayer().sendMessage(combined, false);
-			id++;
-		}
-	}
+            MutableText combined = clusterHeader.copy().append(" ").append(teleportButton).append(" ").append(showSpawnersButton);
+            source.getPlayer().sendMessage(combined, false);
+            id++;
+        }
+    }
 
     public static void init()
     {
