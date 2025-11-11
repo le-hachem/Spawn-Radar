@@ -152,7 +152,7 @@ public record SpawnerCluster(List<BlockPos> spawners, List<BlockPos> intersectio
 
         for (BlockPos spawner : spawners)
             if (clusters.stream().noneMatch(c -> c.spawners().contains(spawner)))
-                clusters.add(new SpawnerCluster(List.of(spawner), List.of(spawner)));
+                clusters.add(new SpawnerCluster(List.of(spawner), generateSphere(spawner, activationRadius)));
 
         clusters = filterStrictSubsets(clusters);
 
