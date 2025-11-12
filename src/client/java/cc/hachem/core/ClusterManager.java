@@ -1,5 +1,6 @@
 package cc.hachem.core;
 
+import cc.hachem.RadarClient;
 import net.minecraft.util.math.BlockPos;
 import java.util.*;
 
@@ -31,6 +32,7 @@ public class ClusterManager
     public static void setClusters(List<SpawnerCluster> list)
     {
         clusters = list;
+        RadarClient.LOGGER.debug("Set {} clusters.", list.size());
     }
 
     public static List<SpawnerCluster> getClusters()
@@ -54,9 +56,15 @@ public class ClusterManager
 
         HighlightedCluster hc = new HighlightedCluster(clusterId, clusters.get(clusterId));
         if (highlightedClusters.contains(hc))
+        {
             highlightedClusters.remove(hc);
+            RadarClient.LOGGER.info("Un-highlighted cluster #{}.", clusterId + 1);
+        }
         else
+        {
             highlightedClusters.add(hc);
+            RadarClient.LOGGER.info("Highlighted cluster #{}.", clusterId + 1);
+        }
 
         updateActiveHighlights();
     }
@@ -68,12 +76,14 @@ public class ClusterManager
             highlightedClusters.add(new HighlightedCluster(i, clusters.get(i)));
 
         updateActiveHighlights();
+        RadarClient.LOGGER.info("Highlighted all {} clusters.", clusters.size());
     }
 
     public static void clearHighlights()
     {
         highlightedClusters.clear();
         updateActiveHighlights();
+        RadarClient.LOGGER.info("Cleared all highlighted clusters.");
     }
 
     private static void updateActiveHighlights()
@@ -81,6 +91,8 @@ public class ClusterManager
         activeHighlights.clear();
         for (HighlightedCluster hc : highlightedClusters)
             activeHighlights.addAll(hc.cluster.spawners());
+
+        RadarClient.LOGGER.debug("Active highlights updated: {} blocks highlighted.", activeHighlights.size());
     }
 
     public static List<BlockPos> getHighlights()
@@ -91,19 +103,5 @@ public class ClusterManager
     public static Set<HighlightedCluster> getHighlightedClusters()
     {
         return new HashSet<>(highlightedClusters);
-    }
-
-    public static List<List<BlockPos>> getHighlightedIntersectionRegions()
-    {
-        List<List<BlockPos>> intersections = new ArrayList<>();
-
-        if (!highlightedClusters.isEmpty())
-            for (HighlightedCluster hc : highlightedClusters)
-                intersections.add(hc.cluster.intersectionRegion());
-        else if (!activeHighlights.isEmpty())
-            for (SpawnerCluster cluster : clusters)
-                intersections.add(cluster.intersectionRegion());
-
-        return intersections;
     }
 }

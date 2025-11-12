@@ -1,6 +1,5 @@
 package cc.hachem.renderer;
 
-import java.awt.*;
 import java.util.*;
 import java.util.List;
 
@@ -31,6 +30,17 @@ import org.lwjgl.system.MemoryUtil;
 
 public class BlockHighlightRenderer
 {
+    public record Color(float r, float g, float b)
+    {
+        public static Color fromHex(int color)
+        {
+            float r = ((color >> 16) & 0xFF) / 255f;
+            float g = ((color >> 8) & 0xFF) / 255f;
+            float b = (color & 0xFF) / 255f;
+            return new Color(r, g, b);
+        }
+    }
+
     private static final RenderPipeline FILLED_THROUGH_WALLS = RenderPipelines.register(
         RenderPipeline.builder(RenderPipelines.POSITION_COLOR_SNIPPET)
             .withLocation(Identifier.of(RadarClient.MOD_ID, "pipeline/highlights"))
@@ -47,7 +57,7 @@ public class BlockHighlightRenderer
 
     public static void draw(WorldRenderContext context, BlockPos position, int color, float a)
     {
-        ColorUtil.Color tempColor = ColorUtil.fromHex(color);
+        Color tempColor = Color.fromHex(color);
         float r = tempColor.r();
         float g = tempColor.g();
         float b = tempColor.b();
@@ -70,18 +80,24 @@ public class BlockHighlightRenderer
             x+1, y+1, z+1,
             r, g, b,
             a);
+
         matrices.pop();
+
+        RadarClient.LOGGER.debug("Drawn block highlight at ({}, {}, {}) with color #{}, alpha {}", x, y, z, Integer.toHexString(color), a);
     }
 
     public static void fillRegionMesh(WorldRenderContext context, List<BlockPos> region, int color, float a)
     {
-        ColorUtil.Color tempColor = ColorUtil.fromHex(color);
+        if (region.isEmpty())
+        {
+            RadarClient.LOGGER.debug("fillRegionMesh called with empty region.");
+            return;
+        }
+
+        Color tempColor = Color.fromHex(color);
         float r = tempColor.r();
         float g = tempColor.g();
         float b = tempColor.b();
-
-        if (region.isEmpty())
-            return;
 
         Set<BlockPos> blocks = new HashSet<>(region);
 
@@ -100,20 +116,25 @@ public class BlockHighlightRenderer
             float z = pos.getZ();
 
             if (!blocks.contains(pos.add(1, 0, 0)))  VertexRendering.drawFilledBox(matrices, buffer, x + 1, y,     z,     x + 1, y + 1, z + 1, r, g, b, a);
-            if (!blocks.contains(pos.add(-1, 0, 0))) VertexRendering.drawFilledBox(matrices, buffer, x,     y,     z,     x,     y + 1, z + 1, r, g, b, a); // -X
-            if (!blocks.contains(pos.add(0, 1, 0)))  VertexRendering.drawFilledBox(matrices, buffer, x,     y + 1, z,     x + 1, y + 1, z + 1, r, g, b, a); // +Y
-            if (!blocks.contains(pos.add(0, -1, 0))) VertexRendering.drawFilledBox(matrices, buffer, x,     y,     z,     x + 1, y,     z + 1, r, g, b, a); // -Y
-            if (!blocks.contains(pos.add(0, 0, 1)))  VertexRendering.drawFilledBox(matrices, buffer, x,     y,     z + 1, x + 1, y + 1, z + 1, r, g, b, a); // +Z
-            if (!blocks.contains(pos.add(0, 0, -1))) VertexRendering.drawFilledBox(matrices, buffer, x,     y,     z,     x + 1, y + 1, z,     r, g, b, a); // -Z
+            if (!blocks.contains(pos.add(-1, 0, 0))) VertexRendering.drawFilledBox(matrices, buffer, x,     y,     z,     x,     y + 1, z + 1, r, g, b, a);
+            if (!blocks.contains(pos.add(0, 1, 0)))  VertexRendering.drawFilledBox(matrices, buffer, x,     y + 1, z,     x + 1, y + 1, z + 1, r, g, b, a);
+            if (!blocks.contains(pos.add(0, -1, 0))) VertexRendering.drawFilledBox(matrices, buffer, x,     y,     z,     x + 1, y,     z + 1, r, g, b, a);
+            if (!blocks.contains(pos.add(0, 0, 1)))  VertexRendering.drawFilledBox(matrices, buffer, x,     y,     z + 1, x + 1, y + 1, z + 1, r, g, b, a);
+            if (!blocks.contains(pos.add(0, 0, -1))) VertexRendering.drawFilledBox(matrices, buffer, x,     y,     z,     x + 1, y + 1, z,     r, g, b, a);
         }
 
         matrices.pop();
+
+        RadarClient.LOGGER.debug("Filled region mesh of {} blocks with color #{}, alpha {}", region.size(), Integer.toHexString(color), a);
     }
 
     public static void submit(MinecraftClient client)
     {
         if (buffer == null)
+        {
+            RadarClient.LOGGER.debug("submit called but buffer is null; nothing to submit.");
             return;
+        }
 
         BuiltBuffer builtBuffer = buffer.end();
         BuiltBuffer.DrawParameters drawParams = builtBuffer.getDrawParameters();
@@ -125,6 +146,8 @@ public class BlockHighlightRenderer
         if (vertexBuffer != null)
             vertexBuffer.rotate();
         buffer = null;
+
+        RadarClient.LOGGER.debug("Submitted block highlights to GPU, vertex count: {}", drawParams.vertexCount());
     }
 
     private static GpuBuffer uploadToGPU(BuiltBuffer.DrawParameters drawParameters, VertexFormat format, BuiltBuffer builtBuffer)
@@ -138,6 +161,7 @@ public class BlockHighlightRenderer
                 GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_MAP_WRITE,
                 vertexBufferSize
             );
+            RadarClient.LOGGER.debug("Created new MappableRingBuffer with size {}", vertexBufferSize);
         }
 
         CommandEncoder commandEncoder = RenderSystem.getDevice().createCommandEncoder();
@@ -147,6 +171,7 @@ public class BlockHighlightRenderer
             MemoryUtil.memCopy(builtBuffer.getBuffer(), mappedView.data());
         }
 
+        RadarClient.LOGGER.debug("Uploaded {} vertices to GPU", drawParameters.vertexCount());
         return vertexBuffer.getBlocking();
     }
 
@@ -160,12 +185,12 @@ public class BlockHighlightRenderer
         var dynamicTransforms = RenderSystem.getDynamicUniforms().write(RenderSystem.getModelViewMatrix(), COLOR_MODULATOR, new Vector3f(), RenderSystem.getTextureMatrix(), 1f);
 
         try (RenderPass renderPass = RenderSystem.getDevice()
-                                         .createCommandEncoder()
-                                         .createRenderPass(() -> RadarClient.MOD_ID + "_highlight",
-                                             client.getFramebuffer().getColorAttachmentView(),
-                                             OptionalInt.empty(),
-                                             client.getFramebuffer().getDepthAttachmentView(),
-                                             OptionalDouble.empty()))
+                 .createCommandEncoder()
+                 .createRenderPass(() -> RadarClient.MOD_ID + "_highlight",
+                     client.getFramebuffer().getColorAttachmentView(),
+                     OptionalInt.empty(),
+                     client.getFramebuffer().getDepthAttachmentView(),
+                     OptionalDouble.empty()))
         {
             renderPass.setPipeline(BlockHighlightRenderer.FILLED_THROUGH_WALLS);
             RenderSystem.bindDefaultUniforms(renderPass);
@@ -176,6 +201,7 @@ public class BlockHighlightRenderer
         }
 
         builtBuffer.close();
+        RadarClient.LOGGER.debug("Executed drawPipeline for {} indices", drawParameters.indexCount());
     }
 
     public static void close()
@@ -185,6 +211,7 @@ public class BlockHighlightRenderer
         {
             vertexBuffer.close();
             vertexBuffer = null;
+            RadarClient.LOGGER.debug("Closed vertex buffer and allocator.");
         }
     }
 }

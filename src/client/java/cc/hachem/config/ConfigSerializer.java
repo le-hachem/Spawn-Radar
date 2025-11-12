@@ -49,7 +49,7 @@ public class ConfigSerializer
 
         } catch (IOException e)
         {
-            RadarClient.LOGGER.error("[SpawnRadar] Failed to load config: {}", e.getMessage());
+            RadarClient.LOGGER.error("Failed to load config: {}", e.getMessage());
             RadarClient.config = new ConfigManager();
         }
     }
