@@ -23,7 +23,7 @@ public class CommandManager
     {
         dispatcher.register(
             ClientCommandManager.literal("radar:scan")
-                .executes(context -> executeGenerate(context, ConfigManager.defaultSearchRadius))
+                .executes(context -> executeGenerate(context, RadarClient.config.defaultSearchRadius))
                 .then(ClientCommandManager.argument("sorting", StringArgumentType.word())
                     .suggests((context, builder) ->
                     {
@@ -31,7 +31,7 @@ public class CommandManager
                         builder.suggest("size");
                         return builder. buildFuture();
                     })
-                    .executes(context -> executeGenerate(context, ConfigManager.defaultSearchRadius))
+                    .executes(context -> executeGenerate(context, RadarClient.config.defaultSearchRadius))
                     .then(ClientCommandManager.argument("radius", IntegerArgumentType.integer(1, 256))
                         .executes(context ->
                         {
@@ -140,7 +140,7 @@ public class CommandManager
             return;
         }
 
-        SpawnerCluster.SortType sortType = ConfigManager.defaultSortType;
+        SpawnerCluster.SortType sortType = RadarClient.config.defaultSortType;
         switch (StringArgumentType.getString(context, "sorting").toLowerCase())
         {
             case "proximity" -> sortType = SpawnerCluster.SortType.BY_PROXIMITY;

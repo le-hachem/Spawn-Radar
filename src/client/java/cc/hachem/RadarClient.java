@@ -1,6 +1,7 @@
 package cc.hachem;
 
 import cc.hachem.config.ConfigManager;
+import cc.hachem.config.ConfigSerializer;
 import cc.hachem.core.BlockBank;
 import cc.hachem.core.ClusterManager;
 import cc.hachem.core.CommandManager;
@@ -20,8 +21,8 @@ import java.util.List;
 public class RadarClient implements ClientModInitializer
 {
 	public static final String MOD_ID = "radar";
-	public static final int DEFAULT_SCAN_RADIUS = 64;
 	public static Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+	public static ConfigManager config;
 
 	public static void reset()
 	{
@@ -34,7 +35,7 @@ public class RadarClient implements ClientModInitializer
 	{
 		for (BlockPos pos : ClusterManager.getHighlights())
 		{
-			BlockHighlightRenderer.draw(context, pos, ConfigManager.spawnerHighlightColor, 0.5f);
+			BlockHighlightRenderer.draw(context, pos, config.spawnerHighlightColor, 0.5f);
 
 			List<Integer> ids = ClusterManager.getClusterIDAt(pos);
 			if (!ids.isEmpty())
@@ -55,9 +56,7 @@ public class RadarClient implements ClientModInitializer
 		{
 			int spawnerCount = hc.cluster().spawners().size();
 			int clusterColor = ConfigManager.getClusterColor(spawnerCount);
-//			for (BlockPos pos : hc.cluster().spawners())
-//				BlockHighlightRenderer.draw(context, pos, clusterColor, 0.5f);
-			if (spawnerCount >= ConfigManager.minimumSpawnersForRegion)
+			if (spawnerCount >= config.minimumSpawnersForRegion)
 			{
 				List<BlockPos> region = hc.cluster().intersectionRegion();
 				BlockHighlightRenderer.fillRegionMesh(context, region, clusterColor, 0.3f);
@@ -70,6 +69,7 @@ public class RadarClient implements ClientModInitializer
 	@Override
 	public void onInitializeClient()
 	{
+		ConfigSerializer.load();
 		CommandManager.init();
 
 		WorldRenderEvents.BEFORE_TRANSLUCENT.register(this::onRender);

@@ -1,5 +1,6 @@
 package cc.hachem.config;
 
+import cc.hachem.RadarClient;
 import cc.hachem.core.SpawnerCluster;
 
 import java.util.ArrayList;
@@ -17,30 +18,27 @@ public class ConfigManager
         public String getName() { return name; }
     }
 
-    public static SpawnerCluster.SortType defaultSortType = SpawnerCluster.SortType.NO_SORT;
-    public static SortOrder clusterProximitySortOrder = SortOrder.DESCENDING;
-    public static SortOrder clusterSizeSortOrder = SortOrder.ASCENDING;
+    public SpawnerCluster.SortType defaultSortType = SpawnerCluster.SortType.NO_SORT;
+    public SortOrder clusterProximitySortOrder = SortOrder.DESCENDING;
+    public SortOrder clusterSizeSortOrder = SortOrder.ASCENDING;
 
-    public static int spawnerHighlightColor = 0xFFFFFF;
-    public static int minimumSpawnersForRegion = 1;
-    public static int defaultSearchRadius = 64;
+    public int spawnerHighlightColor = 0xFFFFFF;
+    public int minimumSpawnersForRegion = 1;
+    public int defaultSearchRadius = 64;
 
-    public static List<Integer> clusterColors = new ArrayList<>();
-    static
-    {
-        clusterColors.add(0x00FFFF); // 1  spawner
-        clusterColors.add(0x00FF00); // 2  spawners
-        clusterColors.add(0xFFFF00); // 3  spawners
-        clusterColors.add(0xFF0000); // 4  spawners
-        clusterColors.add(0xFF00FF); // 5+ spawners
-    }
+    public List<Integer> clusterColors = new ArrayList<>(
+        List.of(0x00FFFF,
+                0x00FF00,
+                0xFFFF00,
+                0xFF0000,
+                0xFF00FF));
 
     public static int getClusterColor(int spawnerCount)
     {
         if (spawnerCount <= 0)
             return 0xFFFFFF;
-        if (spawnerCount <= clusterColors.size())
-            return clusterColors.get(spawnerCount - 1);
-        return clusterColors.getLast();
+        if (spawnerCount <= RadarClient.config.clusterColors.size())
+            return RadarClient.config.clusterColors.get(spawnerCount - 1);
+        return RadarClient.config.clusterColors.getLast();
     }
 }

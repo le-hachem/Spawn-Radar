@@ -107,14 +107,14 @@ public record SpawnerCluster(List<BlockPos> spawners, List<BlockPos> intersectio
         }
 
         clusters.sort(Comparator.comparingDouble(c -> distanceSquared(c.spawners().getFirst(), px, py, pz)));
-        if (ConfigManager.clusterProximitySortOrder == ConfigManager.SortOrder.DESCENDING)
+        if (RadarClient.config.clusterProximitySortOrder == ConfigManager.SortOrder.DESCENDING)
             Collections.reverse(clusters);
     }
 
     public static void sortClustersBySize(List<SpawnerCluster> clusters)
     {
         clusters.sort(Comparator.comparingInt(a -> a.spawners().size()));
-        if (ConfigManager.clusterSizeSortOrder == ConfigManager.SortOrder.DESCENDING)
+        if (RadarClient.config.clusterSizeSortOrder == ConfigManager.SortOrder.DESCENDING)
             Collections.reverse(clusters);
     }
 
