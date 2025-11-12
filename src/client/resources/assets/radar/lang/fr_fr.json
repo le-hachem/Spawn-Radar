@@ -1,6 +1,6 @@
 {
-  "key.category.spawn_radar.title": "Radar de Spawn",
-  "key.spawn_radar.scan": "Scanner les spawn",
+  "key.category.spawn_radar.title": "Spawn Radar",
+  "key.spawn_radar.scan": "Scanner les spawners",
   "key.spawn_radar.toggle": "Activer/Désactiver les régions actives",
   "key.spawn_radar.reset": "Réinitialiser les données",
 
@@ -8,6 +8,7 @@
   "option.spawn_radar.general": "Général",
   "option.spawn_radar.chunk_search_radius": "Rayon de recherche de chunks",
   "option.spawn_radar.min_spawners": "Nombre minimum de spawners pour surligner un cluster",
+  "option.spawn_radar.highlight_after_scan": "Mettre automatiquement en surbrillance la région active du cluster après l'analyse",
   "option.spawn_radar.default_cluster_sort_type": "Type de tri par défaut des clusters",
   "option.spawn_radar.cluster_proximity_sort_order": "Ordre de tri par proximité du cluster",
   "option.spawn_radar.cluster_size_sort_order": "Ordre de tri par taille du cluster",

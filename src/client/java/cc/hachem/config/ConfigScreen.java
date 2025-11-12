@@ -5,13 +5,8 @@ import cc.hachem.core.SpawnerCluster;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
-import me.shedaniel.clothconfig2.impl.builders.DropdownMenuBuilder;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
-
-import java.util.Arrays;
-import java.util.stream.Collectors;
 
 public class ConfigScreen
 {
@@ -42,6 +37,15 @@ public class ConfigScreen
             )
             .setSaveConsumer(number -> RadarClient.config.minimumSpawnersForRegion = number)
             .setDefaultValue(ConfigManager.DEFAULT.minimumSpawnersForRegion)
+            .build()
+        );
+
+        general.addEntry(entryBuilder.startBooleanToggle(
+                Text.translatable("option.spawn_radar.highlight_after_scan"),
+                RadarClient.config.highlightAfterScan
+            )
+            .setSaveConsumer(value -> RadarClient.config.highlightAfterScan = value)
+            .setDefaultValue(ConfigManager.DEFAULT.highlightAfterScan)
             .build()
         );
 

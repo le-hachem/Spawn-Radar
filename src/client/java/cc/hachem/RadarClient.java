@@ -114,6 +114,9 @@ public class RadarClient implements ClientModInitializer
 			RadarClient.LOGGER.debug("Displayed cluster #{} with {} spawners.", id, cluster.spawners().size());
 			id++;
 		}
+
+		if (RadarClient.config.highlightAfterScan)
+			ClusterManager.highlightAllClusters();
 	}
 
 	public static void toggleCluster(ClientPlayerEntity source, String target)

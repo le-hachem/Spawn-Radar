@@ -32,6 +32,8 @@ public class ConfigManager
     public int spawnerHighlightOpacity = 50;
     public int regionHighlightOpacity = 30;
 
+    public boolean highlightAfterScan = false;
+
     public List<Integer> clusterColors = new ArrayList<>(
         List.of(0x00FFFF,
                 0x00FF00,
