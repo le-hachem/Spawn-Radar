@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Set;
 
 public class RadarClient implements ClientModInitializer
 {
@@ -75,18 +76,17 @@ public class RadarClient implements ClientModInitializer
 			);
 		source.sendMessage(showAllButton, false);
 
-		int id = 1;
 		for (SpawnerCluster cluster : clusters)
 		{
-			int finalId = id;
+			int clusterId = cluster.id();
 			double cx = cluster.spawners().stream().mapToDouble(BlockPos::getX).average().orElse(0);
 			double cy = cluster.spawners().stream().mapToDouble(BlockPos::getY).average().orElse(0);
 			double cz = cluster.spawners().stream().mapToDouble(BlockPos::getZ).average().orElse(0);
 
-			MutableText clusterHeader = Text.translatable("chat.spawn_radar.cluster_header", cluster.spawners().size(), id)
+			MutableText clusterHeader = Text.translatable("chat.spawn_radar.cluster_header", cluster.spawners().size(), clusterId)
 				.styled(style -> style.withColor(Formatting.AQUA)
 					.withUnderline(true)
-					.withClickEvent(new ClickEvent.RunCommand("/radar:toggle " + finalId))
+					.withClickEvent(new ClickEvent.RunCommand("/radar:toggle " + clusterId))
 					.withHoverEvent(new HoverEvent.ShowText(Text.translatable("chat.spawn_radar.cluster_hover")))
 				);
 
@@ -100,7 +100,7 @@ public class RadarClient implements ClientModInitializer
 			MutableText showSpawnersButton = Text.translatable("chat.spawn_radar.show_spawners")
 				.styled(style -> style
 					.withColor(Formatting.GREEN)
-					.withClickEvent(new ClickEvent.RunCommand("/radar:info " + finalId))
+					.withClickEvent(new ClickEvent.RunCommand("/radar:info " + clusterId))
 					.withHoverEvent(new HoverEvent.ShowText(Text.translatable("chat.spawn_radar.show_spawners_hover")))
 				);
 
@@ -111,8 +111,7 @@ public class RadarClient implements ClientModInitializer
 				.append(showSpawnersButton);
 
 			source.sendMessage(combined, false);
-			RadarClient.LOGGER.debug("Displayed cluster #{} with {} spawners.", id, cluster.spawners().size());
-			id++;
+			RadarClient.LOGGER.debug("Displayed cluster #{} with {} spawners.", clusterId, cluster.spawners().size());
 		}
 
 		if (RadarClient.config.highlightAfterScan)
@@ -132,7 +131,7 @@ public class RadarClient implements ClientModInitializer
 				return;
 			}
 
-			boolean anyHighlighted = !ClusterManager.getHighlightedClusters().isEmpty();
+			boolean anyHighlighted = !ClusterManager.getHighlightedClusterIds().isEmpty();
 			if (anyHighlighted)
 			{
 				ClusterManager.unhighlightAllClusters();
@@ -142,21 +141,23 @@ public class RadarClient implements ClientModInitializer
 				ClusterManager.highlightAllClusters();
 				RadarClient.LOGGER.info("Highlighted all {} clusters", clusters.size());
 			}
-		} else
+		}
+		else
 		{
 			try
 			{
-				int id = Integer.parseInt(target) - 1;
-				if (id < 0 || id >= clusters.size())
+				int clusterId = Integer.parseInt(target);
+				if (clusters.stream().noneMatch(c -> c.id() == clusterId))
 				{
 					source.sendMessage(Text.translatable("chat.spawn_radar.invalid_id"), false);
-					RadarClient.LOGGER.warn("Attempted to toggle invalid cluster ID {}", id + 1);
+					RadarClient.LOGGER.warn("Attempted to toggle invalid cluster ID {}", clusterId);
 					return;
 				}
 
-				ClusterManager.toggleHighlightCluster(id);
-				RadarClient.LOGGER.info("Toggled highlight for cluster #{}", id + 1);
-			} catch (NumberFormatException e)
+				ClusterManager.toggleHighlightCluster(clusterId);
+				RadarClient.LOGGER.info("Toggled highlight for cluster #{}", clusterId);
+			}
+			catch (NumberFormatException e)
 			{
 				source.sendMessage(Text.translatable("chat.spawn_radar.invalid_id_number"), false);
 			}
@@ -181,18 +182,19 @@ public class RadarClient implements ClientModInitializer
 	{
 		try
 		{
+			Set<Integer> highlightedIds = ClusterManager.getHighlightedClusterIds();
+
 			for (BlockPos pos : ClusterManager.getHighlights())
 			{
-				BlockHighlightRenderer.draw(context, pos, config.spawnerHighlightColor, config.spawnerHighlightOpacity/100f);
+				BlockHighlightRenderer.draw(context, pos, config.spawnerHighlightColor, config.spawnerHighlightOpacity / 100f);
 
 				List<Integer> ids = ClusterManager.getClusterIDAt(pos);
 				if (!ids.isEmpty())
 				{
 					StringBuilder label = new StringBuilder();
-
 					for (int id : ids)
 					{
-						label.append("Cluster #").append(id + 1);
+						label.append("Cluster #").append(id);
 						if (id != ids.getLast())
 							label.append("\n");
 					}
@@ -200,15 +202,18 @@ public class RadarClient implements ClientModInitializer
 				}
 			}
 
-			for (ClusterManager.HighlightedCluster hc : ClusterManager.getHighlightedClusters())
+			for (SpawnerCluster cluster : ClusterManager.getClusters())
 			{
-				int spawnerCount = hc.cluster().spawners().size();
+				if (!highlightedIds.contains(cluster.id()))
+					continue;
+
+				int spawnerCount = cluster.spawners().size();
 				int clusterColor = ConfigManager.getClusterColor(spawnerCount);
 
 				if (spawnerCount >= config.minimumSpawnersForRegion)
 				{
-					List<BlockPos> region = hc.cluster().intersectionRegion();
-					BlockHighlightRenderer.fillRegionMesh(context, region, clusterColor, config.regionHighlightOpacity/100f);
+					List<BlockPos> region = cluster.intersectionRegion();
+					BlockHighlightRenderer.fillRegionMesh(context, region, clusterColor, config.regionHighlightOpacity / 100f);
 				}
 			}
 

@@ -7,32 +7,13 @@ import java.util.*;
 
 public class ClusterManager
 {
-    private static final Set<HighlightedCluster> highlightedClusters = new HashSet<>();
+    private static final Set<Integer> highlightedClusterIds = new HashSet<>();
     private static List<SpawnerCluster> clusters = new ArrayList<>();
-
-    public record HighlightedCluster(int id, SpawnerCluster cluster)
-    {
-        @Override
-        public boolean equals(Object o)
-        {
-            if (this == o)
-                return true;
-            if (!(o instanceof HighlightedCluster other))
-                return false;
-            return id == other.id;
-        }
-
-        @Override
-        public int hashCode()
-        {
-            return Integer.hashCode(id);
-        }
-    }
 
     public static void setClusters(List<SpawnerCluster> list)
     {
         clusters = list;
-        highlightedClusters.clear();
+        highlightedClusterIds.clear();
         RadarClient.LOGGER.debug("Set {} clusters.", list.size());
     }
 
@@ -44,8 +25,8 @@ public class ClusterManager
     public static List<Integer> getClusterIDAt(BlockPos pos)
     {
         List<Integer> ids = new ArrayList<>();
-        for (int i = 0; i < clusters.size(); i++)
-            if (clusters.get(i).spawners().contains(pos)) ids.add(i);
+        for (SpawnerCluster c : clusters)
+            if (c.spawners().contains(pos)) ids.add(c.id());
         return ids;
     }
 
@@ -54,50 +35,51 @@ public class ClusterManager
         if (!isValidClusterId(clusterId))
             return;
 
-        HighlightedCluster hc = new HighlightedCluster(clusterId, clusters.get(clusterId));
-        if (highlightedClusters.contains(hc))
+        if (highlightedClusterIds.contains(clusterId))
         {
-            highlightedClusters.remove(hc);
+            highlightedClusterIds.remove(clusterId);
             RadarClient.LOGGER.info("Un-highlighted cluster #{}.", clusterId + 1);
-        } else
+        }
+        else
         {
-            highlightedClusters.add(hc);
+            highlightedClusterIds.add(clusterId);
             RadarClient.LOGGER.info("Highlighted cluster #{}.", clusterId + 1);
         }
     }
 
     public static void highlightAllClusters()
     {
-        highlightedClusters.clear();
-        for (int i = 0; i < clusters.size(); i++)
-            highlightedClusters.add(new HighlightedCluster(i, clusters.get(i)));
+        highlightedClusterIds.clear();
+        for (SpawnerCluster c : clusters)
+            highlightedClusterIds.add(c.id());
         RadarClient.LOGGER.info("Highlighted all {} clusters.", clusters.size());
     }
 
     public static void unhighlightAllClusters()
     {
-        highlightedClusters.clear();
+        highlightedClusterIds.clear();
         RadarClient.LOGGER.info("Un-highlighted all clusters.");
     }
 
-    public static Set<HighlightedCluster> getHighlightedClusters()
+    public static Set<Integer> getHighlightedClusterIds()
     {
-        return new HashSet<>(highlightedClusters);
+        return new HashSet<>(highlightedClusterIds);
     }
 
     public static List<BlockPos> getHighlights()
     {
-        if (highlightedClusters.isEmpty())
+        if (highlightedClusterIds.isEmpty())
             return BlockBank.getAll();
 
         List<BlockPos> activeHighlights = new ArrayList<>();
-        for (HighlightedCluster hc : highlightedClusters)
-            activeHighlights.addAll(hc.cluster.spawners());
+        for (SpawnerCluster c : clusters)
+            if (highlightedClusterIds.contains(c.id()))
+                activeHighlights.addAll(c.spawners());
         return activeHighlights;
     }
 
     private static boolean isValidClusterId(int clusterId)
     {
-        return clusterId >= 0 && clusterId < clusters.size();
+        return clusters.stream().anyMatch(c -> c.id() == clusterId);
     }
 }
