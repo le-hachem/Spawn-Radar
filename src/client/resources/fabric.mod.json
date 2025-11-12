@@ -15,6 +15,7 @@
 	"icon": "assets/radar/icon.png",
 	"environment": "*",
 	"entrypoints": {
+		"modmenu": [ "cc.hachem.config.ModMenuIntegration" ],
 		"client": [
 			"cc.hachem.RadarClient"
 		]

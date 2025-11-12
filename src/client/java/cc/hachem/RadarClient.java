@@ -1,5 +1,6 @@
 package cc.hachem;
 
+import cc.hachem.config.ConfigManager;
 import cc.hachem.core.BlockBank;
 import cc.hachem.core.ClusterManager;
 import cc.hachem.core.CommandManager;
@@ -33,7 +34,7 @@ public class RadarClient implements ClientModInitializer
 	{
 		for (BlockPos pos : ClusterManager.getHighlights())
 		{
-			BlockHighlightRenderer.draw(context, pos, 0, 1, 0, 0.5f);
+			BlockHighlightRenderer.draw(context, pos, ConfigManager.spawnerHighlightColor, 0.5f);
 
 			List<Integer> ids = ClusterManager.getClusterIDAt(pos);
 			if (!ids.isEmpty())
@@ -50,11 +51,17 @@ public class RadarClient implements ClientModInitializer
 			}
 		}
 
-		List<List<BlockPos>> intersections = ClusterManager.getHighlightedIntersectionRegions();
-		for (List<BlockPos> region : intersections)
+		for (ClusterManager.HighlightedCluster hc : ClusterManager.getHighlightedClusters())
 		{
-			BlockHighlightRenderer.fillRegionMesh(context, region, 1f, 0f, 0f, 0.3f);
-			BlockHighlightRenderer.submit(MinecraftClient.getInstance());
+			int spawnerCount = hc.cluster().spawners().size();
+			int clusterColor = ConfigManager.getClusterColor(spawnerCount);
+//			for (BlockPos pos : hc.cluster().spawners())
+//				BlockHighlightRenderer.draw(context, pos, clusterColor, 0.5f);
+			if (spawnerCount >= ConfigManager.minimumSpawnersForRegion)
+			{
+				List<BlockPos> region = hc.cluster().intersectionRegion();
+				BlockHighlightRenderer.fillRegionMesh(context, region, clusterColor, 0.3f);
+			}
 		}
 
 		BlockHighlightRenderer.submit(MinecraftClient.getInstance());

@@ -1,6 +1,7 @@
 package cc.hachem.core;
 
 import cc.hachem.RadarClient;
+import cc.hachem.config.ConfigManager;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -18,13 +19,11 @@ import java.util.List;
 
 public class CommandManager
 {
-    public static final int DEFAULT_SCAN_RADIUS = 64;
-
     private static void registerCommands(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess)
     {
         dispatcher.register(
             ClientCommandManager.literal("radar:scan")
-                .executes(context -> executeGenerate(context, DEFAULT_SCAN_RADIUS))
+                .executes(context -> executeGenerate(context, ConfigManager.defaultSearchRadius))
                 .then(ClientCommandManager.argument("sorting", StringArgumentType.word())
                     .suggests((context, builder) ->
                     {
@@ -32,7 +31,7 @@ public class CommandManager
                         builder.suggest("size");
                         return builder. buildFuture();
                     })
-                    .executes(context -> executeGenerate(context, DEFAULT_SCAN_RADIUS))
+                    .executes(context -> executeGenerate(context, ConfigManager.defaultSearchRadius))
                     .then(ClientCommandManager.argument("radius", IntegerArgumentType.integer(1, 256))
                         .executes(context ->
                         {
@@ -141,24 +140,15 @@ public class CommandManager
             return;
         }
 
-        String sorting = null;
-        try {
-            sorting = StringArgumentType.getString(context, "sorting").toLowerCase();
-        } catch (Exception ignored) {}
-
-        List<SpawnerCluster> clusters = SpawnerCluster.findClusters(source, spawners, 16.0);
-
-        if (sorting != null)
+        SpawnerCluster.SortType sortType = ConfigManager.defaultSortType;
+        switch (StringArgumentType.getString(context, "sorting").toLowerCase())
         {
-            switch (sorting)
-            {
-                case "proximity" -> SpawnerCluster.sortClustersByPlayerProximity(source.getPlayer(), clusters);
-                case "size" -> clusters.sort((a, b) -> Integer.compare(b.spawners().size(), a.spawners().size()));
-                default -> source.sendFeedback(Text.literal("Invalid sorting option. Use 'proximity' or 'size'."));
-            }
+            case "proximity" -> sortType = SpawnerCluster.SortType.BY_PROXIMITY;
+            case "size" -> sortType = SpawnerCluster.SortType.BY_SIZE;
+            default -> {}
         }
 
-        clusters = clusters.reversed();
+        List<SpawnerCluster> clusters = SpawnerCluster.findClusters(source, spawners, 16.0, sortType);
         ClusterManager.setClusters(clusters);
 
         if (clusters.isEmpty())

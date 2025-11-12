@@ -1,6 +1,8 @@
 package cc.hachem.renderer;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 import cc.hachem.RadarClient;
 import com.mojang.blaze3d.buffers.GpuBuffer;
@@ -43,8 +45,13 @@ public class BlockHighlightRenderer
     private static BufferBuilder buffer;
     private static MappableRingBuffer vertexBuffer;
 
-    public static void draw(WorldRenderContext context, BlockPos position, float r, float g, float b, float a)
+    public static void draw(WorldRenderContext context, BlockPos position, int color, float a)
     {
+        ColorUtil.Color tempColor = ColorUtil.fromHex(color);
+        float r = tempColor.r();
+        float g = tempColor.g();
+        float b = tempColor.b();
+
         MatrixStack matrices = context.matrices();
         Vec3d camera = context.worldState().cameraRenderState.pos;
 
@@ -66,8 +73,13 @@ public class BlockHighlightRenderer
         matrices.pop();
     }
 
-    public static void fillRegionMesh(WorldRenderContext context, List<BlockPos> region, float r, float g, float b, float a)
+    public static void fillRegionMesh(WorldRenderContext context, List<BlockPos> region, int color, float a)
     {
+        ColorUtil.Color tempColor = ColorUtil.fromHex(color);
+        float r = tempColor.r();
+        float g = tempColor.g();
+        float b = tempColor.b();
+
         if (region.isEmpty())
             return;
 

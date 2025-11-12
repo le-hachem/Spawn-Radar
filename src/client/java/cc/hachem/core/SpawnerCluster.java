@@ -4,13 +4,24 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import cc.hachem.RadarClient;
+import cc.hachem.config.ConfigManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 
 public record SpawnerCluster(List<BlockPos> spawners, List<BlockPos> intersectionRegion)
 {
+    public enum SortType
+    {
+        NO_SORT("No Sort"),
+        BY_PROXIMITY("Sort by Proximity"),
+        BY_SIZE("Sort by Size");
+
+        private final String name;
+        SortType(String name) { this.name = name; }
+        public String getName() { return name; }
+    }
+
     public static boolean spheresIntersect(BlockPos a, BlockPos b, double activationRadius)
     {
         double dx = a.getX() - b.getX();
@@ -32,17 +43,6 @@ public record SpawnerCluster(List<BlockPos> spawners, List<BlockPos> intersectio
     private static boolean inSphere(BlockPos center, BlockPos pos, double radius)
     {
         return distanceSquared(center, pos.getX(), pos.getY(), pos.getZ()) <= radius * radius;
-    }
-
-    private static void sortClusterSpawnersByProximity(SpawnerCluster cluster, double px, double py, double pz, List<SpawnerCluster> clusters)
-    {
-        List<BlockPos> sortedSpawners = cluster.spawners().stream()
-                                            .sorted(Comparator.comparingDouble(pos -> distanceSquared(pos, px, py, pz)))
-                                            .collect(Collectors.toList());
-        List<BlockPos> sortedIntersection = cluster.intersectionRegion().stream()
-                                                .sorted(Comparator.comparingDouble(pos -> distanceSquared(pos, px, py, pz)))
-                                                .collect(Collectors.toList());
-        clusters.set(clusters.indexOf(cluster), new SpawnerCluster(sortedSpawners, sortedIntersection));
     }
 
     private static List<BlockPos> generateSphere(BlockPos center, double radius)
@@ -90,17 +90,36 @@ public record SpawnerCluster(List<BlockPos> spawners, List<BlockPos> intersectio
         return filtered;
     }
 
-    public static void sortClustersByPlayerProximity(ClientPlayerEntity player, List<SpawnerCluster> clusters)
+    public static void sortClustersByProximity(ClientPlayerEntity player, List<SpawnerCluster> clusters)
     {
         double px = player.getX(), py = player.getY(), pz = player.getZ();
         for (SpawnerCluster cluster : clusters)
-            sortClusterSpawnersByProximity(cluster, px, py, pz, clusters);
+        {
+            List<BlockPos> sortedSpawners = cluster.spawners().stream()
+                                                .sorted(Comparator.comparingDouble(pos -> distanceSquared(pos, px, py, pz)))
+                                                .collect(Collectors.toList());
+
+            List<BlockPos> sortedIntersection = cluster.intersectionRegion().stream()
+                                                    .sorted(Comparator.comparingDouble(pos -> distanceSquared(pos, px, py, pz)))
+                                                    .collect(Collectors.toList());
+
+            clusters.set(clusters.indexOf(cluster), new SpawnerCluster(sortedSpawners, sortedIntersection));
+        }
+
         clusters.sort(Comparator.comparingDouble(c -> distanceSquared(c.spawners().getFirst(), px, py, pz)));
+        if (ConfigManager.clusterProximitySortOrder == ConfigManager.SortOrder.DESCENDING)
+            Collections.reverse(clusters);
     }
 
-    public static List<SpawnerCluster> findClusters(FabricClientCommandSource source, List<BlockPos> spawners, double activationRadius)
+    public static void sortClustersBySize(List<SpawnerCluster> clusters)
     {
-        source.sendFeedback(Text.of("Generating radial clusters with incremental intersection check..."));
+        clusters.sort(Comparator.comparingInt(a -> a.spawners().size()));
+        if (ConfigManager.clusterSizeSortOrder == ConfigManager.SortOrder.DESCENDING)
+            Collections.reverse(clusters);
+    }
+
+    public static List<SpawnerCluster> findClusters(FabricClientCommandSource source, List<BlockPos> spawners, double activationRadius, SortType sortType)
+    {
         long startTime = System.nanoTime();
 
         List<SpawnerCluster> clusters = new ArrayList<>();
@@ -159,6 +178,13 @@ public record SpawnerCluster(List<BlockPos> spawners, List<BlockPos> intersectio
         long endTime = System.nanoTime();
         RadarClient.LOGGER.info("Radial incremental clustering finished: {} clusters, took {} s", clusters.size(),
             (endTime - startTime) / 1_000_000_000.0);
+
+        switch (sortType)
+        {
+            case BY_PROXIMITY -> sortClustersByProximity(source.getPlayer(), clusters);
+            case BY_SIZE -> sortClustersBySize(clusters);
+            case NO_SORT -> {}
+        }
 
         return clusters;
     }
