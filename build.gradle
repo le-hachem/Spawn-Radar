@@ -88,3 +88,11 @@ publishing {
 		// retrieving dependencies.
 	}
 }
+
+tasks.register("preconfig") {
+    group = "hachem"
+    description = "Sets up the generated minecraft instance with my keybindings and options"
+
+    from("preconf/options.txt")
+    into("run/options.txt")
+}
