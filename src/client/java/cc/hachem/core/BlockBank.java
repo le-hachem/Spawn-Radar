@@ -20,7 +20,7 @@ public class BlockBank
     public static void scanForSpawners(ClientPlayerEntity player, int chunkRadius, Runnable callback)
     {
         RadarClient.reset(player);
-        player.sendMessage(Text.of("Searching for spawners..."), false);
+        player.sendMessage(Text.translatable("chat.spawn_radar.searching"), false);
         RadarClient.LOGGER.info("Started spawner scan with radius {} chunks.", chunkRadius);
 
         new Thread(() ->
@@ -108,9 +108,9 @@ public class BlockBank
             MinecraftClient.getInstance().execute(() ->
             {
                 if (spawnersFound == 0)
-                    player.sendMessage(Text.of("No spawners found."), false);
+                    player.sendMessage(Text.translatable("chat.spawn_radar.none"), false);
                 else
-                    player.sendMessage(Text.of("Found " + spawnersFound + " spawners."), false);
+                    player.sendMessage(Text.translatable("chat.spawn_radar.found", spawnersFound), false);
 
                 if (callback != null)
                     callback.run();

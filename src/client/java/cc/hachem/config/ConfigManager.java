@@ -2,6 +2,7 @@ package cc.hachem.config;
 
 import cc.hachem.RadarClient;
 import cc.hachem.core.SpawnerCluster;
+import net.minecraft.text.Text;
 
 import java.util.ArrayList;
 import java.util.List;

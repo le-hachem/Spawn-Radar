@@ -10,7 +10,6 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.text.*;
-
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 
@@ -20,10 +19,12 @@ public class CommandManager
 {
     private static void registerCommands(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess)
     {
+        // /radar:scan
         dispatcher.register(ClientCommandManager.literal("radar:scan")
             .executes(context ->
             {
                 RadarClient.generateClusters(context.getSource().getPlayer(), RadarClient.config.defaultSearchRadius, "");
+                context.getSource().sendFeedback(Text.translatable("chat.spawn_radar.scan_started"));
                 return Command.SINGLE_SUCCESS;
             })
             .then(ClientCommandManager.argument("sorting", StringArgumentType.word())
@@ -37,6 +38,7 @@ public class CommandManager
                 {
                     String sorting = StringArgumentType.getString(context, "sorting").toLowerCase();
                     RadarClient.generateClusters(context.getSource().getPlayer(), RadarClient.config.defaultSearchRadius, sorting);
+                    context.getSource().sendFeedback(Text.translatable("chat.spawn_radar.scan_started"));
                     return Command.SINGLE_SUCCESS;
                 })
                 .then(ClientCommandManager.argument("radius", IntegerArgumentType.integer(1, 256))
@@ -45,12 +47,14 @@ public class CommandManager
                         int radius = IntegerArgumentType.getInteger(context, "radius");
                         String sorting = StringArgumentType.getString(context, "sorting").toLowerCase();
                         RadarClient.generateClusters(context.getSource().getPlayer(), radius, sorting);
+                        context.getSource().sendFeedback(Text.translatable("chat.spawn_radar.scan_started"));
                         return Command.SINGLE_SUCCESS;
                     })
                 )
             )
         );
 
+        // /radar:toggle
         dispatcher.register(ClientCommandManager.literal("radar:toggle")
             .then(ClientCommandManager.argument("target", StringArgumentType.word())
                 .suggests((context, builder) ->
@@ -60,15 +64,17 @@ public class CommandManager
                         builder.suggest(String.valueOf(i));
                     return builder.buildFuture();
                 })
-                .executes((context) ->
+                .executes(context ->
                 {
                     String target = StringArgumentType.getString(context, "target").toLowerCase();
                     RadarClient.toggleCluster(context.getSource().getPlayer(), target);
+                    context.getSource().sendFeedback(Text.translatable("chat.spawn_radar.toggle", target));
                     return Command.SINGLE_SUCCESS;
                 })
             )
         );
 
+        // /radar:info
         dispatcher.register(ClientCommandManager.literal("radar:info")
             .then(ClientCommandManager.argument("id", IntegerArgumentType.integer(1))
                 .executes(context ->
@@ -77,7 +83,7 @@ public class CommandManager
                     List<SpawnerCluster> clusters = ClusterManager.getClusters();
                     if (clusters == null || clusters.isEmpty() || id > clusters.size())
                     {
-                        context.getSource().sendFeedback(Text.literal("Invalid cluster ID."));
+                        context.getSource().sendFeedback(Text.translatable("chat.spawn_radar.invalid_id"));
                         return 0;
                     }
 
@@ -91,7 +97,7 @@ public class CommandManager
                                 .styled(style -> style.withColor(Formatting.GREEN)
                                 .withClickEvent(new ClickEvent.RunCommand(
                                         String.format("/tp %d %d %d", pos.getX(), pos.getY(), pos.getZ())))
-                                .withHoverEvent(new HoverEvent.ShowText(Text.literal("Click to teleport to this spawner"))));
+                                .withHoverEvent(new HoverEvent.ShowText(Text.translatable("command.spawn_radar.teleport_hover"))));
                         context.getSource().getPlayer().sendMessage(spawnerText, false);
                         sid++;
                     }
@@ -101,71 +107,34 @@ public class CommandManager
             )
         );
 
+        // /radar:reset
         dispatcher.register(ClientCommandManager.literal("radar:reset")
             .executes(context ->
             {
-                context.getSource().sendFeedback(Text.of("Reset all spawner and cluster banks."));
+                context.getSource().sendFeedback(Text.translatable("chat.spawn_radar.reset"));
                 RadarClient.reset(context.getSource().getPlayer());
                 RadarClient.LOGGER.info("Radar reset via command.");
                 return Command.SINGLE_SUCCESS;
             })
         );
 
+        // /radar:help
         dispatcher.register(ClientCommandManager.literal("radar:help")
             .executes(context ->
             {
                 FabricClientCommandSource source = context.getSource();
 
-                // /radar:sca [sorting] [radius] - Scan for spawners and generate clusters.
-                source.sendFeedback(Text.literal("")
-                    .append(Text.literal("/radar").styled(s -> s.withColor(Formatting.WHITE)))
-                    .append(Text.literal(":").styled(s -> s.withColor(Formatting.WHITE)))
-                    .append(Text.literal("scan ").styled(s -> s.withColor(Formatting.WHITE)))
-                    .append(Text.literal("[sorting] ").styled(s -> s.withColor(Formatting.GRAY).withItalic(true)))
-                    .append(Text.literal("[radius]").styled(s -> s.withColor(Formatting.GRAY).withItalic(true)))
-                    .append(Text.literal(" - Scan for spawners and generate clusters.").styled(s -> s.withColor(Formatting.GRAY)))
-                );
-
-                // /radar:toggle <id|all> - Toggle highlight for a cluster or all clusters.
-                source.sendFeedback(Text.literal("")
-                    .append(Text.literal("/radar").styled(s -> s.withColor(Formatting.WHITE)))
-                    .append(Text.literal(":").styled(s -> s.withColor(Formatting.WHITE)))
-                    .append(Text.literal("toggle ").styled(s -> s.withColor(Formatting.WHITE)))
-                    .append(Text.literal("<id|all>").styled(s -> s.withColor(Formatting.GRAY)))
-                    .append(Text.literal(" - Toggle highlight for a cluster or all clusters.").styled(s -> s.withColor(Formatting.GRAY)))
-                );
-
-                // /radar:info <id> - Show all spawners in a cluster with teleport options.
-                source.sendFeedback(Text.literal("")
-                    .append(Text.literal("/radar").styled(s -> s.withColor(Formatting.WHITE)))
-                    .append(Text.literal(":").styled(s -> s.withColor(Formatting.WHITE)))
-                    .append(Text.literal("info ").styled(s -> s.withColor(Formatting.WHITE)))
-                    .append(Text.literal("<id>").styled(s -> s.withColor(Formatting.GRAY)))
-                    .append(Text.literal(" - Show all spawners in a cluster with teleport options.").styled(s -> s.withColor(Formatting.GRAY)))
-                );
-
-                // /radar:reset - Reset all spawner and cluster data.
-                source.sendFeedback(Text.literal("")
-                     .append(Text.literal("/radar").styled(s -> s.withColor(Formatting.WHITE)))
-                    .append(Text.literal(":").styled(s -> s.withColor(Formatting.WHITE)))
-                    .append(Text.literal("reset").styled(s -> s.withColor(Formatting.WHITE)))
-                    .append(Text.literal(" - Reset all spawner and cluster data.").styled(s -> s.withColor(Formatting.GRAY)))
-                );
-
-                // /radar:help - Show this help message.
-                source.sendFeedback(Text.literal("")
-                    .append(Text.literal("/radar").styled(s -> s.withColor(Formatting.WHITE)))
-                    .append(Text.literal(":").styled(s -> s.withColor(Formatting.WHITE)))
-                    .append(Text.literal("help").styled(s -> s.withColor(Formatting.WHITE)))
-                    .append(Text.literal(" - Show this help message.").styled(s -> s.withColor(Formatting.GRAY)))
-                );
+                // Print each command help line using command.spawn_radar keys
+                source.sendFeedback(Text.translatable("command.spawn_radar.help.scan"));
+                source.sendFeedback(Text.translatable("command.spawn_radar.help.toggle"));
+                source.sendFeedback(Text.translatable("command.spawn_radar.help.info"));
+                source.sendFeedback(Text.translatable("command.spawn_radar.help.reset"));
+                source.sendFeedback(Text.translatable("command.spawn_radar.help.help"));
 
                 return Command.SINGLE_SUCCESS;
             })
         );
     }
-
-
 
     public static void init()
     {

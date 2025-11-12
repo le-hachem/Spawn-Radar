@@ -46,7 +46,7 @@ public class RadarClient implements ClientModInitializer
 
 		if (spawners.isEmpty())
 		{
-			source.sendMessage(Text.literal("No spawners found in the scanned area."), false);
+			source.sendMessage(Text.translatable("chat.spawn_radar.none"), false);
 			RadarClient.LOGGER.warn("No spawners found for cluster generation.");
 			return;
 		}
@@ -63,14 +63,16 @@ public class RadarClient implements ClientModInitializer
 
 		if (clusters.isEmpty())
 		{
-			source.sendMessage(Text.literal("No clusters found."), false);
+			source.sendMessage(Text.translatable("chat.spawn_radar.no_clusters"), false);
 			return;
 		}
 
-		MutableText showAllButton = Text.literal("[Toggle All]").styled(style -> style
-			.withColor(Formatting.GREEN)
-			.withClickEvent(new ClickEvent.RunCommand("/radar:toggle all"))
-			.withHoverEvent(new HoverEvent.ShowText(Text.literal("Toggle all clusters"))));
+		MutableText showAllButton = Text.translatable("chat.spawn_radar.toggle_all")
+			.styled(style -> style
+				.withColor(Formatting.GREEN)
+				.withClickEvent(new ClickEvent.RunCommand("/radar:toggle all"))
+				.withHoverEvent(new HoverEvent.ShowText(Text.translatable("chat.spawn_radar.toggle_all_hover")))
+			);
 		source.sendMessage(showAllButton, false);
 
 		int id = 1;
@@ -81,21 +83,26 @@ public class RadarClient implements ClientModInitializer
 			double cy = cluster.spawners().stream().mapToDouble(BlockPos::getY).average().orElse(0);
 			double cz = cluster.spawners().stream().mapToDouble(BlockPos::getZ).average().orElse(0);
 
-			MutableText clusterHeader = Text.literal("[(" + cluster.spawners().size() + ") Cluster #" + id + "]")
+			MutableText clusterHeader = Text.translatable("chat.spawn_radar.cluster_header", cluster.spawners().size(), id)
 				.styled(style -> style.withColor(Formatting.AQUA)
-				.withUnderline(true)
-				.withClickEvent(new ClickEvent.RunCommand("/radar:toggle " + finalId))
-				.withHoverEvent(new HoverEvent.ShowText(Text.literal("Click to toggle this cluster"))));
+					.withUnderline(true)
+					.withClickEvent(new ClickEvent.RunCommand("/radar:toggle " + finalId))
+					.withHoverEvent(new HoverEvent.ShowText(Text.translatable("chat.spawn_radar.cluster_hover")))
+				);
 
-			MutableText teleportButton = Text.literal("[Teleport]").styled(style -> style
-				.withColor(Formatting.GOLD)
-				.withClickEvent(new ClickEvent.RunCommand(String.format("/tp %.0f %.0f %.0f", cx, cy, cz)))
-				.withHoverEvent(new HoverEvent.ShowText(Text.literal("Teleport to cluster center"))));
+			MutableText teleportButton = Text.translatable("chat.spawn_radar.teleport")
+				.styled(style -> style
+					.withColor(Formatting.GOLD)
+					.withClickEvent(new ClickEvent.RunCommand(String.format("/tp %.0f %.0f %.0f", cx, cy, cz)))
+					.withHoverEvent(new HoverEvent.ShowText(Text.translatable("chat.spawn_radar.teleport_hover")))
+				);
 
-			MutableText showSpawnersButton = Text.literal("[Show Spawners]").styled(style -> style
-     	        .withColor(Formatting.GREEN)
-     	        .withClickEvent(new ClickEvent.RunCommand("/radar:info " + finalId))
-     	        .withHoverEvent(new HoverEvent.ShowText(Text.literal("Show all spawners in this cluster"))));
+			MutableText showSpawnersButton = Text.translatable("chat.spawn_radar.show_spawners")
+				.styled(style -> style
+					.withColor(Formatting.GREEN)
+					.withClickEvent(new ClickEvent.RunCommand("/radar:info " + finalId))
+					.withHoverEvent(new HoverEvent.ShowText(Text.translatable("chat.spawn_radar.show_spawners_hover")))
+				);
 
 			MutableText combined = clusterHeader.copy()
 				.append(" ")
@@ -117,7 +124,7 @@ public class RadarClient implements ClientModInitializer
 		{
 			if (clusters.isEmpty())
 			{
-				source.sendMessage(Text.literal("No clusters to toggle."), false);
+				source.sendMessage(Text.translatable("chat.spawn_radar.no_clusters_to_toggle"), false);
 				RadarClient.LOGGER.warn("Attempted to toggle all clusters but none exist.");
 				return;
 			}
@@ -134,12 +141,12 @@ public class RadarClient implements ClientModInitializer
 			}
 		} else
 		{
-			int id = Integer.parseInt(target) - 1;
 			try
 			{
+				int id = Integer.parseInt(target) - 1;
 				if (id < 0 || id >= clusters.size())
 				{
-					source.sendMessage(Text.literal("Invalid cluster ID."), false);
+					source.sendMessage(Text.translatable("chat.spawn_radar.invalid_id"), false);
 					RadarClient.LOGGER.warn("Attempted to toggle invalid cluster ID {}", id + 1);
 					return;
 				}
@@ -148,7 +155,7 @@ public class RadarClient implements ClientModInitializer
 				RadarClient.LOGGER.info("Toggled highlight for cluster #{}", id + 1);
 			} catch (NumberFormatException e)
 			{
-				source.sendMessage(Text.literal("Invalid cluster ID. Use a number or 'all'."), false);
+				source.sendMessage(Text.translatable("chat.spawn_radar.invalid_id_number"), false);
 			}
 		}
 	}
@@ -163,7 +170,7 @@ public class RadarClient implements ClientModInitializer
 		ClusterManager.getClusters().clear();
 		BlockBank.clear();
 
-		player.sendMessage(Text.of("Reset block bank and spawner data."), false);
+		player.sendMessage(Text.translatable("chat.spawn_radar.reset"), false);
 		LOGGER.debug("Cleared {} clusters and {} highlights.", clustersBefore, highlightsBefore);
 	}
 
@@ -224,11 +231,9 @@ public class RadarClient implements ClientModInitializer
 		WorldRenderEvents.BEFORE_TRANSLUCENT.register(this::onRender);
 		ClientPlayConnectionEvents.JOIN.register(((handler, sender, client) ->
 		{
-			LOGGER.info("Client joined world, resetting state.");
-			ClientPlayerEntity player = getPlayer();
-			if (player == null)
-				return;
-			reset(player);
+			ClusterManager.unhighlightAllClusters();
+			ClusterManager.getClusters().clear();
+			BlockBank.clear();
 		}));
 
 		LOGGER.info("Initialized successfully.");

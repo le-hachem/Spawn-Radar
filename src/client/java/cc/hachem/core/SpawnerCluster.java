@@ -12,9 +12,9 @@ public record SpawnerCluster(List<BlockPos> spawners, List<BlockPos> intersectio
 {
 	public enum SortType
 	{
-		NO_SORT("No Sort"),
-		BY_PROXIMITY("Sort by Proximity"),
-		BY_SIZE("Sort by Size");
+		NO_SORT("option.spawn_radar.sort_type.none"),
+		BY_PROXIMITY("option.spawn_radar.sort_type.proximity"),
+		BY_SIZE("option.spawn_radar.sort_type.size");
 
 		private final String name;
 		SortType(String name) { this.name = name; }
