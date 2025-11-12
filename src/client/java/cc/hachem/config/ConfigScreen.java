@@ -10,7 +10,7 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.stream.Collectors;
 
 public class ConfigScreen
 {
@@ -45,16 +45,24 @@ public class ConfigScreen
         );
 
         general.addEntry(entryBuilder
-            .startDropdownMenu(Text.translatable("option.spawn_radar.default_cluster_sort_type"),
-                DropdownMenuBuilder.TopCellElementBuilder.of(RadarClient.config.defaultSortType,
+            .startDropdownMenu(
+                Text.translatable("option.spawn_radar.default_cluster_sort_type"),
+                DropdownMenuBuilder.TopCellElementBuilder.of(
+                    RadarClient.config.defaultSortType,
                     str -> Arrays.stream(SpawnerCluster.SortType.values())
-                                 .filter(e -> e.getName().equals(str))
-                                 .findFirst()
-                                 .orElse(SpawnerCluster.SortType.NO_SORT),
-                    obj -> Text.translatable(obj.getName())),
-                DropdownMenuBuilder.CellCreatorBuilder.of(20, 150, 5, obj -> Text.translatable(obj.getName())))
+                               .collect(Collectors.toMap(
+                                   e -> Text.translatable(e.getName()).getString(),
+                                   e -> e
+                               )).getOrDefault(str, ConfigManager.DEFAULT.defaultSortType),
+                    obj -> Text.translatable(obj.getName())
+                ),
+                DropdownMenuBuilder.CellCreatorBuilder.of(20, 150, 5, obj -> Text.translatable(obj.getName()))
+            )
             .setSelections(Arrays.asList(SpawnerCluster.SortType.values()))
-            .setSaveConsumer(selection -> RadarClient.config.defaultSortType = selection)
+            .setSaveConsumer(selection -> {
+                RadarClient.config.defaultSortType = selection;
+                System.out.println("[DEBUG] DefaultSortType saved: " + selection);
+            })
             .setDefaultValue(ConfigManager.DEFAULT.defaultSortType)
             .build()
         );
@@ -64,9 +72,10 @@ public class ConfigScreen
                 DropdownMenuBuilder.TopCellElementBuilder.of(
                     RadarClient.config.clusterProximitySortOrder,
                     str -> Arrays.stream(ConfigManager.SortOrder.values())
-                               .filter(e -> e.getName().equals(str))
-                               .findFirst()
-                               .orElse(ConfigManager.SortOrder.DESCENDING),
+                               .collect(Collectors.toMap(
+                                   e -> Text.translatable(e.getName()).getString(),
+                                   e -> e
+                               )).getOrDefault(str, ConfigManager.DEFAULT.clusterProximitySortOrder),
                     obj -> Text.translatable(obj.getName())
                 ),
                 DropdownMenuBuilder.CellCreatorBuilder.of(20, 150, 5, obj -> Text.translatable(obj.getName()))
@@ -82,9 +91,10 @@ public class ConfigScreen
                 DropdownMenuBuilder.TopCellElementBuilder.of(
                     RadarClient.config.clusterSizeSortOrder,
                     str -> Arrays.stream(ConfigManager.SortOrder.values())
-                                .filter(e -> e.getName().equals(str))
-                                .findFirst()
-                                .orElse(ConfigManager.SortOrder.ASCENDING),
+                               .collect(Collectors.toMap(
+                                   e -> Text.translatable(e.getName()).getString(),
+                                   e -> e
+                               )).getOrDefault(str, ConfigManager.DEFAULT.clusterSizeSortOrder),
                     obj -> Text.translatable(obj.getName())
                 ),
                 DropdownMenuBuilder.CellCreatorBuilder.of(20, 150, 5, obj -> Text.translatable(obj.getName()))

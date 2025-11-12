@@ -13,8 +13,8 @@ public class ConfigManager
 
     public enum SortOrder
     {
-        ASCENDING("Ascending"),
-        DESCENDING("Descending");
+        ASCENDING("option.spawn_radar.sort_order.ascending"),
+        DESCENDING("option.spawn_radar.sort_order.descending");
 
         private final String name;
         SortOrder(String name) { this.name = name; }
