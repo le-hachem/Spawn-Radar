@@ -8,6 +8,8 @@ import java.util.List;
 
 public class ConfigManager
 {
+    public static final ConfigManager DEFAULT = new ConfigManager();
+
     public enum SortOrder
     {
         ASCENDING("Ascending"),
@@ -25,6 +27,9 @@ public class ConfigManager
     public int spawnerHighlightColor = 0xFFFFFF;
     public int minimumSpawnersForRegion = 1;
     public int defaultSearchRadius = 64;
+
+    public int spawnerHighlightOpacity = 50;
+    public int regionHighlightOpacity = 30;
 
     public List<Integer> clusterColors = new ArrayList<>(
         List.of(0x00FFFF,

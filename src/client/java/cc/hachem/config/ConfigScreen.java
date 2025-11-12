@@ -27,11 +27,15 @@ public class ConfigScreen
 
         general.addEntry(entryBuilder.startIntField(Text.of("Chunk search radius"), RadarClient.config.defaultSearchRadius)
             .setSaveConsumer(number -> RadarClient.config.defaultSearchRadius = number)
-            .build());
+            .setDefaultValue(ConfigManager.DEFAULT.defaultSearchRadius)
+            .build()
+        );
 
         general.addEntry(entryBuilder.startIntField(Text.of("Min spawners to highlight cluster"), RadarClient.config.minimumSpawnersForRegion)
             .setSaveConsumer(number -> RadarClient.config.minimumSpawnersForRegion = number)
-            .build());
+            .setDefaultValue(ConfigManager.DEFAULT.minimumSpawnersForRegion)
+            .build()
+        );
 
         general.addEntry(entryBuilder
             .startDropdownMenu(Text.of("Default cluster sort type"),
@@ -42,10 +46,11 @@ public class ConfigScreen
                                  .orElse(SpawnerCluster.SortType.NO_SORT),
                     obj -> Text.of(obj.getName())),
                 DropdownMenuBuilder.CellCreatorBuilder.of(20, 150, 5, obj -> Text.of(obj.getName())))
-            .setDefaultValue(SpawnerCluster.SortType.NO_SORT)
             .setSelections(Arrays.asList(SpawnerCluster.SortType.values()))
             .setSaveConsumer(selection -> RadarClient.config.defaultSortType = selection)
-            .build());
+            .setDefaultValue(ConfigManager.DEFAULT.defaultSortType)
+            .build()
+        );
 
         general.addEntry(entryBuilder
             .startDropdownMenu(Text.of("Cluster proximity sort order"),
@@ -59,9 +64,9 @@ public class ConfigScreen
                 ),
                 DropdownMenuBuilder.CellCreatorBuilder.of(20, 150, 5, obj -> Text.of(obj.getName()))
             )
-            .setDefaultValue(ConfigManager.SortOrder.DESCENDING)
             .setSelections(Arrays.asList(ConfigManager.SortOrder.values()))
             .setSaveConsumer(selection -> RadarClient.config.clusterProximitySortOrder = selection)
+            .setDefaultValue(ConfigManager.DEFAULT.clusterProximitySortOrder)
             .build()
         );
 
@@ -77,16 +82,36 @@ public class ConfigScreen
                 ),
                 DropdownMenuBuilder.CellCreatorBuilder.of(20, 150, 5, obj -> Text.of(obj.getName()))
             )
-            .setDefaultValue(ConfigManager.SortOrder.ASCENDING)
             .setSelections(Arrays.asList(ConfigManager.SortOrder.values()))
             .setSaveConsumer(selection -> RadarClient.config.clusterSizeSortOrder = selection)
+            .setDefaultValue(ConfigManager.DEFAULT.clusterSizeSortOrder)
+            .build()
+        );
+
+        general.addEntry(entryBuilder
+            .startIntSlider(Text.of("Spawner highlight opacity"), RadarClient.config.spawnerHighlightOpacity, 0, 100)
+            .setSaveConsumer(value -> RadarClient.config.spawnerHighlightOpacity = value)
+            .setDefaultValue(ConfigManager.DEFAULT.spawnerHighlightOpacity)
+            .setTextGetter(value -> Text.of(value + "%"))
+            .build()
+        );
+
+        general.addEntry(entryBuilder
+            .startIntSlider(Text.of("Active region highlight opacity"), RadarClient.config.regionHighlightOpacity, 0, 100)
+            .setSaveConsumer(value -> RadarClient.config.regionHighlightOpacity = value)
+            .setDefaultValue(ConfigManager.DEFAULT.regionHighlightOpacity)
+            .setTextGetter(value -> Text.of(value + "%"))
             .build()
         );
 
         ConfigCategory colors = builder.getOrCreateCategory(Text.of("Color Options"));
-        colors.addEntry(entryBuilder.startColorField(Text.of("Spawner highlight color"), RadarClient.config.spawnerHighlightColor)
+
+        colors.addEntry(entryBuilder
+            .startColorField(Text.of("Spawner highlight color"), RadarClient.config.spawnerHighlightColor)
             .setSaveConsumer(color -> RadarClient.config.spawnerHighlightColor = color)
-            .build());
+            .setDefaultValue(ConfigManager.DEFAULT.spawnerHighlightColor)
+            .build()
+        );
 
         for (int i = 0; i < RadarClient.config.clusterColors.size(); i++)
         {
@@ -95,9 +120,12 @@ public class ConfigScreen
                                ? "Cluster with " + (i + 1) + " spawner(s)"
                                : "Cluster with " + (i + 1) + "+ spawners";
 
-            colors.addEntry(entryBuilder.startColorField(Text.of(label), RadarClient.config.clusterColors.get(i))
+            colors.addEntry(entryBuilder
+                .startColorField(Text.of(label), RadarClient.config.clusterColors.get(i))
                 .setSaveConsumer(color -> RadarClient.config.clusterColors.set(index, color))
-                .build());
+                .setDefaultValue(ConfigManager.DEFAULT.clusterColors.get(i))
+                .build()
+            );
         }
 
         return builder.build();

@@ -43,7 +43,7 @@ public class RadarClient implements ClientModInitializer
 		{
 			for (BlockPos pos : ClusterManager.getHighlights())
 			{
-				BlockHighlightRenderer.draw(context, pos, config.spawnerHighlightColor, 0.5f);
+				BlockHighlightRenderer.draw(context, pos, config.spawnerHighlightColor, config.spawnerHighlightOpacity/100f);
 
 				List<Integer> ids = ClusterManager.getClusterIDAt(pos);
 				if (!ids.isEmpty())
@@ -68,7 +68,7 @@ public class RadarClient implements ClientModInitializer
 				if (spawnerCount >= config.minimumSpawnersForRegion)
 				{
 					List<BlockPos> region = hc.cluster().intersectionRegion();
-					BlockHighlightRenderer.fillRegionMesh(context, region, clusterColor, 0.3f);
+					BlockHighlightRenderer.fillRegionMesh(context, region, clusterColor, config.regionHighlightOpacity/100f);
 				}
 			}
 
