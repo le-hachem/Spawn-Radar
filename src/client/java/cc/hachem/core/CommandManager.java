@@ -5,7 +5,6 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -22,7 +21,11 @@ public class CommandManager
     private static void registerCommands(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess)
     {
         dispatcher.register(ClientCommandManager.literal("radar:scan")
-            .executes(context -> executeGenerate(context, RadarClient.config.defaultSearchRadius))
+            .executes(context ->
+            {
+                RadarClient.generateClusters(context.getSource().getPlayer(), RadarClient.config.defaultSearchRadius, "");
+                return Command.SINGLE_SUCCESS;
+            })
             .then(ClientCommandManager.argument("sorting", StringArgumentType.word())
                 .suggests((context, builder) ->
                 {
@@ -30,12 +33,19 @@ public class CommandManager
                     builder.suggest("size");
                     return builder.buildFuture();
                 })
-                .executes(context -> executeGenerate(context, RadarClient.config.defaultSearchRadius))
+                .executes(context ->
+                {
+                    String sorting = StringArgumentType.getString(context, "sorting").toLowerCase();
+                    RadarClient.generateClusters(context.getSource().getPlayer(), RadarClient.config.defaultSearchRadius, sorting);
+                    return Command.SINGLE_SUCCESS;
+                })
                 .then(ClientCommandManager.argument("radius", IntegerArgumentType.integer(1, 256))
                     .executes(context ->
                     {
                         int radius = IntegerArgumentType.getInteger(context, "radius");
-                        return executeGenerate(context, radius);
+                        String sorting = StringArgumentType.getString(context, "sorting").toLowerCase();
+                        RadarClient.generateClusters(context.getSource().getPlayer(), radius, sorting);
+                        return Command.SINGLE_SUCCESS;
                     })
                 )
             )
@@ -50,7 +60,12 @@ public class CommandManager
                         builder.suggest(String.valueOf(i));
                     return builder.buildFuture();
                 })
-                .executes(CommandManager::toggleCluster)
+                .executes((context) ->
+                {
+                    String target = StringArgumentType.getString(context, "target").toLowerCase();
+                    RadarClient.toggleCluster(context.getSource().getPlayer(), target);
+                    return Command.SINGLE_SUCCESS;
+                })
             )
         );
 
@@ -90,7 +105,7 @@ public class CommandManager
             .executes(context ->
             {
                 context.getSource().sendFeedback(Text.of("Reset all spawner and cluster banks."));
-                RadarClient.reset();
+                RadarClient.reset(context.getSource().getPlayer());
                 RadarClient.LOGGER.info("Radar reset via command.");
                 return Command.SINGLE_SUCCESS;
             })
@@ -150,135 +165,7 @@ public class CommandManager
         );
     }
 
-    private static int toggleCluster(CommandContext<FabricClientCommandSource> context)
-    {
-        String target = StringArgumentType.getString(context, "target").toLowerCase();
-        List<SpawnerCluster> clusters = ClusterManager.getClusters();
 
-        if (target.equals("all"))
-        {
-            if (clusters.isEmpty())
-            {
-                context.getSource().sendFeedback(Text.literal("No clusters to toggle."));
-                RadarClient.LOGGER.warn("Attempted to toggle all clusters but none exist.");
-                return 0;
-            }
-
-            boolean anyHighlighted = !ClusterManager.getHighlightedClusters().isEmpty();
-            if (anyHighlighted)
-            {
-                ClusterManager.unhighlightAllClusters();
-                RadarClient.LOGGER.info("Un-highlighted all {} clusters", clusters.size());
-            } else
-            {
-                ClusterManager.highlightAllClusters();
-                RadarClient.LOGGER.info("Highlighted all {} clusters", clusters.size());
-            }
-        } else
-        {
-            int id = Integer.parseInt(target) - 1;
-            try
-            {
-                if (id < 0 || id >= clusters.size())
-                {
-                    context.getSource().sendFeedback(Text.literal("Invalid cluster ID."));
-                    RadarClient.LOGGER.warn("Attempted to toggle invalid cluster ID {}", id + 1);
-                    return 0;
-                }
-
-                ClusterManager.toggleHighlightCluster(id);
-                RadarClient.LOGGER.info("Toggled highlight for cluster #{}", id + 1);
-            } catch (NumberFormatException e)
-            {
-                context.getSource().sendFeedback(Text.literal("Invalid cluster ID. Use a number or 'all'."));
-                return 0;
-            }
-
-        }
-
-        return Command.SINGLE_SUCCESS;
-    }
-
-    private static int executeGenerate(CommandContext<FabricClientCommandSource> context, int radius)
-    {
-        BlockBank.scanForSpawners(context.getSource(), radius, () -> generateClusters(context));
-        RadarClient.LOGGER.debug("Scheduled cluster generation after scanning for spawners.");
-        return Command.SINGLE_SUCCESS;
-    }
-
-    private static void generateClusters(CommandContext<FabricClientCommandSource> context)
-    {
-        FabricClientCommandSource source = context.getSource();
-        List<BlockPos> spawners = BlockBank.getAll();
-
-        if (spawners.isEmpty())
-        {
-            source.sendFeedback(Text.literal("No spawners found in the scanned area."));
-            RadarClient.LOGGER.warn("No spawners found for cluster generation.");
-            return;
-        }
-
-        SpawnerCluster.SortType sortType = RadarClient.config.defaultSortType;
-        String argument = null;
-        try
-        {
-            argument = StringArgumentType.getString(context, "sorting").toLowerCase();
-        } catch (Exception ignored) {}
-
-        if ("proximity".equals(argument))
-            sortType = SpawnerCluster.SortType.BY_PROXIMITY;
-        else if ("size".equals(argument))
-            sortType = SpawnerCluster.SortType.BY_SIZE;
-
-        List<SpawnerCluster> clusters = SpawnerCluster.findClusters(source, spawners, 16.0, sortType);
-        ClusterManager.setClusters(clusters);
-        RadarClient.LOGGER.info("Generated {} clusters using sort type {}", clusters.size(), sortType);
-
-        if (clusters.isEmpty())
-        {
-            source.sendFeedback(Text.literal("No clusters found."));
-            return;
-        }
-
-        MutableText showAllButton = Text.literal("[Toggle All]").styled(style -> style
-            .withColor(Formatting.GREEN)
-            .withClickEvent(new ClickEvent.RunCommand("/radar:toggle all"))
-            .withHoverEvent(new HoverEvent.ShowText(Text.literal("Toggle all clusters"))));
-        source.getPlayer().sendMessage(showAllButton, false);
-
-        int id = 1;
-        for (SpawnerCluster cluster : clusters)
-        {
-            int finalId = id;
-            double cx = cluster.spawners().stream().mapToDouble(BlockPos::getX).average().orElse(0);
-            double cy = cluster.spawners().stream().mapToDouble(BlockPos::getY).average().orElse(0);
-            double cz = cluster.spawners().stream().mapToDouble(BlockPos::getZ).average().orElse(0);
-
-            MutableText clusterHeader = Text.literal("[(" + cluster.spawners().size() + ") Cluster #" + id + "]")
-                .styled(style -> style.withColor(Formatting.AQUA)
-                .withUnderline(true)
-                .withClickEvent(new ClickEvent.RunCommand("/radar:toggle " + finalId))
-                .withHoverEvent(new HoverEvent.ShowText(Text.literal("Click to toggle this cluster"))));
-
-            MutableText teleportButton = Text.literal("[Teleport]").styled(style -> style.withColor(Formatting.GOLD)
-                .withClickEvent(new ClickEvent.RunCommand(String.format("/tp %.0f %.0f %.0f", cx, cy, cz)))
-                .withHoverEvent(new HoverEvent.ShowText(Text.literal("Teleport to cluster center"))));
-
-            MutableText showSpawnersButton = Text.literal("[Show Spawners]").styled(style -> style.withColor(Formatting.GREEN)
-                .withClickEvent(new ClickEvent.RunCommand("/radar:info " + finalId))
-                .withHoverEvent(new HoverEvent.ShowText(Text.literal("Show all spawners in this cluster"))));
-
-            MutableText combined = clusterHeader.copy()
-                .append(" ")
-                .append(teleportButton)
-                .append(" ")
-                .append(showSpawnersButton);
-
-            source.getPlayer().sendMessage(combined, false);
-            RadarClient.LOGGER.debug("Displayed cluster #{} with {} spawners.", id, cluster.spawners().size());
-            id++;
-        }
-    }
 
     public static void init()
     {

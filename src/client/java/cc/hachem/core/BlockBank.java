@@ -1,8 +1,9 @@
 package cc.hachem.core;
 
 import cc.hachem.RadarClient;
-import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.block.Blocks;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 
@@ -16,16 +17,16 @@ public class BlockBank
 {
     private static final List<BlockPos> HIGHLIGHTED_BLOCKS = new CopyOnWriteArrayList<>();
 
-    public static void scanForSpawners(FabricClientCommandSource source, int chunkRadius, Runnable callback)
+    public static void scanForSpawners(ClientPlayerEntity player, int chunkRadius, Runnable callback)
     {
-        RadarClient.reset();
-        source.sendFeedback(Text.of("Searching for spawners..."));
+        RadarClient.reset(player);
+        player.sendMessage(Text.of("Searching for spawners..."), false);
         RadarClient.LOGGER.info("Started spawner scan with radius {} chunks.", chunkRadius);
 
         new Thread(() ->
         {
             long startTime = System.currentTimeMillis();
-            BlockPos playerPos = source.getPlayer().getBlockPos();
+            BlockPos playerPos = player.getBlockPos();
             int playerChunkX = playerPos.getX() >> 4;
             int playerChunkZ = playerPos.getZ() >> 4;
 
@@ -62,21 +63,21 @@ public class BlockBank
                         int chunkX = playerChunkX + offset[0];
                         int chunkZ = playerChunkZ + offset[1];
 
-                        if (!source.getWorld().isChunkLoaded(chunkX, chunkZ))
+                        if (!player.getEntityWorld().isChunkLoaded(chunkX, chunkZ))
                             continue;
 
                         int baseX = chunkX << 4;
                         int baseZ = chunkZ << 4;
 
-                        int minY = source.getWorld().getBottomY();
-                        int maxY = source.getWorld().getHeight();
+                        int minY = player.getEntityWorld().getBottomY();
+                        int maxY = player.getEntityWorld().getHeight();
 
                         for (int y = minY; y < maxY; y++)
                             for (int x = 0; x < 16; x++)
                                 for (int z = 0; z < 16; z++)
                                 {
                                     BlockPos pos = new BlockPos(baseX + x, y, baseZ + z);
-                                    if (source.getWorld().getBlockState(pos).isOf(Blocks.SPAWNER))
+                                    if (player.getEntityWorld().getBlockState(pos).isOf(Blocks.SPAWNER))
                                     {
                                         foundSpawners.add(pos);
                                         BlockBank.add(pos);
@@ -104,12 +105,12 @@ public class BlockBank
             long elapsed = System.currentTimeMillis() - startTime;
             RadarClient.LOGGER.info("Spawner scan completed in {} ms. Found {} spawners.", elapsed, spawnersFound);
 
-            source.getClient().execute(() ->
+            MinecraftClient.getInstance().execute(() ->
             {
                 if (spawnersFound == 0)
-                    source.sendFeedback(Text.of("No spawners found."));
+                    player.sendMessage(Text.of("No spawners found."), false);
                 else
-                    source.sendFeedback(Text.of("Found " + spawnersFound + " spawners."));
+                    player.sendMessage(Text.of("Found " + spawnersFound + " spawners."), false);
 
                 if (callback != null)
                     callback.run();

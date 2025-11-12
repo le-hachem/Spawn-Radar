@@ -5,7 +5,6 @@ import java.util.stream.Collectors;
 
 import cc.hachem.RadarClient;
 import cc.hachem.config.ConfigManager;
-import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.util.math.BlockPos;
 
@@ -130,7 +129,7 @@ public record SpawnerCluster(List<BlockPos> spawners, List<BlockPos> intersectio
 		RadarClient.LOGGER.debug("Clusters sorted by size.");
 	}
 
-	public static List<SpawnerCluster> findClusters(FabricClientCommandSource source, List<BlockPos> spawners, double activationRadius, SortType sortType)
+	public static List<SpawnerCluster> findClusters(ClientPlayerEntity player, List<BlockPos> spawners, double activationRadius, SortType sortType)
 	{
 		long startTime = System.nanoTime();
 
@@ -195,7 +194,7 @@ public record SpawnerCluster(List<BlockPos> spawners, List<BlockPos> intersectio
 
 		switch (sortType)
 		{
-			case BY_PROXIMITY -> sortClustersByProximity(source.getPlayer(), clusters);
+			case BY_PROXIMITY -> sortClustersByProximity(player, clusters);
 			case BY_SIZE -> sortClustersBySize(clusters);
 			case NO_SORT -> {}
 		}
