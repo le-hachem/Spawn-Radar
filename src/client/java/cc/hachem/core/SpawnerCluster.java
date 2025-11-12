@@ -18,7 +18,7 @@ public record SpawnerCluster(List<BlockPos> spawners, List<BlockPos> intersectio
 
 		private final String name;
 		SortType(String name) { this.name = name; }
-		public String getName() { return name; }
+		public String toString() { return name; }
 	}
 
 	public static boolean spheresIntersect(BlockPos a, BlockPos b, double activationRadius)

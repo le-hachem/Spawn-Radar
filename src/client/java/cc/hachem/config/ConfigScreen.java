@@ -6,6 +6,7 @@ import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import me.shedaniel.clothconfig2.impl.builders.DropdownMenuBuilder;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
 
@@ -45,63 +46,38 @@ public class ConfigScreen
         );
 
         general.addEntry(entryBuilder
-            .startDropdownMenu(
+            .startEnumSelector(
                 Text.translatable("option.spawn_radar.default_cluster_sort_type"),
-                DropdownMenuBuilder.TopCellElementBuilder.of(
-                    RadarClient.config.defaultSortType,
-                    str -> Arrays.stream(SpawnerCluster.SortType.values())
-                               .collect(Collectors.toMap(
-                                   e -> Text.translatable(e.getName()).getString(),
-                                   e -> e
-                               )).getOrDefault(str, ConfigManager.DEFAULT.defaultSortType),
-                    obj -> Text.translatable(obj.getName())
-                ),
-                DropdownMenuBuilder.CellCreatorBuilder.of(20, 150, 5, obj -> Text.translatable(obj.getName()))
+                SpawnerCluster.SortType.class,
+                RadarClient.config.defaultSortType
             )
-            .setSelections(Arrays.asList(SpawnerCluster.SortType.values()))
-            .setSaveConsumer(selection -> {
-                RadarClient.config.defaultSortType = selection;
-                System.out.println("[DEBUG] DefaultSortType saved: " + selection);
-            })
+            .setEnumNameProvider(e -> Text.translatable(e.toString()))
             .setDefaultValue(ConfigManager.DEFAULT.defaultSortType)
+            .setSaveConsumer(value -> RadarClient.config.defaultSortType = value)
             .build()
         );
 
         general.addEntry(entryBuilder
-            .startDropdownMenu(Text.translatable("option.spawn_radar.cluster_proximity_sort_order"),
-                DropdownMenuBuilder.TopCellElementBuilder.of(
-                    RadarClient.config.clusterProximitySortOrder,
-                    str -> Arrays.stream(ConfigManager.SortOrder.values())
-                               .collect(Collectors.toMap(
-                                   e -> Text.translatable(e.getName()).getString(),
-                                   e -> e
-                               )).getOrDefault(str, ConfigManager.DEFAULT.clusterProximitySortOrder),
-                    obj -> Text.translatable(obj.getName())
-                ),
-                DropdownMenuBuilder.CellCreatorBuilder.of(20, 150, 5, obj -> Text.translatable(obj.getName()))
+            .startEnumSelector(
+                Text.translatable("option.spawn_radar.cluster_proximity_sort_order"),
+                ConfigManager.SortOrder.class,
+                RadarClient.config.clusterProximitySortOrder
             )
-            .setSelections(Arrays.asList(ConfigManager.SortOrder.values()))
-            .setSaveConsumer(selection -> RadarClient.config.clusterProximitySortOrder = selection)
+            .setEnumNameProvider(e -> Text.translatable(e.toString()))
             .setDefaultValue(ConfigManager.DEFAULT.clusterProximitySortOrder)
+            .setSaveConsumer(value -> RadarClient.config.clusterProximitySortOrder = value)
             .build()
         );
 
         general.addEntry(entryBuilder
-            .startDropdownMenu(Text.translatable("option.spawn_radar.cluster_size_sort_order"),
-                DropdownMenuBuilder.TopCellElementBuilder.of(
-                    RadarClient.config.clusterSizeSortOrder,
-                    str -> Arrays.stream(ConfigManager.SortOrder.values())
-                               .collect(Collectors.toMap(
-                                   e -> Text.translatable(e.getName()).getString(),
-                                   e -> e
-                               )).getOrDefault(str, ConfigManager.DEFAULT.clusterSizeSortOrder),
-                    obj -> Text.translatable(obj.getName())
-                ),
-                DropdownMenuBuilder.CellCreatorBuilder.of(20, 150, 5, obj -> Text.translatable(obj.getName()))
+            .startEnumSelector(
+                Text.translatable("option.spawn_radar.cluster_size_sort_order"),
+                ConfigManager.SortOrder.class,
+                RadarClient.config.clusterSizeSortOrder
             )
-            .setSelections(Arrays.asList(ConfigManager.SortOrder.values()))
-            .setSaveConsumer(selection -> RadarClient.config.clusterSizeSortOrder = selection)
+            .setEnumNameProvider(e -> Text.translatable(e.toString()))
             .setDefaultValue(ConfigManager.DEFAULT.clusterSizeSortOrder)
+            .setSaveConsumer(value -> RadarClient.config.clusterSizeSortOrder = value)
             .build()
         );
 

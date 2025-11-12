@@ -18,7 +18,7 @@ public class ConfigManager
 
         private final String name;
         SortOrder(String name) { this.name = name; }
-        public String getName() { return name; }
+        public String toString() { return name; }
     }
 
     public SpawnerCluster.SortType defaultSortType = SpawnerCluster.SortType.NO_SORT;
