@@ -1,0 +1,35 @@
+package cc.hachem.hud;
+
+import net.minecraft.client.gui.DrawContext;
+
+public abstract class Widget
+{
+    protected int x, y;
+    protected int width, height;
+
+    public void render(DrawContext context) { }
+
+    public void onKeyPressed(int keyCode)  { }
+    public void onKeyReleased(int keyCode) { }
+
+    public void onMouseClick(int mx, int my, int mouseButton)   { }
+    public void onMouseRelease(int mx, int my, int mouseButton) { }
+
+    public boolean isMouseHover(int mx, int my)
+    {
+        return (x <= mx && mx <= x+width) &&
+               (y <= my && my <= y+height);
+    }
+
+    public int getX() { return x; }
+    public int getY() { return y; }
+
+    public int getWidth()  { return width; }
+    public int getHeight() { return height; }
+
+    public void setX(int x) { this.x = x; }
+    public void setY(int y) { this.y = y; }
+
+    public void setWidth(int width)   { this.width = width;   }
+    public void setHeight(int height) { this.height = height; }
+}

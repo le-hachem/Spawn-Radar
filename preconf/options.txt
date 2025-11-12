@@ -126,8 +126,8 @@ key_key.saveToolbarActivator:key.keyboard.unknown
 key_key.loadToolbarActivator:key.keyboard.unknown
 key_key.advancements:key.keyboard.l
 key_key.quickActions:key.keyboard.unknown
-key_key.hotbar.1:key.keyboard.w
-key_key.hotbar.2:key.keyboard.space
+key_key.hotbar.1:key.keyboard.space
+key_key.hotbar.2:key.keyboard.w
 key_key.hotbar.3:key.keyboard.2
 key_key.hotbar.4:key.keyboard.3
 key_key.hotbar.5:key.keyboard.r

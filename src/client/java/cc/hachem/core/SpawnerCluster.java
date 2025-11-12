@@ -137,7 +137,7 @@ public record SpawnerCluster(int id, List<BlockPos> spawners, List<BlockPos> int
         List<SpawnerCluster> clusters = new ArrayList<>();
         Set<String> seen = new HashSet<>();
         int n = spawners.size();
-        int nextId = 0;
+        int nextId = 1;
 
         for (int idx = 0; idx < n; idx++)
         {

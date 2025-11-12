@@ -3,6 +3,8 @@ package cc.hachem;
 import cc.hachem.config.ConfigManager;
 import cc.hachem.config.ConfigSerializer;
 import cc.hachem.core.*;
+import cc.hachem.hud.HudRenderer;
+import cc.hachem.hud.PanelWidget;
 import cc.hachem.renderer.BlockHighlightRenderer;
 import cc.hachem.renderer.TextRenderer;
 import net.fabricmc.api.ClientModInitializer;
@@ -41,7 +43,7 @@ public class RadarClient implements ClientModInitializer
 		RadarClient.LOGGER.debug("Scheduled cluster generation after scanning for spawners.");
 	}
 
-	public static void generateClustersChild(ClientPlayerEntity source, String argument)
+    public static void generateClustersChild(ClientPlayerEntity source, String argument)
 	{
 		List<BlockPos> spawners = BlockBank.getAll();
 
@@ -62,61 +64,87 @@ public class RadarClient implements ClientModInitializer
 		ClusterManager.setClusters(clusters);
 		RadarClient.LOGGER.info("Generated {} clusters using sort type {}", clusters.size(), sortType);
 
-		if (clusters.isEmpty())
-		{
-			source.sendMessage(Text.translatable("chat.spawn_radar.no_clusters"), false);
-			return;
-		}
-
-		MutableText showAllButton = Text.translatable("chat.spawn_radar.toggle_all")
-			.styled(style -> style
-				.withColor(Formatting.GREEN)
-				.withClickEvent(new ClickEvent.RunCommand("/radar:toggle all"))
-				.withHoverEvent(new HoverEvent.ShowText(Text.translatable("chat.spawn_radar.toggle_all_hover")))
-			);
-		source.sendMessage(showAllButton, false);
-
-		for (SpawnerCluster cluster : clusters)
-		{
-			int clusterId = cluster.id();
-			double cx = cluster.spawners().stream().mapToDouble(BlockPos::getX).average().orElse(0);
-			double cy = cluster.spawners().stream().mapToDouble(BlockPos::getY).average().orElse(0);
-			double cz = cluster.spawners().stream().mapToDouble(BlockPos::getZ).average().orElse(0);
-
-			MutableText clusterHeader = Text.translatable("chat.spawn_radar.cluster_header", cluster.spawners().size(), clusterId)
-				.styled(style -> style.withColor(Formatting.AQUA)
-					.withUnderline(true)
-					.withClickEvent(new ClickEvent.RunCommand("/radar:toggle " + clusterId))
-					.withHoverEvent(new HoverEvent.ShowText(Text.translatable("chat.spawn_radar.cluster_hover")))
-				);
-
-			MutableText teleportButton = Text.translatable("chat.spawn_radar.teleport")
-				.styled(style -> style
-					.withColor(Formatting.GOLD)
-					.withClickEvent(new ClickEvent.RunCommand(String.format("/tp %.0f %.0f %.0f", cx, cy, cz)))
-					.withHoverEvent(new HoverEvent.ShowText(Text.translatable("chat.spawn_radar.teleport_hover")))
-				);
-
-			MutableText showSpawnersButton = Text.translatable("chat.spawn_radar.show_spawners")
-				.styled(style -> style
-					.withColor(Formatting.GREEN)
-					.withClickEvent(new ClickEvent.RunCommand("/radar:info " + clusterId))
-					.withHoverEvent(new HoverEvent.ShowText(Text.translatable("chat.spawn_radar.show_spawners_hover")))
-				);
-
-			MutableText combined = clusterHeader.copy()
-				.append(" ")
-				.append(teleportButton)
-				.append(" ")
-				.append(showSpawnersButton);
-
-			source.sendMessage(combined, false);
-			RadarClient.LOGGER.debug("Displayed cluster #{} with {} spawners.", clusterId, cluster.spawners().size());
-		}
-
 		if (RadarClient.config.highlightAfterScan)
 			ClusterManager.highlightAllClusters();
+        PanelWidget.refresh();
 	}
+
+//	public static void generateClustersChild(ClientPlayerEntity source, String argument)
+//	{
+//		List<BlockPos> spawners = BlockBank.getAll();
+//
+//		if (spawners.isEmpty())
+//		{
+//			source.sendMessage(Text.translatable("chat.spawn_radar.none"), false);
+//			RadarClient.LOGGER.warn("No spawners found for cluster generation.");
+//			return;
+//		}
+//
+//		SpawnerCluster.SortType sortType = RadarClient.config.defaultSortType;
+//		if ("proximity".equals(argument))
+//			sortType = SpawnerCluster.SortType.BY_PROXIMITY;
+//		else if ("size".equals(argument))
+//			sortType = SpawnerCluster.SortType.BY_SIZE;
+//
+//		List<SpawnerCluster> clusters = SpawnerCluster.findClusters(source, spawners, 16.0, sortType);
+//		ClusterManager.setClusters(clusters);
+//		RadarClient.LOGGER.info("Generated {} clusters using sort type {}", clusters.size(), sortType);
+//
+//		if (clusters.isEmpty())
+//		{
+//			source.sendMessage(Text.translatable("chat.spawn_radar.no_clusters"), false);
+//			return;
+//		}
+//
+//		MutableText showAllButton = Text.translatable("chat.spawn_radar.toggle_all")
+//			.styled(style -> style
+//				.withColor(Formatting.GREEN)
+//				.withClickEvent(new ClickEvent.RunCommand("/radar:toggle all"))
+//				.withHoverEvent(new HoverEvent.ShowText(Text.translatable("chat.spawn_radar.toggle_all_hover")))
+//			);
+//		source.sendMessage(showAllButton, false);
+//
+//		for (SpawnerCluster cluster : clusters)
+//		{
+//			int clusterId = cluster.id();
+//			double cx = cluster.spawners().stream().mapToDouble(BlockPos::getX).average().orElse(0);
+//			double cy = cluster.spawners().stream().mapToDouble(BlockPos::getY).average().orElse(0);
+//			double cz = cluster.spawners().stream().mapToDouble(BlockPos::getZ).average().orElse(0);
+//
+//			MutableText clusterHeader = Text.translatable("chat.spawn_radar.cluster_header", cluster.spawners().size(), clusterId)
+//				.styled(style -> style.withColor(Formatting.AQUA)
+//					.withUnderline(true)
+//					.withClickEvent(new ClickEvent.RunCommand("/radar:toggle " + clusterId))
+//					.withHoverEvent(new HoverEvent.ShowText(Text.translatable("chat.spawn_radar.cluster_hover")))
+//				);
+//
+//			MutableText teleportButton = Text.translatable("chat.spawn_radar.teleport")
+//				.styled(style -> style
+//					.withColor(Formatting.GOLD)
+//					.withClickEvent(new ClickEvent.RunCommand(String.format("/tp %.0f %.0f %.0f", cx, cy, cz)))
+//					.withHoverEvent(new HoverEvent.ShowText(Text.translatable("chat.spawn_radar.teleport_hover")))
+//				);
+//
+//			MutableText showSpawnersButton = Text.translatable("chat.spawn_radar.show_spawners")
+//				.styled(style -> style
+//					.withColor(Formatting.GREEN)
+//					.withClickEvent(new ClickEvent.RunCommand("/radar:info " + clusterId))
+//					.withHoverEvent(new HoverEvent.ShowText(Text.translatable("chat.spawn_radar.show_spawners_hover")))
+//				);
+//
+//			MutableText combined = clusterHeader.copy()
+//				.append(" ")
+//				.append(teleportButton)
+//				.append(" ")
+//				.append(showSpawnersButton);
+//
+//			source.sendMessage(combined, false);
+//			RadarClient.LOGGER.debug("Displayed cluster #{} with {} spawners.", clusterId, cluster.spawners().size());
+//		}
+//
+//		if (RadarClient.config.highlightAfterScan)
+//			ClusterManager.highlightAllClusters();
+//	}
 
 	public static void toggleCluster(ClientPlayerEntity source, String target)
 	{
@@ -235,6 +263,8 @@ public class RadarClient implements ClientModInitializer
 		LOGGER.info("CommandManager initialized.");
 		KeyManager.init();
 		LOGGER.info("KeyManager initialized.");
+        HudRenderer.init();
+        LOGGER.info("KeyManager initialized.");
 
 		WorldRenderEvents.BEFORE_TRANSLUCENT.register(this::onRender);
 		ClientPlayConnectionEvents.JOIN.register(((handler, sender, client) ->
@@ -242,7 +272,11 @@ public class RadarClient implements ClientModInitializer
 			ClusterManager.unhighlightAllClusters();
 			ClusterManager.getClusters().clear();
 			BlockBank.clear();
-		}));
+            LOGGER.info("Cleared block bank and cluster manager.");
+
+            HudRenderer.build();
+            LOGGER.info("Built HudRenderer widgets.");
+        }));
 
 		LOGGER.info("Initialized successfully.");
 	}
