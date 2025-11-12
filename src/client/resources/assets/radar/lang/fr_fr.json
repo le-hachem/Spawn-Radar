@@ -19,7 +19,8 @@
   "option.spawn_radar.cluster_1": "Cluster avec 1 spawner",
   "option.spawn_radar.cluster_2": "Cluster avec 2 spawners",
   "option.spawn_radar.cluster_3": "Cluster avec 3 spawners",
-  "option.spawn_radar.cluster_4_plus": "Cluster avec 4+ spawners",
+  "option.spawn_radar.cluster_4": "Cluster with 4 spawners",
+  "option.spawn_radar.cluster_5_plus": "Cluster with 5+ spawners",
 
   "option.spawn_radar.sort_type.none": "Aucun tri",
   "option.spawn_radar.sort_type.proximity": "Trier par proximité",

@@ -85,21 +85,7 @@ public class ConfigScreen
             .build()
         );
 
-        general.addEntry(entryBuilder
-            .startIntSlider(Text.translatable("option.spawn_radar.spawner_opacity"), RadarClient.config.spawnerHighlightOpacity, 0, 100)
-            .setSaveConsumer(value -> RadarClient.config.spawnerHighlightOpacity = value)
-            .setDefaultValue(ConfigManager.DEFAULT.spawnerHighlightOpacity)
-            .setTextGetter(value -> Text.of(value + "%"))
-            .build()
-        );
 
-        general.addEntry(entryBuilder
-            .startIntSlider(Text.translatable("option.spawn_radar.region_opacity"), RadarClient.config.regionHighlightOpacity, 0, 100)
-            .setSaveConsumer(value -> RadarClient.config.regionHighlightOpacity = value)
-            .setDefaultValue(ConfigManager.DEFAULT.regionHighlightOpacity)
-            .setTextGetter(value -> Text.of(value + "%"))
-            .build()
-        );
 
         ConfigCategory colors = builder.getOrCreateCategory(Text.translatable("option.spawn_radar.colors"));
 
@@ -124,6 +110,22 @@ public class ConfigScreen
                 .build()
             );
         }
+
+        colors.addEntry(entryBuilder
+            .startIntSlider(Text.translatable("option.spawn_radar.spawner_opacity"), RadarClient.config.spawnerHighlightOpacity, 0, 100)
+            .setSaveConsumer(value -> RadarClient.config.spawnerHighlightOpacity = value)
+            .setDefaultValue(ConfigManager.DEFAULT.spawnerHighlightOpacity)
+            .setTextGetter(value -> Text.of(value + "%"))
+            .build()
+        );
+
+        colors.addEntry(entryBuilder
+            .startIntSlider(Text.translatable("option.spawn_radar.region_opacity"), RadarClient.config.regionHighlightOpacity, 0, 100)
+            .setSaveConsumer(value -> RadarClient.config.regionHighlightOpacity = value)
+            .setDefaultValue(ConfigManager.DEFAULT.regionHighlightOpacity)
+            .setTextGetter(value -> Text.of(value + "%"))
+            .build()
+        );
 
         return builder.build();
     }
