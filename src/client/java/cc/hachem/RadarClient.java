@@ -30,7 +30,7 @@ public class RadarClient implements ClientModInitializer
 		int clustersBefore = ClusterManager.getClusters().size();
 		int highlightsBefore = ClusterManager.getHighlights().size();
 
-		ClusterManager.clearHighlights();
+		ClusterManager.unhighlightAllClusters();
 		ClusterManager.getClusters().clear();
 		BlockBank.clear();
 
