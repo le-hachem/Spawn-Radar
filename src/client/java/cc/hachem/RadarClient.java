@@ -196,6 +196,8 @@ public class RadarClient implements ClientModInitializer
 			ClusterManager.unhighlightAllClusters();
 			ClusterManager.getClusters().clear();
 			BlockBank.clear();
+            PanelWidget.refresh();
+            
             LOGGER.info("Cleared block bank and cluster manager.");
 
             HudRenderer.build();

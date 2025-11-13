@@ -66,7 +66,9 @@ public class HudRenderer
 
     public static void build()
     {
-        children.add(new PanelWidget(10, (int) (50+(RadarClient.config.verticalPanelOffset*MinecraftClient.getInstance().getWindow().getHeight()))));
+        var client = MinecraftClient.getInstance();
+        int yOffset = (int) (RadarClient.config.verticalPanelOffset * client.getWindow().getScaledHeight());
+        children.add(new PanelWidget(10, 50+yOffset));
     }
 
     private static void onMouseMove(int mx, int my)
