@@ -1,5 +1,6 @@
 package cc.hachem.hud;
 
+import cc.hachem.RadarClient;
 import cc.hachem.core.ClusterManager;
 import cc.hachem.core.SpawnerCluster;
 import net.minecraft.client.MinecraftClient;
@@ -13,18 +14,20 @@ import java.util.List;
 
 public class PanelWidget extends Widget
 {
-    public static class Pagination extends Widget
+    public static class PanelButton extends Widget
     {
         private final Runnable callback;
-        private final String text;
+        private String text;
+        private int color;
 
-        public Pagination(int x, int y, String text, Runnable callback)
+        public PanelButton(int x, int y, String text, int color, Runnable callback)
         {
             MinecraftClient client = MinecraftClient.getInstance();
             TextRenderer textRenderer = client.textRenderer;
 
             this.text = text;
             this.callback = callback;
+            this.color = color;
 
             this.x = x;
             this.y = y;
@@ -37,21 +40,38 @@ public class PanelWidget extends Widget
         {
             MinecraftClient client = MinecraftClient.getInstance();
             TextRenderer textRenderer = client.textRenderer;
-            context.drawText(textRenderer, text, x, y, Colors.WHITE, true);
+            context.drawText(textRenderer, text, x, y, color, true);
         }
 
         @Override
         public void onMouseClick(int mx, int my, int mouseButton)
         {
-            if (mouseButton != GLFW.GLFW_MOUSE_BUTTON_LEFT) return;
-            if (!isMouseHover(mx, my)) return;
+            if (mouseButton != GLFW.GLFW_MOUSE_BUTTON_LEFT)
+                return;
+            if (!isMouseHover(mx, my))
+                return;
             callback.run();
+        }
+
+        public void setText(String newText)
+        {
+            this.text = newText;
+            MinecraftClient client = MinecraftClient.getInstance();
+            TextRenderer textRenderer = client.textRenderer;
+            this.width = textRenderer.getWidth(newText) + 10;
+        }
+
+        public void setColor(int color)
+        {
+            this.color = color;
         }
     }
 
     public static List<Widget> clusterList = new ArrayList<>();
-    private static Pagination previousPageWidget;
-    private static Pagination nextPageWidget;
+    private static PanelButton previousPageWidget;
+    private static PanelButton nextPageWidget;
+    private static PanelButton toggleAllButton;
+    private static PanelButton resetButton;
 
     private final static int elementCount = 5;
     private static int currentPage = 0;
@@ -75,8 +95,21 @@ public class PanelWidget extends Widget
         this.width = textRenderer.getWidth(placeholder) + 10;
         this.height = (textRenderer.fontHeight + 6) * elementCount;
 
-        previousPageWidget = new Pagination(x, y - 20, "< Prev", PanelWidget::previousPage);
-        nextPageWidget = new Pagination(x + 100, y - 20, "Next >", PanelWidget::nextPage);
+        previousPageWidget = new PanelButton(x, y - 20, "< Prev", Colors.WHITE, PanelWidget::previousPage);
+        nextPageWidget = new PanelButton(x + 100, y - 20, "Next >", Colors.WHITE, PanelWidget::nextPage);
+
+        toggleAllButton = new PanelButton(x, y - 40, "[All OFF]", Colors.GREEN, () ->
+        {
+            ClusterManager.toggleAllClusters();
+            updateTopButtons();
+        });
+
+        resetButton = new PanelButton(x, y - 40, "[Reset]", Colors.LIGHT_RED, () ->
+        {
+            if (client.player != null)
+                RadarClient.reset(client.player);
+            updateTopButtons();
+        });
 
         instance = this;
     }
@@ -118,6 +151,7 @@ public class PanelWidget extends Widget
         currentPage = Math.min(currentPage, Math.max(pageCount - 1, 0));
 
         updatePages();
+        updateTopButtons();
     }
 
     private static void updatePages()
@@ -142,20 +176,43 @@ public class PanelWidget extends Widget
             nextPageWidget.setX(pageTextX + pageTextWidth + paginationSpacing);
             nextPageWidget.setY(paginationY);
         }
+
+        updateTopButtons();
+    }
+
+    private static void updateTopButtons()
+    {
+        boolean allHighlighted = ClusterManager.getHighlightedClusterIds().size() == ClusterManager.getClusters().size();
+        toggleAllButton.setText(allHighlighted ? "[All OFF]" : "[All ON]");
+
+        if (allHighlighted)
+            toggleAllButton.setColor(Colors.LIGHT_YELLOW);
+        else
+            toggleAllButton.setColor(Colors.GREEN);
+
+        int totalWidth = (nextPageWidget.getX() + nextPageWidget.getWidth()) - previousPageWidget.getX();
+        int buttonWidth = totalWidth / 2;
+
+        toggleAllButton.setWidth(buttonWidth);
+        resetButton.setWidth(buttonWidth);
+
+        toggleAllButton.setX(previousPageWidget.getX());
+        toggleAllButton.setY(previousPageWidget.getY() - 20);
+
+        resetButton.setX(nextPageWidget.getX() + nextPageWidget.getWidth() - resetButton.getWidth()+10);
+        resetButton.setY(previousPageWidget.getY() - 20);
     }
 
     public static void nextPage()
     {
-        if (pageCount == 0)
-            return;
+        if (pageCount == 0) return;
         currentPage = (currentPage + 1) % pageCount;
         updatePages();
     }
 
     public static void previousPage()
     {
-        if (pageCount == 0)
-            return;
+        if (pageCount == 0) return;
         currentPage = (currentPage - 1 + pageCount) % pageCount;
         updatePages();
     }
@@ -163,6 +220,9 @@ public class PanelWidget extends Widget
     @Override
     public void onMouseClick(int mx, int my, int mouseButton)
     {
+        toggleAllButton.onMouseClick(mx, my, mouseButton);
+        resetButton.onMouseClick(mx, my, mouseButton);
+
         previousPageWidget.onMouseClick(mx, my, mouseButton);
         nextPageWidget.onMouseClick(mx, my, mouseButton);
 
@@ -173,6 +233,12 @@ public class PanelWidget extends Widget
     @Override
     public void render(DrawContext context)
     {
+        if (!getVisiblePageElements().isEmpty())
+        {
+            toggleAllButton.render(context);
+            resetButton.render(context);
+        }
+
         int leftX = previousPageWidget.getX() + previousPageWidget.getWidth();
         int rightX = nextPageWidget.getX();
         int centerX = leftX + (rightX - leftX) / 2;

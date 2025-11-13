@@ -30,6 +30,20 @@ public class ClusterManager
         return ids;
     }
 
+    public static void toggleAllClusters()
+    {
+        if (highlightedClusterIds.size() == clusters.size())
+        {
+            unhighlightAllClusters();
+            RadarClient.LOGGER.info("Toggled all clusters: now all un-highlighted.");
+        }
+        else
+        {
+            highlightAllClusters();
+            RadarClient.LOGGER.info("Toggled all clusters: now all highlighted.");
+        }
+    }
+
     public static void toggleHighlightCluster(int clusterId)
     {
         if (!isValidClusterId(clusterId))
