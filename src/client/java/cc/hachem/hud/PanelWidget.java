@@ -1,6 +1,5 @@
 package cc.hachem.hud;
 
-import cc.hachem.RadarClient;
 import cc.hachem.core.ClusterManager;
 import cc.hachem.core.SpawnerCluster;
 import net.minecraft.client.MinecraftClient;
@@ -29,8 +28,8 @@ public class PanelWidget extends Widget
 
             this.x = x;
             this.y = y;
-            this.width = textRenderer.getWidth(text)+10;
-            this.height = (textRenderer.fontHeight+10);
+            this.width = textRenderer.getWidth(text) + 10;
+            this.height = textRenderer.fontHeight + 6;
         }
 
         @Override
@@ -41,12 +40,11 @@ public class PanelWidget extends Widget
             context.drawText(textRenderer, text, x, y, Colors.WHITE, true);
         }
 
+        @Override
         public void onMouseClick(int mx, int my, int mouseButton)
         {
-            if (mouseButton != GLFW.GLFW_MOUSE_BUTTON_LEFT)
-                return;
-            if (!isMouseHover(mx, my))
-                return;
+            if (mouseButton != GLFW.GLFW_MOUSE_BUTTON_LEFT) return;
+            if (!isMouseHover(mx, my)) return;
             callback.run();
         }
     }
@@ -61,6 +59,11 @@ public class PanelWidget extends Widget
 
     public static PanelWidget instance;
 
+    private static String pageText = "";
+    private static int pageTextX = 0;
+    private static int pageTextY = 0;
+    private static final int paginationSpacing = 8;
+
     public PanelWidget(int x, int y)
     {
         MinecraftClient client = MinecraftClient.getInstance();
@@ -69,13 +72,18 @@ public class PanelWidget extends Widget
 
         this.x = x;
         this.y = y;
-        this.width = textRenderer.getWidth(placeholder);
-        this.height = (textRenderer.fontHeight+10)* elementCount;
+        this.width = textRenderer.getWidth(placeholder) + 10;
+        this.height = (textRenderer.fontHeight + 6) * elementCount;
 
-        previousPageWidget = new Pagination(x, y - 15, "< Prev", PanelWidget::previousPage);
-        nextPageWidget = new Pagination(x + 100, y - 15, "Next >", PanelWidget::nextPage);
+        previousPageWidget = new Pagination(x, y - 20, "< Prev", PanelWidget::previousPage);
+        nextPageWidget = new Pagination(x + 100, y - 20, "Next >", PanelWidget::nextPage);
 
         instance = this;
+    }
+
+    public static PanelWidget getInstance()
+    {
+        return instance;
     }
 
     public static void refresh()
@@ -91,46 +99,65 @@ public class PanelWidget extends Widget
             ClusterListItemWidget widget = new ClusterListItemWidget(cluster, 0, 0, 0);
             clusterList.add(widget);
 
-            int clusterSize = cluster.spawners().size();
-            int clusterId = cluster.id();
-            String label = String.format("[(%d) Cluster #%d]", clusterSize, clusterId);
+            String label = String.format("[(%d) Cluster #%d]", cluster.spawners().size(), cluster.id());
             int labelWidth = textRenderer.getWidth(label);
-
             if (labelWidth > maxWidth)
                 maxWidth = labelWidth;
         }
 
         int padding = 10;
+
         if (!clusterList.isEmpty())
         {
-            int finalMaxWidth = maxWidth;
-            clusterList.forEach(c -> c.setWidth(finalMaxWidth + padding));
+            int finalMaxWidth = maxWidth + padding;
+            clusterList.forEach(c -> c.setWidth(finalMaxWidth));
+            getInstance().width = finalMaxWidth;
         }
-
-        PanelWidget panelWidget = PanelWidget.getInstance();
-        panelWidget.width = maxWidth + padding;
-
-        previousPageWidget.setX(panelWidget.x);
-        previousPageWidget.setY(panelWidget.y - 15);
-
-        nextPageWidget.setX(panelWidget.x + panelWidget.width - nextPageWidget.getWidth());
-        nextPageWidget.setY(panelWidget.y - 15);
 
         pageCount = (int) Math.ceil((double) clusterList.size() / elementCount);
         currentPage = Math.min(currentPage, Math.max(pageCount - 1, 0));
+
+        updatePages();
     }
 
+    private static void updatePages()
+    {
+        MinecraftClient client = MinecraftClient.getInstance();
+        TextRenderer textRenderer = client.textRenderer;
+
+        if (pageCount > 1)
+        {
+            PanelWidget panel = getInstance();
+
+            pageText = String.format("%d/%d", currentPage + 1, pageCount);
+            int pageTextWidth = textRenderer.getWidth(pageText);
+            int paginationY = panel.y - 20;
+
+            previousPageWidget.setX(panel.x);
+            previousPageWidget.setY(paginationY);
+
+            pageTextX = previousPageWidget.getX() + previousPageWidget.getWidth();
+            pageTextY = paginationY;
+
+            nextPageWidget.setX(pageTextX + pageTextWidth + paginationSpacing);
+            nextPageWidget.setY(paginationY);
+        }
+    }
 
     public static void nextPage()
     {
-        if (currentPage < pageCount - 1)
-            currentPage++;
+        if (pageCount == 0)
+            return;
+        currentPage = (currentPage + 1) % pageCount;
+        updatePages();
     }
 
     public static void previousPage()
     {
-        if (currentPage > 0)
-            currentPage--;
+        if (pageCount == 0)
+            return;
+        currentPage = (currentPage - 1 + pageCount) % pageCount;
+        updatePages();
     }
 
     @Override
@@ -146,34 +173,39 @@ public class PanelWidget extends Widget
     @Override
     public void render(DrawContext context)
     {
-        MinecraftClient client = MinecraftClient.getInstance();
-        TextRenderer textRenderer = client.textRenderer;
+        int leftX = previousPageWidget.getX() + previousPageWidget.getWidth();
+        int rightX = nextPageWidget.getX();
+        int centerX = leftX + (rightX - leftX) / 2;
 
-        if (pageCount > 1)
-        {
-            String pageText = String.format("Page %d / %d", currentPage + 1, pageCount);
-            context.drawText(textRenderer, pageText, x, y - 30, Colors.LIGHT_GRAY, false);
-        }
+        int maxChildWidth = 0;
+        for (Widget child : getVisiblePageElements())
+            if (child.getWidth() > maxChildWidth && child instanceof ClusterListItemWidget)
+                maxChildWidth = child.getWidth();
 
-        if (currentPage > 0)
-            previousPageWidget.render(context);
-        if (currentPage < pageCount - 1)
-            nextPageWidget.render(context);
-
+        int elementX = centerX - maxChildWidth / 2;
         int elementY = y;
+
         for (Widget child : getVisiblePageElements())
         {
-            child.setX(this.x);
+            child.setX(elementX);
             child.setY(elementY);
-            child.setWidth(this.width);
+            child.setWidth(maxChildWidth);
             child.render(context);
             elementY += child.getHeight();
         }
-    }
 
-    public static PanelWidget getInstance()
-    {
-        return instance;
+        if (pageCount > 1)
+        {
+            previousPageWidget.render(context);
+            nextPageWidget.render(context);
+
+            if (!pageText.isEmpty())
+            {
+                MinecraftClient client = MinecraftClient.getInstance();
+                TextRenderer textRenderer = client.textRenderer;
+                context.drawText(textRenderer, pageText, pageTextX, pageTextY, Colors.GRAY, false);
+            }
+        }
     }
 
     private static List<Widget> getVisiblePageElements()

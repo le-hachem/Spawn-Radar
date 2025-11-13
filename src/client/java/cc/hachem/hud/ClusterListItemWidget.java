@@ -43,7 +43,7 @@ public class ClusterListItemWidget extends Widget
 
         int clusterSize = cluster.spawners().size();
         int clusterId = cluster.id();
-        int color = ClusterManager.isHighlighted(clusterId) ? Colors.YELLOW : Colors.WHITE;
+        int color = ClusterManager.isHighlighted(clusterId) ? Colors.WHITE : Colors.LIGHT_GRAY;
 
         String label = String.format("[(%d) Cluster #%d]", clusterSize, clusterId);
         context.drawText(textRenderer, label, x, y, color, true);
