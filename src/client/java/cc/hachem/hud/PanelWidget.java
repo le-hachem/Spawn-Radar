@@ -7,71 +7,17 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.util.Colors;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class PanelWidget extends Widget
 {
-    public static class PanelButton extends Widget
-    {
-        private final Runnable callback;
-        private String text;
-        private int color;
-
-        public PanelButton(int x, int y, String text, int color, Runnable callback)
-        {
-            MinecraftClient client = MinecraftClient.getInstance();
-            TextRenderer textRenderer = client.textRenderer;
-
-            this.text = text;
-            this.callback = callback;
-            this.color = color;
-
-            this.x = x;
-            this.y = y;
-            this.width = textRenderer.getWidth(text) + 10;
-            this.height = textRenderer.fontHeight + 6;
-        }
-
-        @Override
-        public void render(DrawContext context)
-        {
-            MinecraftClient client = MinecraftClient.getInstance();
-            TextRenderer textRenderer = client.textRenderer;
-            context.drawText(textRenderer, text, x, y, color, true);
-        }
-
-        @Override
-        public void onMouseClick(int mx, int my, int mouseButton)
-        {
-            if (mouseButton != GLFW.GLFW_MOUSE_BUTTON_LEFT)
-                return;
-            if (!isMouseHover(mx, my))
-                return;
-            callback.run();
-        }
-
-        public void setText(String newText)
-        {
-            this.text = newText;
-            MinecraftClient client = MinecraftClient.getInstance();
-            TextRenderer textRenderer = client.textRenderer;
-            this.width = textRenderer.getWidth(newText) + 10;
-        }
-
-        public void setColor(int color)
-        {
-            this.color = color;
-        }
-    }
-
     public static List<Widget> clusterList = new ArrayList<>();
-    private static PanelButton previousPageWidget;
-    private static PanelButton nextPageWidget;
-    private static PanelButton toggleAllButton;
-    private static PanelButton resetButton;
+    private static ButtonWidget previousPageWidget;
+    private static ButtonWidget nextPageWidget;
+    private static ButtonWidget toggleAllButton;
+    private static ButtonWidget resetButton;
 
     private final static int elementCount = 5;
     private static int currentPage = 0;
@@ -95,16 +41,16 @@ public class PanelWidget extends Widget
         this.width = textRenderer.getWidth(placeholder) + 10;
         this.height = (textRenderer.fontHeight + 6) * elementCount;
 
-        previousPageWidget = new PanelButton(x, y - 20, "< Prev", Colors.WHITE, PanelWidget::previousPage);
-        nextPageWidget = new PanelButton(x + 100, y - 20, "Next >", Colors.WHITE, PanelWidget::nextPage);
+        previousPageWidget = new ButtonWidget(x, y - 20, "< Prev", Colors.WHITE, PanelWidget::previousPage);
+        nextPageWidget = new ButtonWidget(x + 100, y - 20, "Next >", Colors.WHITE, PanelWidget::nextPage);
 
-        toggleAllButton = new PanelButton(x, y - 40, "[All OFF]", Colors.GREEN, () ->
+        toggleAllButton = new ButtonWidget(x, y - 40, "[All OFF]", Colors.GREEN, () ->
         {
             ClusterManager.toggleAllClusters();
             updateTopButtons();
         });
 
-        resetButton = new PanelButton(x, y - 40, "[Reset]", Colors.LIGHT_RED, () ->
+        resetButton = new ButtonWidget(x, y - 40, "[Reset]", Colors.LIGHT_RED, () ->
         {
             if (client.player != null)
                 RadarClient.reset(client.player);
@@ -170,7 +116,7 @@ public class PanelWidget extends Widget
             previousPageWidget.setX(panel.x);
             previousPageWidget.setY(paginationY);
 
-            pageTextX = previousPageWidget.getX() + previousPageWidget.getWidth();
+            pageTextX = previousPageWidget.getX() + previousPageWidget.getWidth()+paginationSpacing;
             pageTextY = paginationY;
 
             nextPageWidget.setX(pageTextX + pageTextWidth + paginationSpacing);
@@ -257,7 +203,7 @@ public class PanelWidget extends Widget
             child.setY(elementY);
             child.setWidth(maxChildWidth);
             child.render(context);
-            elementY += child.getHeight();
+            elementY += child.getHeight()+5;
         }
 
         if (pageCount > 1)

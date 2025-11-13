@@ -21,7 +21,6 @@ public class BlockBank
     {
         RadarClient.reset(player);
         player.sendMessage(Text.translatable("chat.spawn_radar.searching"), false);
-        RadarClient.LOGGER.info("Started spawner scan with radius {} chunks.", chunkRadius);
 
         new Thread(() ->
         {
