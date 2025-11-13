@@ -82,4 +82,9 @@ public class ClusterManager
     {
         return clusters.stream().anyMatch(c -> c.id() == clusterId);
     }
+
+    public static boolean isHighlighted(int clusterId)
+    {
+        return highlightedClusterIds.contains(clusterId);
+    }
 }

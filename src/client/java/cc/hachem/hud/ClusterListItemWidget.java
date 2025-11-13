@@ -1,15 +1,17 @@
 package cc.hachem.hud;
 
+import cc.hachem.RadarClient;
+import cc.hachem.core.ClusterManager;
 import cc.hachem.core.SpawnerCluster;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.util.Colors;
+import org.lwjgl.glfw.GLFW;
 
 public class ClusterListItemWidget extends Widget
 {
     private final SpawnerCluster cluster;
-    private boolean expanded = false;
 
     public ClusterListItemWidget(SpawnerCluster cluster, int x, int y, int width)
     {
@@ -25,6 +27,16 @@ public class ClusterListItemWidget extends Widget
         this.cluster = cluster;
     }
 
+    public void onMouseRelease(int mx, int my, int mouseButton)
+    {
+        RadarClient.LOGGER.debug("Clicked: @ {}, {} with {}", mx, my, mouseButton);
+        if (!isMouseHover(mx, my))
+            return;
+        if (mouseButton != GLFW.GLFW_MOUSE_BUTTON_LEFT)
+            return;
+        ClusterManager.toggleHighlightCluster(cluster.id());
+    }
+
     @Override
     public void render(DrawContext context)
     {
@@ -33,8 +45,9 @@ public class ClusterListItemWidget extends Widget
 
         int clusterSize = cluster.spawners().size();
         int clusterId = cluster.id();
+        int color = ClusterManager.isHighlighted(clusterId) ? Colors.YELLOW : Colors.WHITE;
 
-        String label = String.format("[(%d)] Cluster #%d", clusterSize, clusterId);
-        context.drawText(textRenderer, label, x, y, Colors.WHITE, true);
+        String label = String.format("[(%d) Cluster #%d]", clusterSize, clusterId);
+        context.drawText(textRenderer, label, x, y, color, true);
     }
 }

@@ -11,7 +11,7 @@ import java.util.List;
 
 public class PanelWidget extends Widget
 {
-    public static List<Widget> listItems = new ArrayList<>();
+    public static List<Widget> children = new ArrayList<>();
     private final static int elementCount = 5;
 
     public PanelWidget(int x, int y)
@@ -28,25 +28,37 @@ public class PanelWidget extends Widget
 
     public static void refresh()
     {
-        listItems.clear();
+        children.clear();
         for (SpawnerCluster cluster : ClusterManager.getClusters())
         {
             Widget widget = new ClusterListItemWidget(cluster, 0, 0, 0);
-            listItems.add(widget);
+            children.add(widget);
         }
+    }
+
+    public void onMouseClick(int mx, int my, int mouseButton)
+    {
+        for (Widget child : children)
+            child.onMouseClick(mx, my, mouseButton);
+    }
+
+    public void onMouseRelease(int mx, int my, int mouseButton)
+    {
+        for (Widget child : children)
+            child.onMouseRelease(mx, my, mouseButton);
     }
 
     @Override
     public void render(DrawContext context)
     {
         int elementY = y;
-        for (Widget listItem : listItems)
+        for (Widget child : children)
         {
-            listItem.setX(this.x);
-            listItem.setY(elementY);
-            listItem.setWidth(this.width);
-            listItem.render(context);
-            elementY += listItem.getHeight();
+            child.setX(this.x);
+            child.setY(elementY);
+            child.setWidth(this.width);
+            child.render(context);
+            elementY += child.getHeight();
         }
     }
 }
