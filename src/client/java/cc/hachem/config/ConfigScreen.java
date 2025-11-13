@@ -2,6 +2,8 @@ package cc.hachem.config;
 
 import cc.hachem.RadarClient;
 import cc.hachem.core.SpawnerCluster;
+import cc.hachem.hud.HudRenderer;
+import cc.hachem.hud.PanelWidget;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
@@ -85,7 +87,23 @@ public class ConfigScreen
             .build()
         );
 
+        general.addEntry(entryBuilder
+            .startIntField(Text.of("Amount of clusters per page"), RadarClient.config.panelElementCount)
+            .setDefaultValue(ConfigManager.DEFAULT.panelElementCount)
+            .setSaveConsumer(value ->
+            {
+                RadarClient.config.panelElementCount = value;
+                PanelWidget.setElementCount(value);
+            }).build());
 
+        general.addEntry(entryBuilder
+            .startIntSlider(Text.of("Panel vertical offset"), (int)(RadarClient.config.verticalPanelOffset*100), 0, 100)
+            .setDefaultValue((int)ConfigManager.DEFAULT.verticalPanelOffset*100)
+            .setSaveConsumer(value ->
+            {
+                RadarClient.config.verticalPanelOffset = value/100.f;
+                HudRenderer.updatePanelPosition();
+            }).build());
 
         ConfigCategory colors = builder.getOrCreateCategory(Text.translatable("option.spawn_radar.colors"));
 

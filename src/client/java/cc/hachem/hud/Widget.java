@@ -9,11 +9,9 @@ public abstract class Widget
 
     public void render(DrawContext context) { }
 
-    public void onKeyPressed(int keyCode)  { }
-    public void onKeyReleased(int keyCode) { }
-
-    public void onMouseClick(int mx, int my, int mouseButton)    { }
+    public void onMouseClick(int mx, int my, int mouseButton)   { }
     public void onMouseRelease(int mx, int my, int mouseButton) { }
+    public void onMouseMove(int mx, int my) { }
 
     public boolean isMouseHover(int mx, int my)
     {

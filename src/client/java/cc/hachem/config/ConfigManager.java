@@ -33,6 +33,9 @@ public class ConfigManager
 
     public boolean highlightAfterScan = false;
 
+    public double verticalPanelOffset = 0.1;
+    public int panelElementCount = 5;
+
     public List<Integer> clusterColors = new ArrayList<>(
         List.of(0x00FFFF,
                 0x00FF00,

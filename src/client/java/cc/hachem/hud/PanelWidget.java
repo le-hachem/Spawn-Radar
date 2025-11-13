@@ -19,7 +19,7 @@ public class PanelWidget extends Widget
     private static ButtonWidget toggleAllButton;
     private static ButtonWidget resetButton;
 
-    private final static int elementCount = 5;
+    private static int elementCount = 5;
     private static int currentPage = 0;
     private static int pageCount = 0;
 
@@ -100,6 +100,37 @@ public class PanelWidget extends Widget
         updateTopButtons();
     }
 
+    public static void updateButtonPositions()
+    {
+        // Previous/Next page buttons
+        previousPageWidget.setX(instance.getX());
+        previousPageWidget.setY(instance.getY() - 20);
+
+        nextPageWidget.setX(previousPageWidget.getX() + previousPageWidget.getWidth() + 50); // spacing
+        nextPageWidget.setY(previousPageWidget.getY());
+
+        // Toggle all / Reset buttons
+        toggleAllButton.setX(previousPageWidget.getX());
+        toggleAllButton.setY(previousPageWidget.getY() - 20);
+
+        resetButton.setX(nextPageWidget.getX() + nextPageWidget.getWidth() - resetButton.getWidth() + 10);
+        resetButton.setY(previousPageWidget.getY() - 20);
+    }
+
+    public static void setElementCount(int newCount)
+    {
+        if (newCount <= 0) return; // prevent invalid counts
+        elementCount = newCount;
+
+        // Recalculate page count and current page
+        pageCount = (int) Math.ceil((double) clusterList.size() / elementCount);
+        currentPage = Math.min(currentPage, Math.max(pageCount - 1, 0));
+
+        // Update pages and buttons
+        updatePages();
+        updateTopButtons();
+    }
+
     private static void updatePages()
     {
         MinecraftClient client = MinecraftClient.getInstance();
@@ -151,14 +182,16 @@ public class PanelWidget extends Widget
 
     public static void nextPage()
     {
-        if (pageCount == 0) return;
+        if (pageCount == 0)
+            return;
         currentPage = (currentPage + 1) % pageCount;
         updatePages();
     }
 
     public static void previousPage()
     {
-        if (pageCount == 0) return;
+        if (pageCount == 0)
+            return;
         currentPage = (currentPage - 1 + pageCount) % pageCount;
         updatePages();
     }
@@ -172,8 +205,18 @@ public class PanelWidget extends Widget
         previousPageWidget.onMouseClick(mx, my, mouseButton);
         nextPageWidget.onMouseClick(mx, my, mouseButton);
 
-        for (Widget child : getVisiblePageElements())
-            child.onMouseClick(mx, my, mouseButton);
+        getVisiblePageElements().forEach(child -> child.onMouseClick(mx, my, mouseButton));
+    }
+
+    @Override
+    public void onMouseMove(int mx, int my)
+    {
+        toggleAllButton.onMouseMove(mx, my);
+        resetButton.onMouseMove(mx, my);
+        previousPageWidget.onMouseMove(mx, my);
+        nextPageWidget.onMouseMove(mx, my);
+
+        getVisiblePageElements().forEach(child -> child.onMouseMove(mx, my));
     }
 
     @Override

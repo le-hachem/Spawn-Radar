@@ -4,6 +4,7 @@ import cc.hachem.RadarClient;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.util.Identifier;
@@ -27,6 +28,7 @@ public class HudRenderer
         {
             double mx = client.mouse.getX() / client.getWindow().getScaleFactor();
             double my = client.mouse.getY() / client.getWindow().getScaleFactor();
+            onMouseMove((int)mx, (int)my);
 
             long handle = client.getWindow().getHandle();
 
@@ -48,27 +50,42 @@ public class HudRenderer
         });
     }
 
+
+    public static void updatePanelPosition()
+    {
+        if (!children.isEmpty() && PanelWidget.getInstance() != null)
+        {
+            var client = MinecraftClient.getInstance();
+            int yOffset = (int) (RadarClient.config.verticalPanelOffset * client.getWindow().getScaledHeight());
+            PanelWidget.getInstance().setY(50+yOffset);
+            PanelWidget.updateButtonPositions();
+            PanelWidget.refresh();
+        }
+    }
+
+
     public static void build()
     {
-        PanelWidget panelWidget = new PanelWidget(10, 50);
-        children.add(panelWidget);
+        children.add(new PanelWidget(10, (int) (50+(RadarClient.config.verticalPanelOffset*MinecraftClient.getInstance().getWindow().getHeight()))));
+    }
+
+    private static void onMouseMove(int mx, int my)
+    {
+        children.forEach(child -> child.onMouseMove(mx, my));
     }
 
     private static void onMouseClick(int mx, int my, int mouseButton)
     {
-        for (Widget child : children)
-            child.onMouseClick(mx, my, mouseButton);
+        children.forEach(child -> child.onMouseClick(mx, my, mouseButton));
     }
 
     private static void onMouseRelease(int mx, int my, int mouseButton)
     {
-        for (Widget child : children)
-            child.onMouseRelease(mx, my, mouseButton);
+        children.forEach(child -> child.onMouseRelease(mx, my, mouseButton));
     }
 
     private static void render(DrawContext context, RenderTickCounter tickCounter)
     {
-        for (Widget child : children)
-            child.render(context);
+        children.forEach(child -> child.render(context));
     }
 }
