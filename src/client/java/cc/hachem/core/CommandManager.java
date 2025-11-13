@@ -111,7 +111,6 @@ public class CommandManager
         dispatcher.register(ClientCommandManager.literal("radar:reset")
             .executes(context ->
             {
-                context.getSource().sendFeedback(Text.translatable("chat.spawn_radar.reset"));
                 RadarClient.reset(context.getSource().getPlayer());
                 RadarClient.LOGGER.info("Radar reset via command.");
                 return Command.SINGLE_SUCCESS;

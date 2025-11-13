@@ -2,7 +2,6 @@ package cc.hachem.config;
 
 import cc.hachem.RadarClient;
 import cc.hachem.core.SpawnerCluster;
-import net.minecraft.text.Text;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,8 +21,8 @@ public class ConfigManager
     }
 
     public SpawnerCluster.SortType defaultSortType = SpawnerCluster.SortType.NO_SORT;
-    public SortOrder clusterProximitySortOrder = SortOrder.DESCENDING;
-    public SortOrder clusterSizeSortOrder = SortOrder.ASCENDING;
+    public SortOrder clusterProximitySortOrder = SortOrder.ASCENDING;
+    public SortOrder clusterSizeSortOrder = SortOrder.DESCENDING;
 
     public int spawnerHighlightColor = 0xFFFFFF;
     public int minimumSpawnersForRegion = 1;

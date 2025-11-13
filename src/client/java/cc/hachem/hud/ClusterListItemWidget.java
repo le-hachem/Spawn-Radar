@@ -1,6 +1,5 @@
 package cc.hachem.hud;
 
-import cc.hachem.RadarClient;
 import cc.hachem.core.ClusterManager;
 import cc.hachem.core.SpawnerCluster;
 import net.minecraft.client.MinecraftClient;
@@ -17,7 +16,6 @@ public class ClusterListItemWidget extends Widget
     {
         MinecraftClient client = MinecraftClient.getInstance();
         TextRenderer textRenderer = client.textRenderer;
-        String placeholder = "[(xxx) Cluster#xxx]";
 
         this.x = x;
         this.y = y;
@@ -27,12 +25,12 @@ public class ClusterListItemWidget extends Widget
         this.cluster = cluster;
     }
 
-    public void onMouseRelease(int mx, int my, int mouseButton)
+    @Override
+    public void onMouseClick(int mx, int my, int mouseButton)
     {
-        RadarClient.LOGGER.debug("Clicked: @ {}, {} with {}", mx, my, mouseButton);
-        if (!isMouseHover(mx, my))
-            return;
         if (mouseButton != GLFW.GLFW_MOUSE_BUTTON_LEFT)
+            return;
+        if (!isMouseHover(mx, my))
             return;
         ClusterManager.toggleHighlightCluster(cluster.id());
     }

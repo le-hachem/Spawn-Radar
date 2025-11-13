@@ -116,7 +116,7 @@ public record SpawnerCluster(int id, List<BlockPos> spawners, List<BlockPos> int
         }
 
         clusters.sort(Comparator.comparingDouble(c -> distanceSquared(c.spawners().getFirst(), px, py, pz)));
-        if (RadarClient.config.clusterProximitySortOrder == ConfigManager.SortOrder.DESCENDING)
+        if (RadarClient.config.clusterProximitySortOrder == ConfigManager.SortOrder.ASCENDING)
             Collections.reverse(clusters);
 
         RadarClient.LOGGER.debug("Clusters sorted by proximity to player at ({}, {}, {}).", px, py, pz);
@@ -125,7 +125,7 @@ public record SpawnerCluster(int id, List<BlockPos> spawners, List<BlockPos> int
     public static void sortClustersBySize(List<SpawnerCluster> clusters)
     {
         clusters.sort(Comparator.comparingInt(a -> a.spawners().size()));
-        if (RadarClient.config.clusterSizeSortOrder == ConfigManager.SortOrder.DESCENDING)
+        if (RadarClient.config.clusterSizeSortOrder == ConfigManager.SortOrder.ASCENDING)
             Collections.reverse(clusters);
 
         RadarClient.LOGGER.debug("Clusters sorted by size.");

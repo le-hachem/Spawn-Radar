@@ -204,7 +204,8 @@ public class RadarClient implements ClientModInitializer
 
 		player.sendMessage(Text.translatable("chat.spawn_radar.reset"), false);
 		LOGGER.debug("Cleared {} clusters and {} highlights.", clustersBefore, highlightsBefore);
-	}
+        PanelWidget.refresh();
+    }
 
 	private void onRender(WorldRenderContext context)
 	{
