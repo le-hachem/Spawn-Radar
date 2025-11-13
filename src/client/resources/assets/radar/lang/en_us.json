@@ -21,11 +21,11 @@
   "option.spawn_radar.cluster_3": "Cluster with 3 spawners",
   "option.spawn_radar.cluster_4": "Cluster with 4 spawners",
   "option.spawn_radar.cluster_5_plus": "Cluster with 5+ spawners",
-
   "option.spawn_radar.sort_type.none": "No Sort",
   "option.spawn_radar.sort_type.proximity": "Sort by Proximity",
   "option.spawn_radar.sort_type.size": "Sort by Size",
-
+  "option.spawn_radar.panel_element_count": "Amount of clusters per page",
+  "option.spawn_radar.panel_vertical_offset": "Panel vertical offset",
   "option.spawn_radar.sort_order.ascending": "Ascending",
   "option.spawn_radar.sort_order.descending": "Descending",
 
@@ -48,8 +48,17 @@
   "chat.spawn_radar.invalid_id_number": "Invalid cluster ID. Use a number or 'all'.",
   "chat.spawn_radar.reset": "Reset block bank and spawner data.",
 
-  "command.spawn_radar.teleport_hover": "Click to teleport to this spawner",
+  "button.spawn_radar.expand": ">",
+  "button.spawn_radar.collapse": "v",
+  "button.spawn_radar.cluster_label": "[(%d) Cluster #%d]",
+  "button.spawn_radar.spawner_label": "- Spawners @ [%d, %d, %d]",
+  "button.spawn_radar.prev_page": "< Prev",
+  "button.spawn_radar.next_page": "Next >",
+  "button.spawn_radar.toggle_all_on": "[All ON]",
+  "button.spawn_radar.toggle_all_off": "[All OFF]",
+  "button.spawn_radar.reset": "[Reset]",
 
+  "command.spawn_radar.teleport_hover": "Click to teleport to this spawner",
   "command.spawn_radar.help.scan": "/radar:scan [sorting] [radius] - Scan for spawners and generate clusters.",
   "command.spawn_radar.help.toggle": "/radar:toggle <id|all> - Toggle highlight for a cluster or all clusters.",
   "command.spawn_radar.help.info": "/radar:info <id> - Show all spawners in a cluster with teleport options.",

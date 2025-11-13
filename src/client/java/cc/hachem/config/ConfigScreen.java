@@ -88,27 +88,46 @@ public class ConfigScreen
         );
 
         general.addEntry(entryBuilder
-            .startIntField(Text.of("Amount of clusters per page"), RadarClient.config.panelElementCount)
+            .startIntField(
+                Text.translatable("option.spawn_radar.panel_element_count"),
+                RadarClient.config.panelElementCount
+            )
             .setDefaultValue(ConfigManager.DEFAULT.panelElementCount)
             .setSaveConsumer(value ->
             {
                 RadarClient.config.panelElementCount = value;
-                PanelWidget.setElementCount(value);
-            }).build());
+                if (PanelWidget.getInstance() != null)
+                    PanelWidget.setElementCount(value);
+            })
+            .build()
+        );
 
         general.addEntry(entryBuilder
-            .startIntSlider(Text.of("Panel vertical offset"), (int)(RadarClient.config.verticalPanelOffset*100), 0, 100)
-            .setDefaultValue((int)ConfigManager.DEFAULT.verticalPanelOffset*100)
+            .startIntSlider(
+                Text.translatable("option.spawn_radar.panel_vertical_offset"),
+                (int)(RadarClient.config.verticalPanelOffset*100),
+                0,
+                100
+            )
+            .setDefaultValue((int)(ConfigManager.DEFAULT.verticalPanelOffset*100))
+            .setTextGetter(value -> Text.of(value + "%"))
             .setSaveConsumer(value ->
             {
                 RadarClient.config.verticalPanelOffset = value/100.f;
-                HudRenderer.updatePanelPosition();
-            }).build());
+                if (PanelWidget.getInstance() != null)
+                    HudRenderer.updatePanelPosition();
+            })
+
+            .build()
+        );
 
         ConfigCategory colors = builder.getOrCreateCategory(Text.translatable("option.spawn_radar.colors"));
 
         colors.addEntry(entryBuilder
-            .startColorField(Text.translatable("option.spawn_radar.spawner_color"), RadarClient.config.spawnerHighlightColor)
+            .startColorField(
+                Text.translatable("option.spawn_radar.spawner_color"),
+                RadarClient.config.spawnerHighlightColor
+            )
             .setSaveConsumer(color -> RadarClient.config.spawnerHighlightColor = color)
             .setDefaultValue(ConfigManager.DEFAULT.spawnerHighlightColor)
             .build()
@@ -130,7 +149,12 @@ public class ConfigScreen
         }
 
         colors.addEntry(entryBuilder
-            .startIntSlider(Text.translatable("option.spawn_radar.spawner_opacity"), RadarClient.config.spawnerHighlightOpacity, 0, 100)
+            .startIntSlider(
+                Text.translatable("option.spawn_radar.spawner_opacity"),
+                RadarClient.config.spawnerHighlightOpacity,
+                0,
+                100
+            )
             .setSaveConsumer(value -> RadarClient.config.spawnerHighlightOpacity = value)
             .setDefaultValue(ConfigManager.DEFAULT.spawnerHighlightOpacity)
             .setTextGetter(value -> Text.of(value + "%"))
@@ -138,7 +162,12 @@ public class ConfigScreen
         );
 
         colors.addEntry(entryBuilder
-            .startIntSlider(Text.translatable("option.spawn_radar.region_opacity"), RadarClient.config.regionHighlightOpacity, 0, 100)
+            .startIntSlider(
+                Text.translatable("option.spawn_radar.region_opacity"),
+                RadarClient.config.regionHighlightOpacity,
+                0,
+                100
+            )
             .setSaveConsumer(value -> RadarClient.config.regionHighlightOpacity = value)
             .setDefaultValue(ConfigManager.DEFAULT.regionHighlightOpacity)
             .setTextGetter(value -> Text.of(value + "%"))

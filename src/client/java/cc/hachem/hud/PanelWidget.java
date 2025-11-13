@@ -6,6 +6,7 @@ import cc.hachem.core.SpawnerCluster;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.text.Text;
 import net.minecraft.util.Colors;
 
 import java.util.ArrayList;
@@ -41,21 +42,40 @@ public class PanelWidget extends Widget
         this.width = textRenderer.getWidth(placeholder) + 10;
         this.height = (textRenderer.fontHeight + 6) * elementCount;
 
-        previousPageWidget = new ButtonWidget(x, y - 20, "< Prev", Colors.WHITE, PanelWidget::previousPage);
-        nextPageWidget = new ButtonWidget(x + 100, y - 20, "Next >", Colors.WHITE, PanelWidget::nextPage);
+        previousPageWidget = new ButtonWidget(
+            x, y - 20,
+            Text.translatable("button.spawn_radar.prev_page").getString(),
+            Colors.WHITE,
+            PanelWidget::previousPage
+        );
 
-        toggleAllButton = new ButtonWidget(x, y - 40, "[All OFF]", Colors.GREEN, () ->
-        {
-            ClusterManager.toggleAllClusters();
-            updateTopButtons();
-        });
+        nextPageWidget = new ButtonWidget(
+            x + 100, y - 20,
+            Text.translatable("button.spawn_radar.next_page").getString(),
+            Colors.WHITE,
+            PanelWidget::nextPage
+        );
 
-        resetButton = new ButtonWidget(x, y - 40, "[Reset]", Colors.LIGHT_RED, () ->
-        {
-            if (client.player != null)
-                RadarClient.reset(client.player);
-            updateTopButtons();
-        });
+        toggleAllButton = new ButtonWidget(
+            x, y - 40,
+            Text.translatable("button.spawn_radar.toggle_all_off").getString(),
+            Colors.GREEN,
+            () -> {
+                ClusterManager.toggleAllClusters();
+                updateTopButtons();
+            }
+        );
+
+        resetButton = new ButtonWidget(
+            x, y - 40,
+            Text.translatable("button.spawn_radar.reset").getString(),
+            Colors.LIGHT_RED,
+            () -> {
+                if (client.player != null)
+                    RadarClient.reset(client.player);
+                updateTopButtons();
+            }
+        );
 
         instance = this;
     }
@@ -78,7 +98,7 @@ public class PanelWidget extends Widget
             ClusterListItemWidget widget = new ClusterListItemWidget(cluster, 0, 0, 0);
             clusterList.add(widget);
 
-            String label = String.format("[(%d) Cluster #%d]", cluster.spawners().size(), cluster.id());
+            String label = Text.translatable("button.spawn_radar.cluster_label", cluster.spawners().size(), cluster.id()).getString();
             int labelWidth = textRenderer.getWidth(label);
             if (labelWidth > maxWidth)
                 maxWidth = labelWidth;
@@ -102,14 +122,12 @@ public class PanelWidget extends Widget
 
     public static void updateButtonPositions()
     {
-        // Previous/Next page buttons
         previousPageWidget.setX(instance.getX());
         previousPageWidget.setY(instance.getY() - 20);
 
-        nextPageWidget.setX(previousPageWidget.getX() + previousPageWidget.getWidth() + 50); // spacing
+        nextPageWidget.setX(previousPageWidget.getX() + previousPageWidget.getWidth() + 50);
         nextPageWidget.setY(previousPageWidget.getY());
 
-        // Toggle all / Reset buttons
         toggleAllButton.setX(previousPageWidget.getX());
         toggleAllButton.setY(previousPageWidget.getY() - 20);
 
@@ -119,14 +137,12 @@ public class PanelWidget extends Widget
 
     public static void setElementCount(int newCount)
     {
-        if (newCount <= 0) return; // prevent invalid counts
+        if (newCount <= 0) return;
         elementCount = newCount;
 
-        // Recalculate page count and current page
         pageCount = (int) Math.ceil((double) clusterList.size() / elementCount);
         currentPage = Math.min(currentPage, Math.max(pageCount - 1, 0));
 
-        // Update pages and buttons
         updatePages();
         updateTopButtons();
     }
@@ -147,7 +163,7 @@ public class PanelWidget extends Widget
             previousPageWidget.setX(panel.x);
             previousPageWidget.setY(paginationY);
 
-            pageTextX = previousPageWidget.getX() + previousPageWidget.getWidth()+paginationSpacing;
+            pageTextX = previousPageWidget.getX() + previousPageWidget.getWidth() + paginationSpacing;
             pageTextY = paginationY;
 
             nextPageWidget.setX(pageTextX + pageTextWidth + paginationSpacing);
@@ -160,12 +176,11 @@ public class PanelWidget extends Widget
     private static void updateTopButtons()
     {
         boolean allHighlighted = ClusterManager.getHighlightedClusterIds().size() == ClusterManager.getClusters().size();
-        toggleAllButton.setText(allHighlighted ? "[All OFF]" : "[All ON]");
 
-        if (allHighlighted)
-            toggleAllButton.setColor(Colors.LIGHT_YELLOW);
-        else
-            toggleAllButton.setColor(Colors.GREEN);
+        toggleAllButton.setText(
+            Text.translatable(allHighlighted ? "button.spawn_radar.toggle_all_off" : "button.spawn_radar.toggle_all_on").getString()
+        );
+        toggleAllButton.setColor(allHighlighted ? Colors.LIGHT_YELLOW : Colors.GREEN);
 
         int totalWidth = (nextPageWidget.getX() + nextPageWidget.getWidth()) - previousPageWidget.getX();
         int buttonWidth = totalWidth / 2;
@@ -176,22 +191,20 @@ public class PanelWidget extends Widget
         toggleAllButton.setX(previousPageWidget.getX());
         toggleAllButton.setY(previousPageWidget.getY() - 20);
 
-        resetButton.setX(nextPageWidget.getX() + nextPageWidget.getWidth() - resetButton.getWidth()+10);
+        resetButton.setX(nextPageWidget.getX() + nextPageWidget.getWidth() - resetButton.getWidth() + 10);
         resetButton.setY(previousPageWidget.getY() - 20);
     }
 
     public static void nextPage()
     {
-        if (pageCount == 0)
-            return;
+        if (pageCount == 0) return;
         currentPage = (currentPage + 1) % pageCount;
         updatePages();
     }
 
     public static void previousPage()
     {
-        if (pageCount == 0)
-            return;
+        if (pageCount == 0) return;
         currentPage = (currentPage - 1 + pageCount) % pageCount;
         updatePages();
     }
@@ -246,7 +259,7 @@ public class PanelWidget extends Widget
             child.setY(elementY);
             child.setWidth(maxChildWidth);
             child.render(context);
-            elementY += child.getHeight()+5;
+            elementY += child.getHeight() + 5;
         }
 
         if (pageCount > 1)
