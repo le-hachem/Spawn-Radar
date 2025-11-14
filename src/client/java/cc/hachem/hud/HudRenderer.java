@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
@@ -26,9 +27,12 @@ public class HudRenderer
 
         ClientTickEvents.END_CLIENT_TICK.register(client ->
         {
+            if (!(client.currentScreen instanceof ChatScreen))
+                return;
+
             double mx = client.mouse.getX() / client.getWindow().getScaleFactor();
             double my = client.mouse.getY() / client.getWindow().getScaleFactor();
-            onMouseMove((int)mx, (int)my);
+            onMouseMove((int) mx, (int) my);
 
             long handle = client.getWindow().getHandle();
 
@@ -50,7 +54,6 @@ public class HudRenderer
         });
     }
 
-
     public static void updatePanelPosition()
     {
         if (!children.isEmpty() && PanelWidget.getInstance() != null)
@@ -62,7 +65,6 @@ public class HudRenderer
             PanelWidget.refresh();
         }
     }
-
 
     public static void build()
     {

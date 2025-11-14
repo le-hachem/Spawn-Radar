@@ -87,6 +87,9 @@ public class PanelWidget extends Widget
 
     public static void refresh()
     {
+        if (instance == null)
+            return;
+
         clusterList.clear();
         MinecraftClient client = MinecraftClient.getInstance();
         TextRenderer textRenderer = client.textRenderer;

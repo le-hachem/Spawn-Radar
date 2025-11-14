@@ -96,8 +96,7 @@ public class ConfigScreen
             .setSaveConsumer(value ->
             {
                 RadarClient.config.panelElementCount = value;
-                if (PanelWidget.getInstance() != null)
-                    PanelWidget.setElementCount(value);
+                PanelWidget.setElementCount(value);
             })
             .build()
         );
@@ -114,8 +113,7 @@ public class ConfigScreen
             .setSaveConsumer(value ->
             {
                 RadarClient.config.verticalPanelOffset = value/100.f;
-                if (PanelWidget.getInstance() != null)
-                    HudRenderer.updatePanelPosition();
+                HudRenderer.updatePanelPosition();
             })
 
             .build()
