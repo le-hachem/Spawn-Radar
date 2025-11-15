@@ -11,23 +11,20 @@ public class ButtonWidget extends Widget
 {
     private final Runnable callback;
     private String text;
-    private int color;
     private int baseColor;
+    private boolean hovered = false;
+    private boolean decorated = true;
 
     public ButtonWidget(int x, int y, String text, int color, Runnable callback)
     {
         this.text = text;
         this.callback = callback;
-        this.color = color;
         this.baseColor = color;
 
         this.x = x;
         this.y = y;
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        TextRenderer textRenderer = client.textRenderer;
-        this.width = textRenderer.getWidth(text);
-        this.height = textRenderer.fontHeight;
+        recalcDimensions();
     }
 
     @Override
@@ -35,7 +32,8 @@ public class ButtonWidget extends Widget
     {
         MinecraftClient client = MinecraftClient.getInstance();
         TextRenderer textRenderer = client.textRenderer;
-        context.drawText(textRenderer, text, x, y, color, true);
+        int drawColor = hovered ? lightenColor(baseColor) : baseColor;
+        context.drawText(textRenderer, getDisplayText(), x, y, drawColor, true);
     }
 
     @Override
@@ -55,24 +53,39 @@ public class ButtonWidget extends Widget
     @Override
     public void onMouseMove(int mx, int my)
     {
-        if (isMouseHover(mx, my))
-            color = lightenColor(baseColor);
-        else
-            color = baseColor;
+        hovered = isMouseHover(mx, my);
     }
 
     public void setText(String newText)
     {
         this.text = newText;
-        MinecraftClient client = MinecraftClient.getInstance();
-        TextRenderer textRenderer = client.textRenderer;
-        this.width = textRenderer.getWidth(newText);
+        recalcDimensions();
     }
 
     public void setColor(int color)
     {
-        this.color = color;
         this.baseColor = color;
+    }
+
+    public void setDecorated(boolean decorated)
+    {
+        if (this.decorated == decorated)
+            return;
+        this.decorated = decorated;
+        recalcDimensions();
+    }
+
+    private void recalcDimensions()
+    {
+        MinecraftClient client = MinecraftClient.getInstance();
+        TextRenderer textRenderer = client.textRenderer;
+        this.width = textRenderer.getWidth(getDisplayText());
+        this.height = textRenderer.fontHeight;
+    }
+
+    private String getDisplayText()
+    {
+        return decorated ? "[ " + text + " ]" : text;
     }
 
     private int lightenColor(int color)

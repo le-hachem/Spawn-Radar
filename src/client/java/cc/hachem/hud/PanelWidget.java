@@ -60,7 +60,8 @@ public class PanelWidget extends Widget
             x, y - 40,
             Text.translatable("button.spawn_radar.toggle_all_off").getString(),
             Colors.GREEN,
-            () -> {
+            () ->
+            {
                 ClusterManager.toggleAllClusters();
                 updateTopButtons();
             }
@@ -70,12 +71,16 @@ public class PanelWidget extends Widget
             x, y - 40,
             Text.translatable("button.spawn_radar.reset").getString(),
             Colors.LIGHT_RED,
-            () -> {
+            () ->
+            {
                 if (client.player != null)
                     RadarClient.reset(client.player);
                 updateTopButtons();
             }
         );
+
+        toggleAllButton.setDecorated(false);
+        resetButton.setDecorated(false);
 
         instance = this;
     }
@@ -91,8 +96,7 @@ public class PanelWidget extends Widget
             return;
 
         clusterList.clear();
-        MinecraftClient client = MinecraftClient.getInstance();
-        TextRenderer textRenderer = client.textRenderer;
+        TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
 
         int maxWidth = 0;
 
@@ -134,8 +138,8 @@ public class PanelWidget extends Widget
         toggleAllButton.setX(previousPageWidget.getX());
         toggleAllButton.setY(previousPageWidget.getY() - 20);
 
-        resetButton.setX(nextPageWidget.getX() + nextPageWidget.getWidth() - resetButton.getWidth() + 10);
-        resetButton.setY(previousPageWidget.getY() - 20);
+        resetButton.setX(toggleAllButton.getX() + toggleAllButton.getWidth());
+        resetButton.setY(toggleAllButton.getY());
     }
 
     public static void setElementCount(int newCount)
@@ -191,8 +195,8 @@ public class PanelWidget extends Widget
         toggleAllButton.setX(previousPageWidget.getX());
         toggleAllButton.setY(previousPageWidget.getY() - 20);
 
-        resetButton.setX(nextPageWidget.getX() + nextPageWidget.getWidth() - resetButton.getWidth() + 10);
-        resetButton.setY(previousPageWidget.getY() - 20);
+        resetButton.setX(toggleAllButton.getX() + toggleAllButton.getWidth());
+        resetButton.setY(toggleAllButton.getY());
     }
 
     public static void nextPage()
@@ -241,23 +245,20 @@ public class PanelWidget extends Widget
             resetButton.render(context);
         }
 
-        int leftX = previousPageWidget.getX() + previousPageWidget.getWidth();
-        int rightX = nextPageWidget.getX();
-        int centerX = leftX + (rightX - leftX) / 2;
+        MinecraftClient client = MinecraftClient.getInstance();
+        TextRenderer textRenderer = client.textRenderer;
 
-        int maxChildWidth = 0;
-        for (Widget child : getVisiblePageElements())
-            if (child.getWidth() > maxChildWidth && child instanceof ClusterListItemWidget)
-                maxChildWidth = child.getWidth();
+        int listWidth = Math.max(width, 140);
+        int padding = 6;
+        int frameX = Math.max(2, x - padding);
+        int listX = frameX + padding;
 
-        int elementX = centerX - maxChildWidth / 2;
         int elementY = y;
-
         for (Widget child : getVisiblePageElements())
         {
-            child.setX(elementX);
+            child.setX(listX);
             child.setY(elementY);
-            child.setWidth(maxChildWidth);
+            child.setWidth(listWidth);
             child.render(context);
             elementY += child.getHeight() + 5;
         }
@@ -266,9 +267,6 @@ public class PanelWidget extends Widget
         {
             previousPageWidget.render(context);
             nextPageWidget.render(context);
-
-            MinecraftClient client = MinecraftClient.getInstance();
-            TextRenderer textRenderer = client.textRenderer;
             context.drawText(textRenderer, pageText, pageTextX, pageTextY, Colors.GRAY, false);
         }
     }

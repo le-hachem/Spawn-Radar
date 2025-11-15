@@ -51,7 +51,7 @@
   "button.spawn_radar.expand": ">",
   "button.spawn_radar.collapse": "v",
   "button.spawn_radar.cluster_label": "[(%d) Cluster #%d]",
-  "button.spawn_radar.spawner_label": "- Spawner @ [%d, %d, %d]",
+  "button.spawn_radar.spawner_label": "Spawner @ [%d, %d, %d]",
   "button.spawn_radar.prev_page": "< Zurück",
   "button.spawn_radar.next_page": "Weiter >",
   "button.spawn_radar.toggle_all_on": "[Alle AN]",

@@ -1,5 +1,6 @@
 package cc.hachem.hud;
 
+import cc.hachem.config.ConfigManager;
 import cc.hachem.core.ClusterManager;
 import cc.hachem.core.SpawnerCluster;
 import net.minecraft.client.MinecraftClient;
@@ -8,7 +9,6 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
 import net.minecraft.util.Colors;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.Formatting;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +17,7 @@ public class ClusterListItemWidget extends Widget
 {
     private final SpawnerCluster cluster;
     private boolean expanded = false;
+    private final String baseLabel;
 
     private final ButtonWidget expandButton;
     private final ButtonWidget clusterButton;
@@ -33,15 +34,18 @@ public class ClusterListItemWidget extends Widget
         this.width = width;
         this.height = textRenderer.fontHeight + 5;
 
-        expandButton = new ButtonWidget(x, y, Text.translatable("button.spawn_radar.expand").getString(), Colors.WHITE, this::toggleExpanded);
+        expandButton = new ButtonWidget(x, y, "+", Colors.WHITE, this::toggleExpanded);
+        expandButton.setDecorated(false);
 
+        baseLabel = Text.translatable("button.spawn_radar.cluster_label", cluster.spawners().size(), cluster.id()).getString();
         clusterButton = new ButtonWidget(
             x + expandButton.getWidth() + 5,
             y,
-            Text.translatable("button.spawn_radar.cluster_label", cluster.spawners().size(), cluster.id()).getString(),
+            baseLabel,
             Colors.LIGHT_GRAY,
             () -> ClusterManager.toggleHighlightCluster(cluster.id())
         );
+        clusterButton.setDecorated(false);
 
         for (BlockPos pos : cluster.spawners())
         {
@@ -62,6 +66,7 @@ public class ClusterListItemWidget extends Widget
                         );
                 }
             ));
+            children.getLast().setDecorated(false);
         }
     }
 
@@ -90,24 +95,35 @@ public class ClusterListItemWidget extends Widget
     @Override
     public void render(DrawContext context)
     {
-        expandButton.setText(Text.translatable(expanded ? "button.spawn_radar.collapse" : "button.spawn_radar.expand").getString());
+        TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
+
+        expandButton.setText(expanded ? "-" : "+");
         expandButton.setX(x);
         expandButton.setY(y);
         expandButton.render(context);
 
         clusterButton.setX(x + expandButton.getWidth() + 5);
         clusterButton.setY(y);
-        clusterButton.setText(Text.translatable("button.spawn_radar.cluster_label", cluster.spawners().size(), cluster.id()).getString());
-        clusterButton.setColor(ClusterManager.isHighlighted(cluster.id()) ? Colors.WHITE : Colors.LIGHT_GRAY);
+        boolean highlighted = ClusterManager.isHighlighted(cluster.id());
+
+        String statusMarker = highlighted ? "[*]" : "[ ]";
+        clusterButton.setText(statusMarker + " " + baseLabel);
+
+        int accentColor = 0xFF000000 | ConfigManager.getClusterColor(cluster.spawners().size());
+        clusterButton.setColor(highlighted ? accentColor : Colors.LIGHT_GRAY);
         clusterButton.render(context);
 
         if (expanded)
         {
             int childY = y + expandButton.getHeight() + 2;
-            for (ButtonWidget child : children)
+            for (int i = 0; i < children.size(); i++)
             {
+                ButtonWidget child = children.get(i);
                 child.setX(x + expandButton.getWidth() + 10);
                 child.setY(childY);
+                String branch = (i == children.size() - 1) ? "┗━━" : "┠━━";
+                int branchX = child.getX() - textRenderer.getWidth(branch) - 4;
+                context.drawText(textRenderer, branch, branchX, childY, Colors.DARK_GRAY, false);
                 child.render(context);
                 childY += child.getHeight() + 2;
             }
@@ -118,7 +134,7 @@ public class ClusterListItemWidget extends Widget
     public int getHeight()
     {
         if (!expanded) return expandButton.getHeight();
-        return expandButton.getHeight() + children.size() * (children.get(0).getHeight() + 2);
+        return expandButton.getHeight() + children.size() * (children.getFirst().getHeight() + 2);
     }
 
     private void toggleExpanded()
