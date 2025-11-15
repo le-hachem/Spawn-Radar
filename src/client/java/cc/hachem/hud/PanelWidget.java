@@ -155,23 +155,20 @@ public class PanelWidget extends Widget
         MinecraftClient client = MinecraftClient.getInstance();
         TextRenderer textRenderer = client.textRenderer;
 
-        if (pageCount > 1)
-        {
-            PanelWidget panel = getInstance();
+        PanelWidget panel = getInstance();
 
-            pageText = String.format("%d/%d", currentPage + 1, pageCount);
-            int pageTextWidth = textRenderer.getWidth(pageText);
-            int paginationY = panel.y - 20;
+        pageText = String.format("%d/%d", currentPage + 1, pageCount);
+        int pageTextWidth = textRenderer.getWidth(pageText);
+        int paginationY = panel.y - 20;
 
-            previousPageWidget.setX(panel.x);
-            previousPageWidget.setY(paginationY);
+        previousPageWidget.setX(panel.x);
+        previousPageWidget.setY(paginationY);
 
-            pageTextX = previousPageWidget.getX() + previousPageWidget.getWidth() + paginationSpacing;
-            pageTextY = paginationY;
+        pageTextX = previousPageWidget.getX() + previousPageWidget.getWidth() + paginationSpacing;
+        pageTextY = paginationY;
 
-            nextPageWidget.setX(pageTextX + pageTextWidth + paginationSpacing);
-            nextPageWidget.setY(paginationY);
-        }
+        nextPageWidget.setX(pageTextX + pageTextWidth + paginationSpacing);
+        nextPageWidget.setY(paginationY);
 
         updateTopButtons();
     }
@@ -265,12 +262,15 @@ public class PanelWidget extends Widget
             elementY += child.getHeight() + 5;
         }
 
-        previousPageWidget.render(context);
-        nextPageWidget.render(context);
+        if (pageCount >= 1)
+        {
+            previousPageWidget.render(context);
+            nextPageWidget.render(context);
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        TextRenderer textRenderer = client.textRenderer;
-        context.drawText(textRenderer, pageText, pageTextX, pageTextY, Colors.GRAY, false);
+            MinecraftClient client = MinecraftClient.getInstance();
+            TextRenderer textRenderer = client.textRenderer;
+            context.drawText(textRenderer, pageText, pageTextX, pageTextY, Colors.GRAY, false);
+        }
     }
 
     private static List<Widget> getVisiblePageElements()
