@@ -277,4 +277,5 @@ public class PanelWidget extends Widget
         int end = Math.min(start + elementCount, clusterList.size());
         return clusterList.subList(start, end);
     }
+
 }

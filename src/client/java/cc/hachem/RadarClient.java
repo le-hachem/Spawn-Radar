@@ -58,6 +58,7 @@ public class RadarClient implements ClientModInitializer
 
         List<SpawnerCluster> clusters = SpawnerCluster.findClusters(source, spawners, 16.0, sortType);
         ClusterManager.setClusters(clusters);
+        BlockHighlightRenderer.clearRegionMeshCache();
         RadarClient.LOGGER.info("Generated {} clusters using sort type {}", clusters.size(), sortType);
 
         if (RadarClient.config.highlightAfterScan)
@@ -119,6 +120,7 @@ public class RadarClient implements ClientModInitializer
 
         ClusterManager.unhighlightAllClusters();
         ClusterManager.getClusters().clear();
+        BlockHighlightRenderer.clearRegionMeshCache();
         BlockBank.clear();
 
         player.sendMessage(Text.translatable("chat.spawn_radar.reset"), false);
@@ -162,7 +164,7 @@ public class RadarClient implements ClientModInitializer
                 if (spawnerCount >= config.minimumSpawnersForRegion)
                 {
                     List<BlockPos> region = cluster.intersectionRegion();
-                    BlockHighlightRenderer.fillRegionMesh(context, region, clusterColor, config.regionHighlightOpacity / 100f);
+                    BlockHighlightRenderer.fillRegionMesh(context, cluster.id(), region, clusterColor, config.regionHighlightOpacity / 100f);
                 }
             }
 
@@ -187,11 +189,12 @@ public class RadarClient implements ClientModInitializer
         HudRenderer.init();
         LOGGER.info("KeyManager initialized.");
 
-        WorldRenderEvents.BEFORE_TRANSLUCENT.register(this::onRender);
+        WorldRenderEvents.END_MAIN.register(this::onRender);
         ClientPlayConnectionEvents.JOIN.register(((handler, sender, client) ->
         {
-            ClusterManager.unhighlightAllClusters();
-            ClusterManager.getClusters().clear();
+        ClusterManager.unhighlightAllClusters();
+        ClusterManager.getClusters().clear();
+        BlockHighlightRenderer.clearRegionMeshCache();
             BlockBank.clear();
             PanelWidget.refresh();
             LOGGER.info("Reset initial data.");

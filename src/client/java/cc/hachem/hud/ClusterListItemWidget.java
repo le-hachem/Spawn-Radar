@@ -22,6 +22,7 @@ public class ClusterListItemWidget extends Widget
     private final ButtonWidget expandButton;
     private final ButtonWidget clusterButton;
     private final List<ButtonWidget> children = new ArrayList<>();
+    private int rowWidth;
 
     public ClusterListItemWidget(SpawnerCluster cluster, int x, int y, int width)
     {
@@ -32,6 +33,7 @@ public class ClusterListItemWidget extends Widget
         this.x = x;
         this.y = y;
         this.width = width;
+        this.rowWidth = width;
         this.height = textRenderer.fontHeight + 5;
 
         expandButton = new ButtonWidget(x, y, "+", Colors.WHITE, this::toggleExpanded);
@@ -68,6 +70,13 @@ public class ClusterListItemWidget extends Widget
             ));
             children.getLast().setDecorated(false);
         }
+    }
+
+    @Override
+    public void setWidth(int width)
+    {
+        super.setWidth(width);
+        this.rowWidth = width;
     }
 
     @Override
@@ -111,6 +120,8 @@ public class ClusterListItemWidget extends Widget
 
         int accentColor = 0xFF000000 | ConfigManager.getClusterColor(cluster.spawners().size());
         clusterButton.setColor(highlighted ? accentColor : Colors.LIGHT_GRAY);
+        int availableWidth = Math.max(clusterButton.getWidth(), rowWidth - (clusterButton.getX() - x) - 4);
+        clusterButton.setWidth(Math.max(availableWidth, 80));
         clusterButton.render(context);
 
         if (expanded)
@@ -120,10 +131,12 @@ public class ClusterListItemWidget extends Widget
             {
                 ButtonWidget child = children.get(i);
                 child.setX(x + expandButton.getWidth() + 10);
-                child.setY(childY);
+                child.setY(childY); 
                 String branch = (i == children.size() - 1) ? "┗━━" : "┠━━";
                 int branchX = child.getX() - textRenderer.getWidth(branch) - 4;
                 context.drawText(textRenderer, branch, branchX, childY, Colors.DARK_GRAY, false);
+                int childAvailable = Math.max(child.getWidth(), rowWidth - (child.getX() - x) - 4);
+                child.setWidth(Math.max(childAvailable, 80));
                 child.render(context);
                 childY += child.getHeight() + 2;
             }

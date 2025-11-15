@@ -48,9 +48,9 @@ public class BlockHighlightRenderer
         QuadVertices reversed()
         {
             return new QuadVertices(x1, y1, z1,
-                                     x4, y4, z4,
-                                     x3, y3, z3,
-                                     x2, y2, z2);
+                                    x4, y4, z4,
+                                    x3, y3, z3,
+                                    x2, y2, z2);
         }
     }
 
@@ -67,6 +67,9 @@ public class BlockHighlightRenderer
 
     private static BufferBuilder buffer;
     private static MappableRingBuffer vertexBuffer;
+    private static final Map<Integer, CachedMesh> REGION_MESH_CACHE = new HashMap<>();
+
+    private record CachedMesh(int regionHash, List<GreedyMesher.Quad> quads) {}
 
     public static void draw(WorldRenderContext context, BlockPos position, int color, float a)
     {
@@ -100,7 +103,7 @@ public class BlockHighlightRenderer
         RadarClient.LOGGER.debug("Drawn block highlight at ({}, {}, {}) with color #{}, alpha {}", x, y, z, Integer.toHexString(color), a);
     }
 
-    public static void fillRegionMesh(WorldRenderContext context, List<BlockPos> region, int color, float a)
+    public static void fillRegionMesh(WorldRenderContext context, int regionId, List<BlockPos> region, int color, float a)
     {
         if (region.isEmpty())
             return;
@@ -119,12 +122,16 @@ public class BlockHighlightRenderer
         if (buffer == null)
             buffer = new BufferBuilder(ALLOCATOR, FILLED_THROUGH_WALLS.getVertexFormatMode(), FILLED_THROUGH_WALLS.getVertexFormat());
 
-        Set<BlockPos> set = new HashSet<>(region);
-        List<GreedyMesher.Quad> quads = GreedyMesher.mesh(set);
-        for (GreedyMesher.Quad q : quads)
+        CachedMesh cachedMesh = getOrCreateMesh(regionId, region);
+        for (GreedyMesher.Quad q : cachedMesh.quads())
             emitQuad(matrices, buffer, q, r, g, b, a);
 
         matrices.pop();
+    }
+
+    public static void clearRegionMeshCache()
+    {
+        REGION_MESH_CACHE.clear();
     }
 
     private static void emitQuad(MatrixStack matrices, BufferBuilder buffer,
@@ -145,6 +152,29 @@ public class BlockHighlightRenderer
         QuadVertices vertices = buildVertices(quad);
         drawQuad(buffer, matrices, vertices, r, g, b, a);
         drawQuad(buffer, matrices, vertices.reversed(), r, g, b, a);
+    }
+
+    private static CachedMesh getOrCreateMesh(int regionId, List<BlockPos> region)
+    {
+        int regionHash = hashRegion(region);
+        CachedMesh cached = REGION_MESH_CACHE.get(regionId);
+        if (cached != null && cached.regionHash == regionHash)
+            return cached;
+
+        Set<BlockPos> set = new HashSet<>(region);
+        List<GreedyMesher.Quad> quads = List.copyOf(GreedyMesher.mesh(set));
+        cached = new CachedMesh(regionHash, quads);
+        REGION_MESH_CACHE.put(regionId, cached);
+        return cached;
+    }
+
+    private static int hashRegion(List<BlockPos> region)
+    {
+        int hash = 1;
+        for (BlockPos pos : region)
+            hash = 31 * hash + pos.hashCode();
+        hash = 31 * hash + region.size();
+        return hash;
     }
 
     private static void drawQuad(BufferBuilder buffer, MatrixStack matrices, QuadVertices vertices,
