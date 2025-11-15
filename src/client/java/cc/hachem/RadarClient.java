@@ -124,8 +124,6 @@ public class RadarClient implements ClientModInitializer
         player.sendMessage(Text.translatable("chat.spawn_radar.reset"), false);
         LOGGER.debug("Cleared {} clusters and {} highlights.", clustersBefore, highlightsBefore);
         PanelWidget.refresh();
-
-        BlockHighlightRenderer.clearCache();
     }
 
     private void onRender(WorldRenderContext context)
@@ -195,8 +193,7 @@ public class RadarClient implements ClientModInitializer
             ClusterManager.getClusters().clear();
             BlockBank.clear();
             PanelWidget.refresh();
-
-            LOGGER.info("Cleared block bank and cluster manager.");
+            LOGGER.info("Reset initial data.");
 
             HudRenderer.build();
             LOGGER.info("Built HudRenderer widgets.");

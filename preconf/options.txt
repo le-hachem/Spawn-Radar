@@ -109,7 +109,7 @@ key_key.jump:key.keyboard.tab
 key_key.sneak:key.keyboard.left.shift
 key_key.sprint:key.keyboard.keypad.0
 key_key.drop:key.keyboard.4
-key_key.inventory:key.keyboard.q
+key_key.inventory:key.keyboard.r
 key_key.chat:key.keyboard.y
 key_key.playerlist:key.keyboard.grave.accent
 key_key.pickItem:key.mouse.middle
@@ -130,7 +130,7 @@ key_key.hotbar.1:key.keyboard.space
 key_key.hotbar.2:key.keyboard.w
 key_key.hotbar.3:key.keyboard.2
 key_key.hotbar.4:key.keyboard.3
-key_key.hotbar.5:key.keyboard.r
+key_key.hotbar.5:key.keyboard.t
 key_key.hotbar.6:key.keyboard.g
 key_key.hotbar.7:key.keyboard.x
 key_key.hotbar.8:key.keyboard.c

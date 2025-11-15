@@ -265,18 +265,12 @@ public class PanelWidget extends Widget
             elementY += child.getHeight() + 5;
         }
 
-        if (pageCount > 1)
-        {
-            previousPageWidget.render(context);
-            nextPageWidget.render(context);
+        previousPageWidget.render(context);
+        nextPageWidget.render(context);
 
-            if (!pageText.isEmpty())
-            {
-                MinecraftClient client = MinecraftClient.getInstance();
-                TextRenderer textRenderer = client.textRenderer;
-                context.drawText(textRenderer, pageText, pageTextX, pageTextY, Colors.GRAY, false);
-            }
-        }
+        MinecraftClient client = MinecraftClient.getInstance();
+        TextRenderer textRenderer = client.textRenderer;
+        context.drawText(textRenderer, pageText, pageTextX, pageTextY, Colors.GRAY, false);
     }
 
     private static List<Widget> getVisiblePageElements()
