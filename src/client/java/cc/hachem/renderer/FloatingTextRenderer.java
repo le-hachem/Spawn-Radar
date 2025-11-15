@@ -6,7 +6,7 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 
-public class TextRenderer
+public class FloatingTextRenderer
 {
     public static void render(WorldRenderContext context, BlockPos pos,
                               String text, float scale, int color,

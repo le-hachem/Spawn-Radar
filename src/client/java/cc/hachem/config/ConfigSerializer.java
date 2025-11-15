@@ -13,17 +13,16 @@ import java.io.IOException;
 public class ConfigSerializer
 {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final File CONFIG_FILE = new File(
-        FabricLoader.getInstance().getConfigDir().toFile(),
-        "spawn_radar.json"
-    );
+    private static final File CONFIG_FILE = new File(FabricLoader.getInstance().getConfigDir().toFile(),
+                                                    "spawn_radar.json");
 
     public static void save()
     {
         try (FileWriter writer = new FileWriter(CONFIG_FILE))
         {
             GSON.toJson(RadarClient.config, writer);
-        } catch (IOException e)
+        }
+        catch (IOException e)
         {
             RadarClient.LOGGER.error("Failed to save config: {}", e.getMessage());
         }
@@ -34,6 +33,7 @@ public class ConfigSerializer
         if (!CONFIG_FILE.exists())
         {
             RadarClient.config = new ConfigManager();
+            RadarClient.config.ensureColorPalette();
             save();
         }
 
@@ -44,13 +44,17 @@ public class ConfigSerializer
             {
                 RadarClient.LOGGER.error("Config file was empty or invalid. Recreating default config.");
                 RadarClient.config = new ConfigManager();
+                RadarClient.config.ensureColorPalette();
                 save();
             }
+            else
+                RadarClient.config.ensureColorPalette();
 
         } catch (IOException e)
         {
             RadarClient.LOGGER.error("Failed to load config: {}", e.getMessage());
             RadarClient.config = new ConfigManager();
+            RadarClient.config.ensureColorPalette();
         }
     }
 }

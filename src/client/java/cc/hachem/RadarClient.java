@@ -6,7 +6,7 @@ import cc.hachem.core.*;
 import cc.hachem.hud.HudRenderer;
 import cc.hachem.hud.PanelWidget;
 import cc.hachem.renderer.BlockHighlightRenderer;
-import cc.hachem.renderer.TextRenderer;
+import cc.hachem.renderer.FloatingTextRenderer;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
@@ -146,7 +146,8 @@ public class RadarClient implements ClientModInitializer
                         if (id != ids.getLast())
                             label.append("\n");
                     }
-                    TextRenderer.renderBlockNametag(context, pos, label.toString());
+
+                    FloatingTextRenderer.renderBlockNametag(context, pos, label.toString());
                 }
             }
 

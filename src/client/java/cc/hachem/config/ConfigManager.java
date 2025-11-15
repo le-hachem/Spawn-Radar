@@ -43,12 +43,40 @@ public class ConfigManager
                 0xFF0000,
                 0xFF00FF));
 
+    public void ensureColorPalette()
+    {
+        if (clusterColors == null)
+        {
+            clusterColors = new ArrayList<>(DEFAULT.clusterColors);
+            RadarClient.LOGGER.warn("Cluster color palette missing, restored defaults.");
+            return;
+        }
+
+        clusterColors.removeIf(java.util.Objects::isNull);
+
+        if (clusterColors.isEmpty())
+        {
+            clusterColors.addAll(DEFAULT.clusterColors);
+            RadarClient.LOGGER.warn("Cluster color palette empty, restored defaults.");
+            return;
+        }
+
+        int originalSize = clusterColors.size();
+        while (clusterColors.size() < DEFAULT.clusterColors.size())
+            clusterColors.add(DEFAULT.clusterColors.get(clusterColors.size()));
+
+        if (clusterColors.size() != originalSize)
+            RadarClient.LOGGER.warn("Cluster color palette had {} entries; padded to {}", originalSize, clusterColors.size());
+    }
+
     public static int getClusterColor(int spawnerCount)
     {
         if (spawnerCount <= 0)
             return 0xFFFFFF;
+        RadarClient.config.ensureColorPalette();
+
         if (spawnerCount <= RadarClient.config.clusterColors.size())
-            return RadarClient.config.clusterColors.get(spawnerCount - 1);
+            return RadarClient.config.clusterColors.get(Math.max(0, spawnerCount - 1));
         return RadarClient.config.clusterColors.getLast();
     }
 }
