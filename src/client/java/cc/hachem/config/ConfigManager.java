@@ -20,6 +20,16 @@ public class ConfigManager
         public String toString() { return name; }
     }
 
+    public enum HudHorizontalAlignment
+    {
+        LEFT("option.spawn_radar.hud_alignment.left"),
+        RIGHT("option.spawn_radar.hud_alignment.right");
+
+        private final String name;
+        HudHorizontalAlignment(String name) { this.name = name; }
+        public String toString() { return name; }
+    }
+
     public SpawnerCluster.SortType defaultSortType = SpawnerCluster.SortType.NO_SORT;
     public SortOrder clusterProximitySortOrder = SortOrder.ASCENDING;
     public SortOrder clusterSizeSortOrder = SortOrder.DESCENDING;
@@ -35,6 +45,7 @@ public class ConfigManager
 
     public double verticalPanelOffset = 0.1;
     public int panelElementCount = 5;
+    public HudHorizontalAlignment panelHorizontalAlignment = HudHorizontalAlignment.LEFT;
 
     public List<Integer> clusterColors = new ArrayList<>(
         List.of(0x00FFFF,
@@ -78,5 +89,11 @@ public class ConfigManager
         if (spawnerCount <= RadarClient.config.clusterColors.size())
             return RadarClient.config.clusterColors.get(Math.max(0, spawnerCount - 1));
         return RadarClient.config.clusterColors.getLast();
+    }
+
+    public void ensureHudAlignment()
+    {
+        if (panelHorizontalAlignment == null)
+            panelHorizontalAlignment = DEFAULT.panelHorizontalAlignment;
     }
 }

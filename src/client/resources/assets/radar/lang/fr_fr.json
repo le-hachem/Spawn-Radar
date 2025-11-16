@@ -23,6 +23,7 @@
   "option.spawn_radar.cluster_5_plus": "Cluster avec 5+ spawners",
   "option.spawn_radar.panel_element_count": "Nombre de clusters par page",
   "option.spawn_radar.panel_vertical_offset": "Décalage vertical du panneau",
+  "option.spawn_radar.panel_horizontal_alignment": "Alignement horizontal du panneau",
 
   "option.spawn_radar.sort_type.none": "Aucun tri",
   "option.spawn_radar.sort_type.proximity": "Trier par proximité",
@@ -30,6 +31,8 @@
 
   "option.spawn_radar.sort_order.ascending": "Ascendant",
   "option.spawn_radar.sort_order.descending": "Descendant",
+  "option.spawn_radar.hud_alignment.left": "Gauche",
+  "option.spawn_radar.hud_alignment.right": "Droite",
 
   "chat.spawn_radar.searching": "Recherche des spawners...",
   "chat.spawn_radar.found": "%d spawners trouvés.",
@@ -53,11 +56,11 @@
   "button.spawn_radar.expand": ">",
   "button.spawn_radar.collapse": "v",
   "button.spawn_radar.cluster_label": "[(%d) Cluster #%d]",
-  "button.spawn_radar.spawner_label": "Spawner @ [%d, %d, %d]",
   "button.spawn_radar.prev_page": "Précédent",
   "button.spawn_radar.next_page": "Suivant",
   "button.spawn_radar.toggle_all_on": "[Tout ON]",
   "button.spawn_radar.toggle_all_off": "[Tout OFF]",
+  "button.spawn_radar.rescan": "[Scanner]",
   "button.spawn_radar.reset": "[Réinitialiser]",
 
   "command.spawn_radar.teleport_hover": "Cliquez pour téléporter vers ce spawner",

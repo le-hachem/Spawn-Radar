@@ -1,6 +1,7 @@
 package cc.hachem.hud;
 
 import cc.hachem.RadarClient;
+import cc.hachem.config.ConfigManager;
 import cc.hachem.core.ClusterManager;
 import cc.hachem.core.SpawnerCluster;
 import net.minecraft.client.MinecraftClient;
@@ -18,6 +19,7 @@ public class PanelWidget extends Widget
     private static ButtonWidget previousPageWidget;
     private static ButtonWidget nextPageWidget;
     private static ButtonWidget toggleAllButton;
+    private static ButtonWidget rescanButton;
     private static ButtonWidget resetButton;
 
     private static int elementCount = 5;
@@ -67,6 +69,13 @@ public class PanelWidget extends Widget
             }
         );
 
+        rescanButton = new ButtonWidget(
+            x, y - 40,
+            Text.translatable("button.spawn_radar.rescan").getString(),
+            Colors.CYAN,
+            PanelWidget::triggerRescan
+        );
+
         resetButton = new ButtonWidget(
             x, y - 40,
             Text.translatable("button.spawn_radar.reset").getString(),
@@ -80,6 +89,7 @@ public class PanelWidget extends Widget
         );
 
         toggleAllButton.setDecorated(false);
+        rescanButton.setDecorated(false);
         resetButton.setDecorated(false);
 
         instance = this;
@@ -96,26 +106,22 @@ public class PanelWidget extends Widget
             return;
 
         clusterList.clear();
-        TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
-
-        int maxWidth = 0;
+        int minWidth = 140;
+        int maxWidth = minWidth;
 
         for (SpawnerCluster cluster : ClusterManager.getClusters())
         {
             ClusterListItemWidget widget = new ClusterListItemWidget(cluster, 0, 0, 0);
             clusterList.add(widget);
 
-            String label = Text.translatable("button.spawn_radar.cluster_label", cluster.spawners().size(), cluster.id()).getString();
-            int labelWidth = textRenderer.getWidth(label);
-            if (labelWidth > maxWidth)
-                maxWidth = labelWidth;
+            maxWidth = Math.max(maxWidth, widget.getRequiredWidth());
         }
 
         int padding = 10;
 
         if (!clusterList.isEmpty())
         {
-            int finalMaxWidth = maxWidth + padding;
+            int finalMaxWidth = Math.max(minWidth, maxWidth + padding);
             clusterList.forEach(c -> c.setWidth(finalMaxWidth));
             getInstance().width = finalMaxWidth;
         }
@@ -125,27 +131,25 @@ public class PanelWidget extends Widget
 
         updatePages();
         updateTopButtons();
+
+        HudRenderer.updatePanelPosition();
     }
 
-    public static void updateButtonPositions()
+    public static void onPanelMoved()
     {
-        previousPageWidget.setX(instance.getX());
-        previousPageWidget.setY(instance.getY() - 20);
-
-        nextPageWidget.setX(previousPageWidget.getX() + previousPageWidget.getWidth() + 50);
-        nextPageWidget.setY(previousPageWidget.getY());
-
-        toggleAllButton.setX(previousPageWidget.getX());
-        toggleAllButton.setY(previousPageWidget.getY() - 20);
-
-        resetButton.setX(toggleAllButton.getX() + toggleAllButton.getWidth());
-        resetButton.setY(toggleAllButton.getY());
+        if (instance == null)
+            return;
+        updatePages();
     }
 
     public static void setElementCount(int newCount)
     {
-        if (newCount <= 0) return;
+        if (newCount <= 0)
+            return;
         elementCount = newCount;
+
+        if (instance == null)
+            return;
 
         pageCount = (int) Math.ceil((double) clusterList.size() / elementCount);
         currentPage = Math.min(currentPage, Math.max(pageCount - 1, 0));
@@ -164,15 +168,33 @@ public class PanelWidget extends Widget
         pageText = String.format("%d/%d", currentPage + 1, pageCount);
         int pageTextWidth = textRenderer.getWidth(pageText);
         int paginationY = panel.y - 20;
+        int listWidth = Math.max(panel.width, 140);
+        int leftEdge = panel.x;
+        int rightEdge = panel.x + listWidth;
+        ConfigManager.HudHorizontalAlignment alignment = getPanelAlignment();
 
-        previousPageWidget.setX(panel.x);
-        previousPageWidget.setY(paginationY);
+        if (alignment == ConfigManager.HudHorizontalAlignment.RIGHT)
+        {
+            nextPageWidget.setX(rightEdge - nextPageWidget.getWidth());
+            nextPageWidget.setY(paginationY);
 
-        pageTextX = previousPageWidget.getX() + previousPageWidget.getWidth() + paginationSpacing;
-        pageTextY = paginationY;
+            pageTextX = nextPageWidget.getX() - paginationSpacing - pageTextWidth;
+            pageTextY = paginationY;
 
-        nextPageWidget.setX(pageTextX + pageTextWidth + paginationSpacing);
-        nextPageWidget.setY(paginationY);
+            previousPageWidget.setX(pageTextX - paginationSpacing - previousPageWidget.getWidth());
+            previousPageWidget.setY(paginationY);
+        }
+        else
+        {
+            previousPageWidget.setX(leftEdge);
+            previousPageWidget.setY(paginationY);
+
+            pageTextX = previousPageWidget.getX() + previousPageWidget.getWidth() + paginationSpacing;
+            pageTextY = paginationY;
+
+            nextPageWidget.setX(pageTextX + pageTextWidth + paginationSpacing);
+            nextPageWidget.setY(paginationY);
+        }
 
         updateTopButtons();
     }
@@ -186,17 +208,44 @@ public class PanelWidget extends Widget
         );
         toggleAllButton.setColor(allHighlighted ? Colors.LIGHT_YELLOW : Colors.GREEN);
 
-        int totalWidth = (nextPageWidget.getX() + nextPageWidget.getWidth()) - previousPageWidget.getX();
-        int buttonWidth = totalWidth / 2;
+        PanelWidget panel = getInstance();
+        if (panel == null)
+            return;
 
-        toggleAllButton.setWidth(buttonWidth);
-        resetButton.setWidth(buttonWidth);
+        int listWidth = Math.max(panel.width, 140);
+        int baseY = previousPageWidget.getY() - 20;
+        toggleAllButton.setY(baseY);
+        rescanButton.setY(baseY);
+        resetButton.setY(baseY);
 
-        toggleAllButton.setX(previousPageWidget.getX());
-        toggleAllButton.setY(previousPageWidget.getY() - 20);
+        ConfigManager.HudHorizontalAlignment alignment = getPanelAlignment();
+        if (alignment == ConfigManager.HudHorizontalAlignment.RIGHT)
+        {
+            toggleAllButton.setWidth(toggleAllButton.getContentWidth());
+            rescanButton.setWidth(rescanButton.getContentWidth());
+            resetButton.setWidth(resetButton.getContentWidth());
+            resetButton.setX(panel.x + listWidth - resetButton.getWidth());
+            rescanButton.setX(resetButton.getX() - paginationSpacing - rescanButton.getWidth());
+            toggleAllButton.setX(rescanButton.getX() - paginationSpacing - toggleAllButton.getWidth());
+        }
+        else
+        {
+            int buttonY = baseY;
+            int toggleX = previousPageWidget.getX();
+            toggleAllButton.setWidth(toggleAllButton.getContentWidth());
+            toggleAllButton.setX(toggleX);
+            toggleAllButton.setY(buttonY);
 
-        resetButton.setX(toggleAllButton.getX() + toggleAllButton.getWidth());
-        resetButton.setY(toggleAllButton.getY());
+            int rescanX = toggleAllButton.getX() + toggleAllButton.getWidth() + paginationSpacing;
+            rescanButton.setWidth(rescanButton.getContentWidth());
+            rescanButton.setX(rescanX);
+            rescanButton.setY(buttonY);
+
+            int resetX = rescanButton.getX() + rescanButton.getWidth() + paginationSpacing;
+            resetButton.setWidth(resetButton.getContentWidth());
+            resetButton.setX(resetX);
+            resetButton.setY(buttonY);
+        }
     }
 
     public static void nextPage()
@@ -217,6 +266,7 @@ public class PanelWidget extends Widget
     public void onMouseClick(int mx, int my, int mouseButton)
     {
         toggleAllButton.onMouseClick(mx, my, mouseButton);
+        rescanButton.onMouseClick(mx, my, mouseButton);
         resetButton.onMouseClick(mx, my, mouseButton);
 
         previousPageWidget.onMouseClick(mx, my, mouseButton);
@@ -229,6 +279,7 @@ public class PanelWidget extends Widget
     public void onMouseMove(int mx, int my)
     {
         toggleAllButton.onMouseMove(mx, my);
+        rescanButton.onMouseMove(mx, my);
         resetButton.onMouseMove(mx, my);
         previousPageWidget.onMouseMove(mx, my);
         nextPageWidget.onMouseMove(mx, my);
@@ -239,9 +290,10 @@ public class PanelWidget extends Widget
     @Override
     public void render(DrawContext context)
     {
-        if (!getVisiblePageElements().isEmpty())
+        if (!ClusterManager.getClusters().isEmpty())
         {
             toggleAllButton.render(context);
+            rescanButton.render(context);
             resetButton.render(context);
         }
 
@@ -253,12 +305,19 @@ public class PanelWidget extends Widget
         int frameX = Math.max(2, x - padding);
         int listX = frameX + padding;
 
+        var panelAlignment = getPanelAlignment();
+        var entryAlignment = panelAlignment == ConfigManager.HudHorizontalAlignment.RIGHT
+                                 ? ConfigManager.HudHorizontalAlignment.RIGHT
+                                 : ConfigManager.HudHorizontalAlignment.LEFT;
+
         int elementY = y;
         for (Widget child : getVisiblePageElements())
         {
             child.setX(listX);
             child.setY(elementY);
             child.setWidth(listWidth);
+            if (child instanceof ClusterListItemWidget clusterItem)
+                clusterItem.setAlignment(entryAlignment);
             child.render(context);
             elementY += child.getHeight() + 5;
         }
@@ -276,6 +335,33 @@ public class PanelWidget extends Widget
         int start = currentPage * elementCount;
         int end = Math.min(start + elementCount, clusterList.size());
         return clusterList.subList(start, end);
+    }
+
+    private static void triggerRescan()
+    {
+        var client = MinecraftClient.getInstance();
+        if (client.player == null)
+            return;
+        int radius = RadarClient.config != null ? RadarClient.config.defaultSearchRadius : ConfigManager.DEFAULT.defaultSearchRadius;
+        var sortType = RadarClient.config != null ? RadarClient.config.defaultSortType : ConfigManager.DEFAULT.defaultSortType;
+        RadarClient.generateClusters(client.player, radius, mapSortType(sortType));
+    }
+
+    private static ConfigManager.HudHorizontalAlignment getPanelAlignment()
+    {
+        if (RadarClient.config == null || RadarClient.config.panelHorizontalAlignment == null)
+            return ConfigManager.DEFAULT.panelHorizontalAlignment;
+        return RadarClient.config.panelHorizontalAlignment;
+    }
+
+    private static String mapSortType(SpawnerCluster.SortType type)
+    {
+        return switch (type)
+        {
+            case BY_PROXIMITY -> "proximity";
+            case BY_SIZE -> "size";
+            default -> "";
+        };
     }
 
 }

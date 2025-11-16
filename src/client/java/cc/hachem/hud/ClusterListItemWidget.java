@@ -23,6 +23,16 @@ public class ClusterListItemWidget extends Widget
     private final ButtonWidget clusterButton;
     private final List<ButtonWidget> children = new ArrayList<>();
     private int rowWidth;
+    private final int branchGlyphWidth;
+    private int requiredWidth;
+    private static final int CLUSTER_GAP = 5;
+    private static final int CHILD_INDENT = 10;
+    private static final int BRANCH_GAP = 4;
+    private static final String LEFT_BRANCH_CONTINUE = "┠━━";
+    private static final String LEFT_BRANCH_END = "┗━━";
+    private static final String RIGHT_BRANCH_CONTINUE = "━━┫";
+    private static final String RIGHT_BRANCH_END = "━━┛";
+    private ConfigManager.HudHorizontalAlignment alignment = ConfigManager.HudHorizontalAlignment.LEFT;
 
     public ClusterListItemWidget(SpawnerCluster cluster, int x, int y, int width)
     {
@@ -41,7 +51,7 @@ public class ClusterListItemWidget extends Widget
 
         baseLabel = Text.translatable("button.spawn_radar.cluster_label", cluster.spawners().size(), cluster.id()).getString();
         clusterButton = new ButtonWidget(
-            x + expandButton.getWidth() + 5,
+            x + expandButton.getWidth() + CLUSTER_GAP,
             y,
             baseLabel,
             Colors.LIGHT_GRAY,
@@ -49,15 +59,18 @@ public class ClusterListItemWidget extends Widget
         );
         clusterButton.setDecorated(false);
 
+        int leftBranchWidth = Math.max(textRenderer.getWidth(LEFT_BRANCH_END), textRenderer.getWidth(LEFT_BRANCH_CONTINUE));
+        int rightBranchWidth = Math.max(textRenderer.getWidth(RIGHT_BRANCH_END), textRenderer.getWidth(RIGHT_BRANCH_CONTINUE));
+        branchGlyphWidth = Math.max(leftBranchWidth, rightBranchWidth);
+
+        requiredWidth = expandButton.getWidth() + CLUSTER_GAP + textRenderer.getWidth("[*] " + baseLabel);
+
+        int index = 1;
         for (BlockPos pos : cluster.spawners())
         {
-            String label = Text.translatable(
-                "button.spawn_radar.spawner_label",
-                pos.getX(), pos.getY(), pos.getZ()
-            ).getString();
-
-            children.add(new ButtonWidget(
-                x + 10,
+            String label = String.format("%d. (%d, %d, %d)", index++, pos.getX(), pos.getY(), pos.getZ());
+            ButtonWidget childButton = new ButtonWidget(
+                x + CHILD_INDENT,
                 y,
                 label,
                 Colors.ALTERNATE_WHITE,
@@ -67,8 +80,13 @@ public class ClusterListItemWidget extends Widget
                             String.format("tp %d %d %d", pos.getX(), pos.getY(), pos.getZ())
                         );
                 }
-            ));
-            children.getLast().setDecorated(false);
+            );
+            childButton.setDecorated(false);
+            children.add(childButton);
+
+            int childContentWidth = expandButton.getWidth() + CHILD_INDENT + branchGlyphWidth + BRANCH_GAP + childButton.getContentWidth();
+            if (childContentWidth > requiredWidth)
+                requiredWidth = childContentWidth;
         }
     }
 
@@ -107,51 +125,109 @@ public class ClusterListItemWidget extends Widget
         TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
 
         expandButton.setText(expanded ? "-" : "+");
-        expandButton.setX(x);
         expandButton.setY(y);
-        expandButton.render(context);
-
-        clusterButton.setX(x + expandButton.getWidth() + 5);
-        clusterButton.setY(y);
         boolean highlighted = ClusterManager.isHighlighted(cluster.id());
 
         String statusMarker = highlighted ? "[*]" : "[ ]";
-        clusterButton.setText(statusMarker + " " + baseLabel);
+        String clusterText = statusMarker + " " + baseLabel;
+        clusterButton.setText(clusterText);
+        clusterButton.setY(y);
 
         int accentColor = 0xFF000000 | ConfigManager.getClusterColor(cluster.spawners().size());
         clusterButton.setColor(highlighted ? accentColor : Colors.LIGHT_GRAY);
-        int availableWidth = Math.max(clusterButton.getWidth(), rowWidth - (clusterButton.getX() - x) - 4);
-        clusterButton.setWidth(Math.max(availableWidth, 80));
+        int clusterTextWidth = textRenderer.getWidth(clusterText);
+        layoutClusterRow(clusterTextWidth);
+
+        expandButton.render(context);
         clusterButton.render(context);
 
         if (expanded)
-        {
-            int childY = y + expandButton.getHeight() + 2;
-            for (int i = 0; i < children.size(); i++)
-            {
-                ButtonWidget child = children.get(i);
-                child.setX(x + expandButton.getWidth() + 10);
-                child.setY(childY); 
-                String branch = (i == children.size() - 1) ? "┗━━" : "┠━━";
-                int branchX = child.getX() - textRenderer.getWidth(branch) - 4;
-                context.drawText(textRenderer, branch, branchX, childY, Colors.DARK_GRAY, false);
-                int childAvailable = Math.max(child.getWidth(), rowWidth - (child.getX() - x) - 4);
-                child.setWidth(Math.max(childAvailable, 80));
-                child.render(context);
-                childY += child.getHeight() + 2;
-            }
-        }
+            renderChildren(context, textRenderer);
     }
 
     @Override
     public int getHeight()
     {
-        if (!expanded) return expandButton.getHeight();
+        if (!expanded || children.isEmpty())
+            return expandButton.getHeight();
         return expandButton.getHeight() + children.size() * (children.getFirst().getHeight() + 2);
     }
 
     private void toggleExpanded()
     {
         expanded = !expanded;
+    }
+
+    public int getRequiredWidth()
+    {
+        return requiredWidth;
+    }
+
+    public void setAlignment(ConfigManager.HudHorizontalAlignment alignment)
+    {
+        this.alignment = alignment == null ? ConfigManager.HudHorizontalAlignment.LEFT : alignment;
+    }
+
+    private void layoutClusterRow(int clusterTextWidth)
+    {
+        boolean mirror = alignment == ConfigManager.HudHorizontalAlignment.RIGHT;
+        int expandWidth = expandButton.getWidth();
+
+        if (!mirror)
+        {
+            expandButton.setX(x);
+            int clusterX = expandButton.getX() + expandWidth + CLUSTER_GAP;
+            clusterButton.setX(clusterX);
+        }
+        else
+        {
+            int expandX = x + rowWidth - expandWidth;
+            expandButton.setX(expandX);
+            int clusterX = expandX - CLUSTER_GAP - clusterTextWidth;
+            clusterButton.setX(clusterX);
+        }
+
+        clusterButton.setWidth(Math.max(clusterTextWidth, 80));
+    }
+
+    private void renderChildren(DrawContext context, TextRenderer textRenderer)
+    {
+        boolean mirror = alignment == ConfigManager.HudHorizontalAlignment.RIGHT;
+        int childY = y + expandButton.getHeight() + 2;
+
+        for (int i = 0; i < children.size(); i++)
+        {
+            ButtonWidget child = children.get(i);
+            child.setY(childY);
+            String branch = getBranchGlyph(i == children.size() - 1, mirror);
+            int branchWidth = textRenderer.getWidth(branch);
+            int childWidth = Math.max(child.getContentWidth(), 80);
+
+            if (!mirror)
+            {
+                int branchX = expandButton.getX() + expandButton.getWidth() + CHILD_INDENT;
+                int childX = branchX + branchWidth + BRANCH_GAP;
+                child.setX(childX);
+                context.drawText(textRenderer, branch, branchX, childY, Colors.DARK_GRAY, false);
+            }
+            else
+            {
+                int branchX = expandButton.getX() - CHILD_INDENT - branchWidth;
+                int childX = branchX - BRANCH_GAP - childWidth;
+                child.setX(childX);
+                context.drawText(textRenderer, branch, branchX, childY, Colors.DARK_GRAY, false);
+            }
+
+            child.setWidth(childWidth);
+            child.render(context);
+            childY += child.getHeight() + 2;
+        }
+    }
+
+    private String getBranchGlyph(boolean isLast, boolean mirror)
+    {
+        if (mirror)
+            return isLast ? RIGHT_BRANCH_END : RIGHT_BRANCH_CONTINUE;
+        return isLast ? LEFT_BRANCH_END : LEFT_BRANCH_CONTINUE;
     }
 }

@@ -1,6 +1,7 @@
 package cc.hachem.hud;
 
 import cc.hachem.RadarClient;
+import cc.hachem.config.ConfigManager;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
@@ -8,6 +9,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.render.RenderTickCounter;
+import net.minecraft.client.util.Window;
 import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 
@@ -19,6 +21,8 @@ public class HudRenderer
     private final static List<Widget> children = new ArrayList<>();
     private static boolean leftDown = false;
     private static boolean rightDown = false;
+    private static int lastScreenWidth = -1;
+    private static int lastScreenHeight = -1;
 
     public static void init()
     {
@@ -27,6 +31,11 @@ public class HudRenderer
 
         ClientTickEvents.END_CLIENT_TICK.register(client ->
         {
+            if (client == null)
+                return;
+
+            handleWindowResize(client);
+
             if (!(client.currentScreen instanceof ChatScreen))
                 return;
 
@@ -56,21 +65,29 @@ public class HudRenderer
 
     public static void updatePanelPosition()
     {
-        if (!children.isEmpty() && PanelWidget.getInstance() != null)
-        {
-            var client = MinecraftClient.getInstance();
-            int yOffset = (int) (RadarClient.config.verticalPanelOffset * client.getWindow().getScaledHeight());
-            PanelWidget.getInstance().setY(50+yOffset);
-            PanelWidget.updateButtonPositions();
-            PanelWidget.refresh();
-        }
+        var panel = PanelWidget.getInstance();
+        if (panel == null || RadarClient.config == null)
+            return;
+
+        var client = MinecraftClient.getInstance();
+        int screenHeight = client.getWindow().getScaledHeight();
+        int screenWidth = client.getWindow().getScaledWidth();
+
+        int yOffset = (int) (RadarClient.config.verticalPanelOffset * screenHeight);
+        panel.setY(50 + yOffset);
+        panel.setX(computeAlignedX(panel, screenWidth));
+        PanelWidget.onPanelMoved();
     }
 
     public static void build()
     {
         var client = MinecraftClient.getInstance();
         int yOffset = (int) (RadarClient.config.verticalPanelOffset * client.getWindow().getScaledHeight());
-        children.add(new PanelWidget(10, 50+yOffset));
+        children.add(new PanelWidget(10, 50 + yOffset));
+        Window window = client.getWindow();
+        lastScreenWidth = window.getScaledWidth();
+        lastScreenHeight = window.getScaledHeight();
+        updatePanelPosition();
     }
 
     private static void onMouseMove(int mx, int my)
@@ -91,5 +108,45 @@ public class HudRenderer
     private static void render(DrawContext context, RenderTickCounter tickCounter)
     {
         children.forEach(child -> child.render(context));
+    }
+
+    private static void handleWindowResize(MinecraftClient client)
+    {
+        var panel = PanelWidget.getInstance();
+        if (panel == null)
+        {
+            lastScreenWidth = -1;
+            lastScreenHeight = -1;
+            return;
+        }
+
+        Window window = client.getWindow();
+        int width = window.getScaledWidth();
+        int height = window.getScaledHeight();
+
+        if (width != lastScreenWidth || height != lastScreenHeight)
+        {
+            lastScreenWidth = width;
+            lastScreenHeight = height;
+            updatePanelPosition();
+        }
+    }
+
+    private static int computeAlignedX(PanelWidget panel, int screenWidth)
+    {
+        int margin = 10;
+        int panelWidth = Math.max(panel.getWidth(), 140);
+        int leftMost = margin;
+        int rightMost = Math.max(margin, screenWidth - panelWidth - margin);
+
+        ConfigManager.HudHorizontalAlignment alignment = RadarClient.config.panelHorizontalAlignment;
+        if (alignment == null)
+            alignment = ConfigManager.DEFAULT.panelHorizontalAlignment;
+
+        return switch (alignment)
+        {
+            case RIGHT -> rightMost;
+            case LEFT -> leftMost;
+        };
     }
 }

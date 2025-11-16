@@ -119,6 +119,22 @@ public class ConfigScreen
             .build()
         );
 
+        general.addEntry(entryBuilder
+            .startEnumSelector(
+                Text.translatable("option.spawn_radar.panel_horizontal_alignment"),
+                ConfigManager.HudHorizontalAlignment.class,
+                RadarClient.config.panelHorizontalAlignment
+            )
+            .setEnumNameProvider(e -> Text.translatable(e.toString()))
+            .setDefaultValue(ConfigManager.DEFAULT.panelHorizontalAlignment)
+            .setSaveConsumer(value ->
+            {
+                RadarClient.config.panelHorizontalAlignment = value;
+                HudRenderer.updatePanelPosition();
+            })
+            .build()
+        );
+
         ConfigCategory colors = builder.getOrCreateCategory(Text.translatable("option.spawn_radar.colors"));
 
         colors.addEntry(entryBuilder

@@ -34,6 +34,7 @@ public class ConfigSerializer
         {
             RadarClient.config = new ConfigManager();
             RadarClient.config.ensureColorPalette();
+            RadarClient.config.ensureHudAlignment();
             save();
         }
 
@@ -45,16 +46,21 @@ public class ConfigSerializer
                 RadarClient.LOGGER.error("Config file was empty or invalid. Recreating default config.");
                 RadarClient.config = new ConfigManager();
                 RadarClient.config.ensureColorPalette();
+                RadarClient.config.ensureHudAlignment();
                 save();
             }
             else
+            {
                 RadarClient.config.ensureColorPalette();
+                RadarClient.config.ensureHudAlignment();
+            }
 
         } catch (IOException e)
         {
             RadarClient.LOGGER.error("Failed to load config: {}", e.getMessage());
             RadarClient.config = new ConfigManager();
             RadarClient.config.ensureColorPalette();
+            RadarClient.config.ensureHudAlignment();
         }
     }
 }

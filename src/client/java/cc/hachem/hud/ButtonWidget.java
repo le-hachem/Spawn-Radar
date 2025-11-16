@@ -14,6 +14,7 @@ public class ButtonWidget extends Widget
     private int baseColor;
     private boolean hovered = false;
     private boolean decorated = true;
+    private int contentWidth;
 
     public ButtonWidget(int x, int y, String text, int color, Runnable callback)
     {
@@ -79,7 +80,8 @@ public class ButtonWidget extends Widget
     {
         MinecraftClient client = MinecraftClient.getInstance();
         TextRenderer textRenderer = client.textRenderer;
-        this.width = textRenderer.getWidth(getDisplayText());
+        this.contentWidth = textRenderer.getWidth(getDisplayText());
+        this.width = contentWidth;
         this.height = textRenderer.fontHeight;
     }
 
@@ -110,5 +112,10 @@ public class ButtonWidget extends Widget
         }
 
         return (a << 24) | (r << 16) | (g << 8) | b;
+    }
+
+    public int getContentWidth()
+    {
+        return contentWidth;
     }
 }
