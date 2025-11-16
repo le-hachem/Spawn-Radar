@@ -22,6 +22,7 @@ import net.minecraft.client.util.BufferAllocator;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -73,6 +74,9 @@ public class BlockHighlightRenderer
 
     public static void draw(WorldRenderContext context, BlockPos position, int color, float a)
     {
+        if (isNotVisible(new Box(position)))
+            return;
+
         Color tempColor = Color.fromHex(color);
         float r = tempColor.r();
         float g = tempColor.g();
@@ -100,12 +104,15 @@ public class BlockHighlightRenderer
 
         matrices.pop();
 
-        RadarClient.LOGGER.debug("Drawn block highlight at ({}, {}, {}) with color #{}, alpha {}", x, y, z, Integer.toHexString(color), a);
     }
 
     public static void fillRegionMesh(WorldRenderContext context, int regionId, List<BlockPos> region, int color, float a)
     {
         if (region.isEmpty())
+            return;
+
+        Box bounds = computeBounds(region);
+        if (bounds != null && isNotVisible(bounds))
             return;
 
         Color tempColor = Color.fromHex(color);
@@ -143,9 +150,6 @@ public class BlockHighlightRenderer
 
         if (width <= 0 || height <= 0)
         {
-            if (RadarClient.LOGGER.isDebugEnabled())
-                RadarClient.LOGGER.debug("Skipping degenerate quad {} at {},{},{} ({}x{})",
-                    quad.face(), quad.x(), quad.y(), quad.z(), width, height);
             return;
         }
 
@@ -260,7 +264,82 @@ public class BlockHighlightRenderer
     }
 
 
+    private static boolean isNotVisible(Box box)
+    {
+        Boolean manualResult = frustumCheck(box);
+        if (manualResult != null)
+            return manualResult;
+        return false;
+    }
 
+    private static Box computeBounds(List<BlockPos> region)
+    {
+        if (region.isEmpty())
+            return null;
+
+        int minX = Integer.MAX_VALUE;
+        int minY = Integer.MAX_VALUE;
+        int minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int maxY = Integer.MIN_VALUE;
+        int maxZ = Integer.MIN_VALUE;
+
+        for (BlockPos pos : region)
+        {
+            int x = pos.getX();
+            int y = pos.getY();
+            int z = pos.getZ();
+
+            if (x < minX) minX = x;
+            if (y < minY) minY = y;
+            if (z < minZ) minZ = z;
+            if (x > maxX) maxX = x;
+            if (y > maxY) maxY = y;
+            if (z > maxZ) maxZ = z;
+        }
+
+        return new Box(minX, minY, minZ, maxX + 1, maxY + 1, maxZ + 1);
+    }
+
+    private static Boolean frustumCheck(Box box)
+    {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client == null || client.gameRenderer == null || client.getWindow() == null)
+            return null;
+
+        var camera = client.gameRenderer.getCamera();
+        if (camera == null)
+            return null;
+
+        Vec3d camPos = camera.getPos();
+        float yaw = camera.getYaw();
+        float pitch = camera.getPitch();
+
+        double yawRad = Math.toRadians(yaw);
+        double pitchRad = Math.toRadians(pitch);
+        double forwardX = -Math.sin(yawRad) * Math.cos(pitchRad);
+        double forwardY = -Math.sin(pitchRad);
+        double forwardZ = Math.cos(yawRad) * Math.cos(pitchRad);
+        Vec3d forward = new Vec3d(forwardX, forwardY, forwardZ).normalize();
+
+        Vec3d center = new Vec3d((box.minX + box.maxX) * 0.5,
+                                 (box.minY + box.maxY) * 0.5,
+                                 (box.minZ + box.maxZ) * 0.5);
+        Vec3d toCenter = center.subtract(camPos);
+        double distance = toCenter.length();
+
+        double width = box.maxX - box.minX;
+        double height = box.maxY - box.minY;
+        double depth = box.maxZ - box.minZ;
+        double radius = Math.sqrt(width * width + height * height + depth * depth) * 0.5;
+
+        if (distance <= 1e-3)
+            return true;
+
+        double forwardComponent = toCenter.dotProduct(forward);
+        return !(forwardComponent + radius <= 0);
+    }
+    
     private static void quad(BufferBuilder buffer, MatrixStack matrices,
                              float x1, float y1, float z1,
                              float x2, float y2, float z2,
@@ -283,7 +362,6 @@ public class BlockHighlightRenderer
     {
         if (buffer == null)
         {
-            RadarClient.LOGGER.debug("submit called but buffer is null; nothing to submit.");
             return;
         }
 
@@ -298,7 +376,6 @@ public class BlockHighlightRenderer
             vertexBuffer.rotate();
         buffer = null;
 
-        RadarClient.LOGGER.debug("Submitted block highlights to GPU, vertex count: {}", drawParams.vertexCount());
     }
 
     private static GpuBuffer uploadToGPU(BuiltBuffer.DrawParameters drawParameters, VertexFormat format, BuiltBuffer builtBuffer)
@@ -312,7 +389,6 @@ public class BlockHighlightRenderer
                 GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_MAP_WRITE,
                 vertexBufferSize
             );
-            RadarClient.LOGGER.debug("Created new MappableRingBuffer with size {}", vertexBufferSize);
         }
 
         CommandEncoder commandEncoder = RenderSystem.getDevice().createCommandEncoder();
@@ -325,7 +401,6 @@ public class BlockHighlightRenderer
             MemoryUtil.memCopy(builtBuffer.getBuffer(), mappedView.data());
         }
 
-        RadarClient.LOGGER.debug("Uploaded {} vertices to GPU", drawParameters.vertexCount());
         return vertexBuffer.getBlocking();
     }
 
@@ -355,7 +430,6 @@ public class BlockHighlightRenderer
         }
 
         builtBuffer.close();
-        RadarClient.LOGGER.debug("Executed drawPipeline for {} indices", drawParameters.indexCount());
     }
 
     public static void close()
@@ -365,7 +439,6 @@ public class BlockHighlightRenderer
         {
             vertexBuffer.close();
             vertexBuffer = null;
-            RadarClient.LOGGER.debug("Closed vertex buffer and allocator.");
         }
     }
 }
