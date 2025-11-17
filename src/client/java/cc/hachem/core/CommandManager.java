@@ -23,9 +23,12 @@ public class CommandManager
         dispatcher.register(ClientCommandManager.literal("radar:scan")
             .executes(context ->
             {
-                RadarClient.generateClusters(context.getSource().getPlayer(), RadarClient.config.defaultSearchRadius, "");
-                context.getSource().sendFeedback(Text.translatable("chat.spawn_radar.scan_started"));
-                return Command.SINGLE_SUCCESS;
+                if (RadarClient.generateClusters(context.getSource().getPlayer(), RadarClient.config.defaultSearchRadius, ""))
+                {
+                    context.getSource().sendFeedback(Text.translatable("chat.spawn_radar.scan_started"));
+                    return Command.SINGLE_SUCCESS;
+                }
+                return 0;
             })
             .then(ClientCommandManager.argument("sorting", StringArgumentType.word())
                 .suggests((context, builder) ->
@@ -37,18 +40,24 @@ public class CommandManager
                 .executes(context ->
                 {
                     String sorting = StringArgumentType.getString(context, "sorting").toLowerCase();
-                    RadarClient.generateClusters(context.getSource().getPlayer(), RadarClient.config.defaultSearchRadius, sorting);
-                    context.getSource().sendFeedback(Text.translatable("chat.spawn_radar.scan_started"));
-                    return Command.SINGLE_SUCCESS;
+                    if (RadarClient.generateClusters(context.getSource().getPlayer(), RadarClient.config.defaultSearchRadius, sorting))
+                    {
+                        context.getSource().sendFeedback(Text.translatable("chat.spawn_radar.scan_started"));
+                        return Command.SINGLE_SUCCESS;
+                    }
+                    return 0;
                 })
                 .then(ClientCommandManager.argument("radius", IntegerArgumentType.integer(1, 256))
                     .executes(context ->
                     {
                         int radius = IntegerArgumentType.getInteger(context, "radius");
                         String sorting = StringArgumentType.getString(context, "sorting").toLowerCase();
-                        RadarClient.generateClusters(context.getSource().getPlayer(), radius, sorting);
-                        context.getSource().sendFeedback(Text.translatable("chat.spawn_radar.scan_started"));
-                        return Command.SINGLE_SUCCESS;
+                        if (RadarClient.generateClusters(context.getSource().getPlayer(), radius, sorting))
+                        {
+                            context.getSource().sendFeedback(Text.translatable("chat.spawn_radar.scan_started"));
+                            return Command.SINGLE_SUCCESS;
+                        }
+                        return 0;
                     })
                 )
             )
@@ -67,9 +76,12 @@ public class CommandManager
                 .executes(context ->
                 {
                     String target = StringArgumentType.getString(context, "target").toLowerCase();
-                    RadarClient.toggleCluster(context.getSource().getPlayer(), target);
-                    context.getSource().sendFeedback(Text.translatable("chat.spawn_radar.toggle", target));
-                    return Command.SINGLE_SUCCESS;
+                    if (RadarClient.toggleCluster(context.getSource().getPlayer(), target))
+                    {
+                        context.getSource().sendFeedback(Text.translatable("chat.spawn_radar.toggle", target));
+                        return Command.SINGLE_SUCCESS;
+                    }
+                    return 0;
                 })
             )
         );
@@ -111,9 +123,12 @@ public class CommandManager
         dispatcher.register(ClientCommandManager.literal("radar:reset")
             .executes(context ->
             {
-                RadarClient.reset(context.getSource().getPlayer());
-                RadarClient.LOGGER.info("Radar reset via command.");
-                return Command.SINGLE_SUCCESS;
+                if (RadarClient.reset(context.getSource().getPlayer()))
+                {
+                    RadarClient.LOGGER.info("Radar reset via command.");
+                    return Command.SINGLE_SUCCESS;
+                }
+                return 0;
             })
         );
 

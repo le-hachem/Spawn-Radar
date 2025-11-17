@@ -82,9 +82,8 @@ public class PanelWidget extends Widget
             Colors.LIGHT_RED,
             () ->
             {
-                if (client.player != null)
-                    RadarClient.reset(client.player);
-                updateTopButtons();
+                if (client.player != null && RadarClient.reset(client.player))
+                    updateTopButtons();
             }
         );
 

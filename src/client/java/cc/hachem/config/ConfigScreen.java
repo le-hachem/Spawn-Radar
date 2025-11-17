@@ -51,6 +51,15 @@ public class ConfigScreen
             .build()
         );
 
+        general.addEntry(entryBuilder.startBooleanToggle(
+                Text.translatable("option.spawn_radar.frustum_culling"),
+                RadarClient.config.frustumCullingEnabled
+            )
+            .setSaveConsumer(value -> RadarClient.config.frustumCullingEnabled = value)
+            .setDefaultValue(ConfigManager.DEFAULT.frustumCullingEnabled)
+            .build()
+        );
+
         general.addEntry(entryBuilder
             .startEnumSelector(
                 Text.translatable("option.spawn_radar.default_cluster_sort_type"),

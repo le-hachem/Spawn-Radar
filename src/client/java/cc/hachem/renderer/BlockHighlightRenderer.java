@@ -266,6 +266,9 @@ public class BlockHighlightRenderer
 
     private static boolean isNotVisible(Box box)
     {
+        if (RadarClient.config == null || !RadarClient.config.frustumCullingEnabled)
+            return false;
+
         Boolean manualResult = frustumCheck(box);
         if (manualResult != null)
             return manualResult;

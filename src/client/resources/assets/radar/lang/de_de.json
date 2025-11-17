@@ -8,6 +8,7 @@
   "option.spawn_radar.general": "Allgemein",
   "option.spawn_radar.chunk_search_radius": "Chunk-Suchradius",
   "option.spawn_radar.highlight_after_scan": "Cluster-Aktivregion nach Scan automatisch hervorheben",
+  "option.spawn_radar.frustum_culling": "Frustum-Culling aktivieren",
   "option.spawn_radar.min_spawners": "Minimale Spawner zum Hervorheben eines Clusters",
   "option.spawn_radar.default_cluster_sort_type": "Standard-Cluster-Sortierung",
   "option.spawn_radar.cluster_proximity_sort_order": "Sortierreihenfolge nach Cluster-Nähe",
@@ -50,6 +51,7 @@
   "chat.spawn_radar.no_clusters_to_toggle": "Keine Cluster zum Umschalten vorhanden.",
   "chat.spawn_radar.invalid_id_number": "Ungültige Cluster-ID. Verwenden Sie eine Zahl oder 'all'.",
   "chat.spawn_radar.reset": "Blockbank und Spawner-Daten zurücksetzen.",
+  "chat.spawn_radar.disabled": "Spawn Radar ist auf diesem Server deaktiviert.",
 
   "button.spawn_radar.expand": ">",
   "button.spawn_radar.collapse": "v",

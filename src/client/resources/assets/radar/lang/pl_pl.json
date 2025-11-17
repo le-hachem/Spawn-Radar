@@ -8,6 +8,7 @@
   "option.spawn_radar.general": "Ogólne",
   "option.spawn_radar.chunk_search_radius": "Promień wyszukiwania chunków",
   "option.spawn_radar.highlight_after_scan": "Automatycznie podświetl region aktywny klastra po skanie",
+  "option.spawn_radar.frustum_culling": "Włącz frustum culling",
   "option.spawn_radar.min_spawners": "Minimalna liczba spawnerów do podświetlenia klastra",
   "option.spawn_radar.default_cluster_sort_type": "Domyślny typ sortowania klastra",
   "option.spawn_radar.cluster_proximity_sort_order": "Kolejność sortowania według bliskości klastra",
@@ -50,6 +51,7 @@
   "chat.spawn_radar.no_clusters_to_toggle": "Brak klastrów do przełączenia.",
   "chat.spawn_radar.invalid_id_number": "Nieprawidłowe ID klastra. Użyj liczby lub 'all'.",
   "chat.spawn_radar.reset": "Zresetuj bank bloków i dane spawnerów.",
+  "chat.spawn_radar.disabled": "Radar Spawnerów jest wyłączony na tym serwerze.",
 
   "button.spawn_radar.expand": ">",
   "button.spawn_radar.collapse": "v",

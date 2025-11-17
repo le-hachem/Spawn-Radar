@@ -34,5 +34,5 @@ Spawn Radar is a Minecraft Fabric mod that helps you locate mob spawners and gro
 * Shows a list of available commands and usage information.
 
 ## License
-This project is licensed under the [MIT License](License). You are free to use, modify, and distribute the mod as long as the original license and copyright notice are included.
+This project is licensed under the [MIT License](LICENSE). You are free to use, modify, and distribute the mod as long as the original license and copyright notice are included.
 

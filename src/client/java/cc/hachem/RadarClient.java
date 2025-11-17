@@ -2,13 +2,19 @@ package cc.hachem;
 
 import cc.hachem.config.ConfigManager;
 import cc.hachem.config.ConfigSerializer;
-import cc.hachem.core.*;
+import cc.hachem.core.BlockBank;
+import cc.hachem.core.ClusterManager;
+import cc.hachem.core.CommandManager;
+import cc.hachem.core.KeyManager;
+import cc.hachem.core.SpawnerCluster;
 import cc.hachem.hud.HudRenderer;
 import cc.hachem.hud.PanelWidget;
+import cc.hachem.network.RadarHandshakePayload;
 import cc.hachem.renderer.BlockHighlightRenderer;
 import cc.hachem.renderer.FloatingTextRenderer;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
@@ -26,6 +32,7 @@ public class RadarClient implements ClientModInitializer
     public static final String MOD_ID = "radar";
     public static Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
     public static ConfigManager config;
+    private static volatile boolean serverSupportsRadar = false;
 
     public static ClientPlayerEntity getPlayer()
     {
@@ -33,10 +40,14 @@ public class RadarClient implements ClientModInitializer
         return client.player;
     }
 
-    public static void generateClusters(ClientPlayerEntity source, int radius, String sorting)
+    public static boolean generateClusters(ClientPlayerEntity source, int radius, String sorting)
     {
+        if (!ensureServerEnabled(source))
+            return false;
+
         BlockBank.scanForSpawners(source, radius, () -> generateClustersChild(source, sorting));
         RadarClient.LOGGER.debug("Scheduled cluster generation after scanning for spawners.");
+        return true;
     }
 
     public static void generateClustersChild(ClientPlayerEntity source, String argument)
@@ -66,8 +77,11 @@ public class RadarClient implements ClientModInitializer
         PanelWidget.refresh();
     }
 
-    public static void toggleCluster(ClientPlayerEntity source, String target)
+    public static boolean toggleCluster(ClientPlayerEntity source, String target)
     {
+        if (!ensureServerEnabled(source))
+            return false;
+
         List<SpawnerCluster> clusters = ClusterManager.getClusters();
 
         if (target.equals("all"))
@@ -76,7 +90,7 @@ public class RadarClient implements ClientModInitializer
             {
                 source.sendMessage(Text.translatable("chat.spawn_radar.no_clusters_to_toggle"), false);
                 RadarClient.LOGGER.warn("Attempted to toggle all clusters but none exist.");
-                return;
+                return false;
             }
 
             boolean anyHighlighted = !ClusterManager.getHighlightedClusterIds().isEmpty();
@@ -99,7 +113,7 @@ public class RadarClient implements ClientModInitializer
                 {
                     source.sendMessage(Text.translatable("chat.spawn_radar.invalid_id"), false);
                     RadarClient.LOGGER.warn("Attempted to toggle invalid cluster ID {}", clusterId);
-                    return;
+                    return false;
                 }
 
                 ClusterManager.toggleHighlightCluster(clusterId);
@@ -108,12 +122,17 @@ public class RadarClient implements ClientModInitializer
             catch (NumberFormatException e)
             {
                 source.sendMessage(Text.translatable("chat.spawn_radar.invalid_id_number"), false);
+                return false;
             }
         }
+        return true;
     }
 
-    public static void reset(ClientPlayerEntity player)
+    public static boolean reset(ClientPlayerEntity player)
     {
+        if (!ensureServerEnabled(player))
+            return false;
+
         LOGGER.info("Resetting RadarClient data...");
         int clustersBefore = ClusterManager.getClusters().size();
         int highlightsBefore = ClusterManager.getHighlights().size();
@@ -126,6 +145,7 @@ public class RadarClient implements ClientModInitializer
         player.sendMessage(Text.translatable("chat.spawn_radar.reset"), false);
         LOGGER.debug("Cleared {} clusters and {} highlights.", clustersBefore, highlightsBefore);
         PanelWidget.refresh();
+        return true;
     }
 
     private void onRender(WorldRenderContext context)
@@ -190,11 +210,29 @@ public class RadarClient implements ClientModInitializer
         LOGGER.info("KeyManager initialized.");
 
         WorldRenderEvents.END_MAIN.register(this::onRender);
+        ClientPlayNetworking.registerGlobalReceiver(RadarHandshakePayload.ID, (payload, context) ->
+            MinecraftClient.getInstance().execute(() -> {
+                serverSupportsRadar = true;
+                LOGGER.info("Spawn Radar features enabled on the current server.");
+            })
+        );
+        ClientPlayConnectionEvents.INIT.register((handler, client) ->
+            serverSupportsRadar = client.isIntegratedServerRunning()
+        );
+
         ClientPlayConnectionEvents.JOIN.register(((handler, sender, client) ->
         {
-        ClusterManager.unhighlightAllClusters();
-        ClusterManager.getClusters().clear();
-        BlockHighlightRenderer.clearRegionMeshCache();
+            if (!client.isIntegratedServerRunning())
+            {
+                ClientPlayNetworking.send(RadarHandshakePayload.INSTANCE);
+                LOGGER.debug("Requested Spawn Radar handshake from server.");
+            }
+            else
+                serverSupportsRadar = true;
+
+            ClusterManager.unhighlightAllClusters();
+            ClusterManager.getClusters().clear();
+            BlockHighlightRenderer.clearRegionMeshCache();
             BlockBank.clear();
             PanelWidget.refresh();
             LOGGER.info("Reset initial data.");
@@ -202,7 +240,20 @@ public class RadarClient implements ClientModInitializer
             HudRenderer.build();
             LOGGER.info("Built HudRenderer widgets.");
         }));
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> serverSupportsRadar = false);
 
         LOGGER.info("Initialized successfully.");
+    }
+
+    private static boolean ensureServerEnabled(ClientPlayerEntity player)
+    {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.isIntegratedServerRunning() || serverSupportsRadar)
+            return true;
+
+        if (player != null)
+            player.sendMessage(Text.translatable("chat.spawn_radar.disabled"), false);
+        LOGGER.warn("Prevented Spawn Radar usage because the connected server does not have the mod installed.");
+        return false;
     }
 }
