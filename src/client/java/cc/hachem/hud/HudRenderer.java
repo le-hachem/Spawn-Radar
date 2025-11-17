@@ -24,43 +24,66 @@ public class HudRenderer
     private static int lastScreenWidth = -1;
     private static int lastScreenHeight = -1;
 
+    private HudRenderer() {}
+
     public static void init()
+    {
+        registerHudElement();
+        registerClientTickHandler();
+    }
+
+    private static void registerHudElement()
     {
         HudElementRegistry.attachElementAfter(VanillaHudElements.CHAT,
             Identifier.of(RadarClient.MOD_ID, "hud"), HudRenderer::render);
+    }
 
-        ClientTickEvents.END_CLIENT_TICK.register(client ->
-        {
-            if (client == null)
-                return;
+    private static void registerClientTickHandler()
+    {
+        ClientTickEvents.END_CLIENT_TICK.register(HudRenderer::handleClientTick);
+    }
 
-            handleWindowResize(client);
+    private static void handleClientTick(MinecraftClient client)
+    {
+        if (client == null)
+            return;
 
-            if (!(client.currentScreen instanceof ChatScreen))
-                return;
+        handleWindowResize(client);
+        if (!shouldProcessInput(client))
+            return;
 
-            double mx = client.mouse.getX() / client.getWindow().getScaleFactor();
-            double my = client.mouse.getY() / client.getWindow().getScaleFactor();
-            onMouseMove((int) mx, (int) my);
+        double scaleFactor = client.getWindow().getScaleFactor();
+        int mx = (int) (client.mouse.getX() / scaleFactor);
+        int my = (int) (client.mouse.getY() / scaleFactor);
 
-            long handle = client.getWindow().getHandle();
+        onMouseMove(mx, my);
+        processMouseButtons(client, mx, my);
+    }
 
-            boolean nowLeft = GLFW.glfwGetMouseButton(handle, GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
-            boolean nowRight = GLFW.glfwGetMouseButton(handle, GLFW.GLFW_MOUSE_BUTTON_RIGHT) == GLFW.GLFW_PRESS;
+    private static boolean shouldProcessInput(MinecraftClient client)
+    {
+        return client.currentScreen instanceof ChatScreen;
+    }
 
-            if (nowLeft && !leftDown)
-                HudRenderer.onMouseClick((int) mx, (int) my, GLFW.GLFW_MOUSE_BUTTON_LEFT);
-            if (!nowLeft && leftDown)
-                HudRenderer.onMouseRelease((int) mx, (int) my, GLFW.GLFW_MOUSE_BUTTON_LEFT);
+    private static void processMouseButtons(MinecraftClient client, int mx, int my)
+    {
+        long handle = client.getWindow().getHandle();
 
-            if (nowRight && !rightDown)
-                HudRenderer.onMouseClick((int) mx, (int) my, GLFW.GLFW_MOUSE_BUTTON_RIGHT);
-            if (!nowRight && rightDown)
-                HudRenderer.onMouseRelease((int) mx, (int) my, GLFW.GLFW_MOUSE_BUTTON_RIGHT);
+        boolean nowLeft = GLFW.glfwGetMouseButton(handle, GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
+        boolean nowRight = GLFW.glfwGetMouseButton(handle, GLFW.GLFW_MOUSE_BUTTON_RIGHT) == GLFW.GLFW_PRESS;
 
-            leftDown = nowLeft;
-            rightDown = nowRight;
-        });
+        if (nowLeft && !leftDown)
+            HudRenderer.onMouseClick(mx, my, GLFW.GLFW_MOUSE_BUTTON_LEFT);
+        if (!nowLeft && leftDown)
+            HudRenderer.onMouseRelease(mx, my, GLFW.GLFW_MOUSE_BUTTON_LEFT);
+
+        if (nowRight && !rightDown)
+            HudRenderer.onMouseClick(mx, my, GLFW.GLFW_MOUSE_BUTTON_RIGHT);
+        if (!nowRight && rightDown)
+            HudRenderer.onMouseRelease(mx, my, GLFW.GLFW_MOUSE_BUTTON_RIGHT);
+
+        leftDown = nowLeft;
+        rightDown = nowRight;
     }
 
     public static void updatePanelPosition()

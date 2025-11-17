@@ -14,53 +14,61 @@ import java.util.Map;
 public class KeyManager
 {
     private static final Map<KeyBinding, Runnable> keyCallbacks = new HashMap<>();
-    private static final KeyBinding.Category category = new KeyBinding.Category(Identifier.of("spawn_radar", "title"));
+    private static final KeyBinding.Category CATEGORY = new KeyBinding.Category(Identifier.of("spawn_radar", "title"));
 
+    private KeyManager() {}
 
-    private static void load()
+    public static void init()
     {
-        register("key.spawn_radar.scan", InputUtil.UNKNOWN_KEY.getCode(), () ->
-        {
-            ClientPlayerEntity player = RadarClient.getPlayer();
-            if (player == null)
-                return;
-            RadarClient.generateClusters(player, RadarClient.config.defaultSearchRadius, "");
-        });
+        registerDefaultBindings();
+        ClientTickEvents.END_CLIENT_TICK.register(client -> pollKeybinds());
+    }
 
-        register("key.spawn_radar.toggle", InputUtil.UNKNOWN_KEY.getCode(), () ->
-        {
-            ClientPlayerEntity player = RadarClient.getPlayer();
-            if (player == null)
-                return;
-            RadarClient.toggleCluster(player, "all");
-        });
+    private static void registerDefaultBindings()
+    {
+        register("key.spawn_radar.scan", InputUtil.UNKNOWN_KEY.getCode(), KeyManager::triggerScan);
+        register("key.spawn_radar.toggle", InputUtil.UNKNOWN_KEY.getCode(), KeyManager::triggerToggle);
+        register("key.spawn_radar.reset", InputUtil.UNKNOWN_KEY.getCode(), KeyManager::triggerReset);
+    }
 
-        register("key.spawn_radar.reset", InputUtil.UNKNOWN_KEY.getCode(), () ->
+    private static void pollKeybinds()
+    {
+        keyCallbacks.forEach((key, callback) ->
         {
-            ClientPlayerEntity player = RadarClient.getPlayer();
-            if (player == null)
-                return;
-            RadarClient.reset(player);
+            while (key.wasPressed())
+                callback.run();
         });
     }
 
     private static void register(String text, int key, Runnable callback)
     {
         KeyBinding keyBinding = KeyBindingHelper.registerKeyBinding(
-            new KeyBinding(text, InputUtil.Type.KEYSYM, key, category)
+            new KeyBinding(text, InputUtil.Type.KEYSYM, key, CATEGORY)
         );
         keyCallbacks.put(keyBinding, callback);
     }
 
-    public static void init()
+    private static void triggerScan()
     {
-        load();
+        ClientPlayerEntity player = RadarClient.getPlayer();
+        if (player == null)
+            return;
+        RadarClient.generateClusters(player, RadarClient.config.defaultSearchRadius, "");
+    }
 
-        ClientTickEvents.END_CLIENT_TICK.register(client ->
-            keyCallbacks.forEach((key, callback) ->
-            {
-                while (key.wasPressed())
-                    callback.run();
-            }));
+    private static void triggerToggle()
+    {
+        ClientPlayerEntity player = RadarClient.getPlayer();
+        if (player == null)
+            return;
+        RadarClient.toggleCluster(player, "all");
+    }
+
+    private static void triggerReset()
+    {
+        ClientPlayerEntity player = RadarClient.getPlayer();
+        if (player == null)
+            return;
+        RadarClient.reset(player);
     }
 }

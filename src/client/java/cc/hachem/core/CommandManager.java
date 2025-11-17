@@ -17,9 +17,25 @@ import java.util.List;
 
 public class CommandManager
 {
+    private CommandManager() {}
+
+    public static void init()
+    {
+        ClientCommandRegistrationCallback.EVENT.register(CommandManager::registerCommands);
+        RadarClient.LOGGER.info("CommandManager initialized and commands registered.");
+    }
+
     private static void registerCommands(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess)
     {
-        // /radar:scan
+        registerScanCommand(dispatcher);
+        registerToggleCommand(dispatcher);
+        registerInfoCommand(dispatcher);
+        registerResetCommand(dispatcher);
+        registerHelpCommand(dispatcher);
+    }
+
+    private static void registerScanCommand(CommandDispatcher<FabricClientCommandSource> dispatcher)
+    {
         dispatcher.register(ClientCommandManager.literal("radar:scan")
             .executes(context ->
             {
@@ -62,8 +78,10 @@ public class CommandManager
                 )
             )
         );
+    }
 
-        // /radar:toggle
+    private static void registerToggleCommand(CommandDispatcher<FabricClientCommandSource> dispatcher)
+    {
         dispatcher.register(ClientCommandManager.literal("radar:toggle")
             .then(ClientCommandManager.argument("target", StringArgumentType.word())
                 .suggests((context, builder) ->
@@ -85,8 +103,10 @@ public class CommandManager
                 })
             )
         );
+    }
 
-        // /radar:info
+    private static void registerInfoCommand(CommandDispatcher<FabricClientCommandSource> dispatcher)
+    {
         dispatcher.register(ClientCommandManager.literal("radar:info")
             .then(ClientCommandManager.argument("id", IntegerArgumentType.integer(1))
                 .executes(context ->
@@ -118,8 +138,10 @@ public class CommandManager
                 })
             )
         );
+    }
 
-        // /radar:reset
+    private static void registerResetCommand(CommandDispatcher<FabricClientCommandSource> dispatcher)
+    {
         dispatcher.register(ClientCommandManager.literal("radar:reset")
             .executes(context ->
             {
@@ -131,14 +153,15 @@ public class CommandManager
                 return 0;
             })
         );
+    }
 
-        // /radar:help
+    private static void registerHelpCommand(CommandDispatcher<FabricClientCommandSource> dispatcher)
+    {
         dispatcher.register(ClientCommandManager.literal("radar:help")
             .executes(context ->
             {
                 FabricClientCommandSource source = context.getSource();
 
-                // Print each command help line using command.spawn_radar keys
                 source.sendFeedback(Text.translatable("command.spawn_radar.help.scan"));
                 source.sendFeedback(Text.translatable("command.spawn_radar.help.toggle"));
                 source.sendFeedback(Text.translatable("command.spawn_radar.help.info"));
@@ -148,11 +171,5 @@ public class CommandManager
                 return Command.SINGLE_SUCCESS;
             })
         );
-    }
-
-    public static void init()
-    {
-        ClientCommandRegistrationCallback.EVENT.register(CommandManager::registerCommands);
-        RadarClient.LOGGER.info("CommandManager initialized and commands registered.");
     }
 }

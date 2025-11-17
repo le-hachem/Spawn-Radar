@@ -136,58 +136,22 @@ public record SpawnerCluster(int id, List<BlockPos> spawners, List<BlockPos> int
         long startTime = System.nanoTime();
         List<SpawnerCluster> clusters = new ArrayList<>();
         Set<String> seen = new HashSet<>();
-        int n = spawners.size();
         int nextId = 1;
 
-        for (int idx = 0; idx < n; idx++)
+        for (BlockPos center : spawners)
         {
-            BlockPos center = spawners.get(idx);
+            ClusterCandidate candidate = buildCluster(center, spawners, activationRadius);
+            if (candidate == null)
+                continue;
 
-            List<BlockPos> others = new ArrayList<>(spawners);
-            others.remove(center);
+            String key = clusterKey(candidate.members());
+            if (!seen.add(key))
+                continue;
 
-            final long cx = center.getX(), cy = center.getY(), cz = center.getZ();
-            others.sort(Comparator.comparingLong(p ->
-            {
-                long dx = p.getX() - cx, dy = p.getY() - cy, dz = p.getZ() - cz;
-                return dx * dx + dy * dy + dz * dz;
-            }));
-
-            List<BlockPos> cluster = new ArrayList<>();
-            cluster.add(center);
-            List<BlockPos> currentIntersection = generateSphere(center, activationRadius);
-
-            for (BlockPos other : others)
-            {
-                if (!spheresIntersect(center, other, activationRadius))
-                    break;
-
-                List<BlockPos> newIntersection = computeIntersectionRegion(other, currentIntersection, activationRadius);
-                if (newIntersection.isEmpty())
-                    break;
-
-                cluster.add(other);
-                currentIntersection = newIntersection;
-            }
-
-            if (cluster.size() <= 1) continue;
-
-            cluster.sort(Comparator.comparingInt(BlockPos::getX)
-                             .thenComparingInt(BlockPos::getY)
-                             .thenComparingInt(BlockPos::getZ));
-
-            String key = cluster.stream().map(p -> p.getX() + "," + p.getY() + "," + p.getZ())
-                             .collect(Collectors.joining(";"));
-            if (seen.contains(key)) continue;
-            seen.add(key);
-
-            clusters.add(new SpawnerCluster(nextId++, cluster, currentIntersection));
+            clusters.add(new SpawnerCluster(nextId++, candidate.members(), candidate.intersection()));
         }
 
-        for (BlockPos spawner : spawners)
-            if (clusters.stream().noneMatch(c -> c.spawners().contains(spawner)))
-                clusters.add(new SpawnerCluster(nextId++, List.of(spawner), generateSphere(spawner, activationRadius)));
-
+        nextId = appendSingletonClusters(spawners, clusters, nextId, activationRadius);
         clusters = filterSubsets(clusters);
 
         long endTime = System.nanoTime();
@@ -215,4 +179,77 @@ public record SpawnerCluster(int id, List<BlockPos> spawners, List<BlockPos> int
         sb.append("]");
         return sb.toString();
     }
+
+    private static ClusterCandidate buildCluster(BlockPos center, List<BlockPos> spawners, double activationRadius)
+    {
+        List<BlockPos> orderedNeighbors = sortedNeighbors(center, spawners);
+
+        List<BlockPos> cluster = new ArrayList<>();
+        cluster.add(center);
+        List<BlockPos> intersection = generateSphere(center, activationRadius);
+
+        for (BlockPos other : orderedNeighbors)
+        {
+            if (!spheresIntersect(center, other, activationRadius))
+                break;
+
+            List<BlockPos> newIntersection = computeIntersectionRegion(other, intersection, activationRadius);
+            if (newIntersection.isEmpty())
+                break;
+
+            cluster.add(other);
+            intersection = newIntersection;
+        }
+
+        if (cluster.size() <= 1)
+            return null;
+
+        cluster.sort(Comparator.comparingInt(BlockPos::getX)
+                          .thenComparingInt(BlockPos::getY)
+                          .thenComparingInt(BlockPos::getZ));
+
+        return new ClusterCandidate(cluster, intersection);
+    }
+
+    private static List<BlockPos> sortedNeighbors(BlockPos center, List<BlockPos> spawners)
+    {
+        List<BlockPos> others = new ArrayList<>(spawners);
+        others.remove(center);
+
+        final long cx = center.getX();
+        final long cy = center.getY();
+        final long cz = center.getZ();
+
+        others.sort(Comparator.comparingLong(pos ->
+        {
+            long dx = pos.getX() - cx;
+            long dy = pos.getY() - cy;
+            long dz = pos.getZ() - cz;
+            return dx * dx + dy * dy + dz * dz;
+        }));
+
+        return others;
+    }
+
+    private static int appendSingletonClusters(List<BlockPos> spawners, List<SpawnerCluster> clusters, int nextId, double activationRadius)
+    {
+        for (BlockPos spawner : spawners)
+        {
+            boolean alreadyIncluded = clusters.stream().anyMatch(c -> c.spawners().contains(spawner));
+            if (alreadyIncluded)
+                continue;
+
+            clusters.add(new SpawnerCluster(nextId++, List.of(spawner), generateSphere(spawner, activationRadius)));
+        }
+        return nextId;
+    }
+
+    private static String clusterKey(List<BlockPos> cluster)
+    {
+        return cluster.stream()
+            .map(pos -> pos.getX() + "," + pos.getY() + "," + pos.getZ())
+            .collect(Collectors.joining(";"));
+    }
+
+    private record ClusterCandidate(List<BlockPos> members, List<BlockPos> intersection) {}
 }

@@ -10,6 +10,8 @@ public class ClusterManager
     private static final Set<Integer> highlightedClusterIds = new HashSet<>();
     private static List<SpawnerCluster> clusters = new ArrayList<>();
 
+    private ClusterManager() {}
+
     public static void setClusters(List<SpawnerCluster> list)
     {
         clusters = list;

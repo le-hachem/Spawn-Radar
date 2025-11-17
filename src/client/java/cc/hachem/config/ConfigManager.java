@@ -8,6 +8,14 @@ import java.util.List;
 
 public class ConfigManager
 {
+    private static final List<Integer> DEFAULT_CLUSTER_COLORS = List.of(
+        0x00FFFF,
+        0x00FF00,
+        0xFFFF00,
+        0xFF0000,
+        0xFF00FF
+    );
+
     public static final ConfigManager DEFAULT = new ConfigManager();
 
     public enum SortOrder
@@ -48,19 +56,19 @@ public class ConfigManager
     public int panelElementCount = 5;
     public HudHorizontalAlignment panelHorizontalAlignment = HudHorizontalAlignment.LEFT;
 
-    public List<Integer> clusterColors = new ArrayList<>(
-        List.of(0x00FFFF,
-                0x00FF00,
-                0xFFFF00,
-                0xFF0000,
-                0xFF00FF));
+    public List<Integer> clusterColors = defaultClusterColors();
+
+    public void normalize()
+    {
+        ensureColorPalette();
+        ensureHudAlignment();
+    }
 
     public void ensureColorPalette()
     {
         if (clusterColors == null)
         {
-            clusterColors = new ArrayList<>(DEFAULT.clusterColors);
-            RadarClient.LOGGER.warn("Cluster color palette missing, restored defaults.");
+            resetClusterColors("missing");
             return;
         }
 
@@ -68,17 +76,27 @@ public class ConfigManager
 
         if (clusterColors.isEmpty())
         {
-            clusterColors.addAll(DEFAULT.clusterColors);
-            RadarClient.LOGGER.warn("Cluster color palette empty, restored defaults.");
+            resetClusterColors("empty");
             return;
         }
 
         int originalSize = clusterColors.size();
-        while (clusterColors.size() < DEFAULT.clusterColors.size())
-            clusterColors.add(DEFAULT.clusterColors.get(clusterColors.size()));
+        while (clusterColors.size() < DEFAULT_CLUSTER_COLORS.size())
+            clusterColors.add(DEFAULT_CLUSTER_COLORS.get(clusterColors.size()));
 
         if (clusterColors.size() != originalSize)
             RadarClient.LOGGER.warn("Cluster color palette had {} entries; padded to {}", originalSize, clusterColors.size());
+    }
+
+    private void resetClusterColors(String reason)
+    {
+        clusterColors = defaultClusterColors();
+        RadarClient.LOGGER.warn("Cluster color palette {}; restored defaults.", reason);
+    }
+
+    private static List<Integer> defaultClusterColors()
+    {
+        return new ArrayList<>(DEFAULT_CLUSTER_COLORS);
     }
 
     public static int getClusterColor(int spawnerCount)

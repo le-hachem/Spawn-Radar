@@ -12,191 +12,184 @@ import net.minecraft.text.Text;
 
 public class ConfigScreen
 {
+    private ConfigScreen() {}
+
     public static Screen create(Screen parent)
     {
         ConfigBuilder builder = ConfigBuilder.create()
-            .setTitle(Text.translatable("option.spawn_radar.title"))
+            .setTitle(text("option.spawn_radar.title"))
             .setSavingRunnable(ConfigSerializer::save)
             .setTransparentBackground(true)
             .setParentScreen(parent);
 
-        ConfigEntryBuilder entryBuilder = builder.entryBuilder();
+        ConfigEntryBuilder entries = builder.entryBuilder();
+        ConfigCategory general = builder.getOrCreateCategory(text("option.spawn_radar.general"));
+        ConfigCategory colors = builder.getOrCreateCategory(text("option.spawn_radar.colors"));
 
-        ConfigCategory general = builder.getOrCreateCategory(Text.translatable("option.spawn_radar.general"));
+        addGeneralEntries(general, entries);
+        addColorEntries(colors, entries);
 
-        general.addEntry(entryBuilder.startIntField(
-                Text.translatable("option.spawn_radar.chunk_search_radius"),
-                RadarClient.config.defaultSearchRadius
-            )
-            .setSaveConsumer(number -> RadarClient.config.defaultSearchRadius = number)
+        return builder.build();
+    }
+
+    private static void addGeneralEntries(ConfigCategory general, ConfigEntryBuilder entries)
+    {
+        var config = RadarClient.config;
+
+        general.addEntry(entries.startIntField(
+                text("option.spawn_radar.chunk_search_radius"),
+                config.defaultSearchRadius)
+            .setSaveConsumer(value -> config.defaultSearchRadius = value)
             .setDefaultValue(ConfigManager.DEFAULT.defaultSearchRadius)
-            .build()
-        );
+            .build());
 
-        general.addEntry(entryBuilder.startIntField(
-                Text.translatable("option.spawn_radar.min_spawners"),
-                RadarClient.config.minimumSpawnersForRegion
-            )
-            .setSaveConsumer(number -> RadarClient.config.minimumSpawnersForRegion = number)
+        general.addEntry(entries.startIntField(
+                text("option.spawn_radar.min_spawners"),
+                config.minimumSpawnersForRegion)
+            .setSaveConsumer(value -> config.minimumSpawnersForRegion = value)
             .setDefaultValue(ConfigManager.DEFAULT.minimumSpawnersForRegion)
-            .build()
-        );
+            .build());
 
-        general.addEntry(entryBuilder.startBooleanToggle(
-                Text.translatable("option.spawn_radar.highlight_after_scan"),
-                RadarClient.config.highlightAfterScan
-            )
-            .setSaveConsumer(value -> RadarClient.config.highlightAfterScan = value)
+        general.addEntry(entries.startBooleanToggle(
+                text("option.spawn_radar.highlight_after_scan"),
+                config.highlightAfterScan)
+            .setSaveConsumer(value -> config.highlightAfterScan = value)
             .setDefaultValue(ConfigManager.DEFAULT.highlightAfterScan)
-            .build()
-        );
+            .build());
 
-        general.addEntry(entryBuilder.startBooleanToggle(
-                Text.translatable("option.spawn_radar.frustum_culling"),
-                RadarClient.config.frustumCullingEnabled
-            )
-            .setSaveConsumer(value -> RadarClient.config.frustumCullingEnabled = value)
+        general.addEntry(entries.startBooleanToggle(
+                text("option.spawn_radar.frustum_culling"),
+                config.frustumCullingEnabled)
+            .setSaveConsumer(value -> config.frustumCullingEnabled = value)
             .setDefaultValue(ConfigManager.DEFAULT.frustumCullingEnabled)
-            .build()
-        );
+            .build());
 
-        general.addEntry(entryBuilder
+        general.addEntry(entries
             .startEnumSelector(
-                Text.translatable("option.spawn_radar.default_cluster_sort_type"),
+                text("option.spawn_radar.default_cluster_sort_type"),
                 SpawnerCluster.SortType.class,
-                RadarClient.config.defaultSortType
-            )
+                config.defaultSortType)
             .setEnumNameProvider(e -> Text.translatable(e.toString()))
             .setDefaultValue(ConfigManager.DEFAULT.defaultSortType)
-            .setSaveConsumer(value -> RadarClient.config.defaultSortType = value)
-            .build()
-        );
+            .setSaveConsumer(value -> config.defaultSortType = value)
+            .build());
 
-        general.addEntry(entryBuilder
+        general.addEntry(entries
             .startEnumSelector(
-                Text.translatable("option.spawn_radar.cluster_proximity_sort_order"),
+                text("option.spawn_radar.cluster_proximity_sort_order"),
                 ConfigManager.SortOrder.class,
-                RadarClient.config.clusterProximitySortOrder
-            )
+                config.clusterProximitySortOrder)
             .setEnumNameProvider(e -> Text.translatable(e.toString()))
             .setDefaultValue(ConfigManager.DEFAULT.clusterProximitySortOrder)
-            .setSaveConsumer(value -> RadarClient.config.clusterProximitySortOrder = value)
-            .build()
-        );
+            .setSaveConsumer(value -> config.clusterProximitySortOrder = value)
+            .build());
 
-        general.addEntry(entryBuilder
+        general.addEntry(entries
             .startEnumSelector(
-                Text.translatable("option.spawn_radar.cluster_size_sort_order"),
+                text("option.spawn_radar.cluster_size_sort_order"),
                 ConfigManager.SortOrder.class,
-                RadarClient.config.clusterSizeSortOrder
-            )
+                config.clusterSizeSortOrder)
             .setEnumNameProvider(e -> Text.translatable(e.toString()))
             .setDefaultValue(ConfigManager.DEFAULT.clusterSizeSortOrder)
-            .setSaveConsumer(value -> RadarClient.config.clusterSizeSortOrder = value)
-            .build()
-        );
+            .setSaveConsumer(value -> config.clusterSizeSortOrder = value)
+            .build());
 
-        general.addEntry(entryBuilder
+        general.addEntry(entries
             .startIntField(
-                Text.translatable("option.spawn_radar.panel_element_count"),
-                RadarClient.config.panelElementCount
-            )
+                text("option.spawn_radar.panel_element_count"),
+                config.panelElementCount)
             .setDefaultValue(ConfigManager.DEFAULT.panelElementCount)
             .setSaveConsumer(value ->
             {
-                RadarClient.config.panelElementCount = value;
+                config.panelElementCount = value;
                 PanelWidget.setElementCount(value);
             })
-            .build()
-        );
+            .build());
 
-        general.addEntry(entryBuilder
+        general.addEntry(entries
             .startIntSlider(
-                Text.translatable("option.spawn_radar.panel_vertical_offset"),
-                (int)(RadarClient.config.verticalPanelOffset*100),
+                text("option.spawn_radar.panel_vertical_offset"),
+                (int) (config.verticalPanelOffset * 100),
                 0,
-                100
-            )
-            .setDefaultValue((int)(ConfigManager.DEFAULT.verticalPanelOffset*100))
+                100)
+            .setDefaultValue((int) (ConfigManager.DEFAULT.verticalPanelOffset * 100))
             .setTextGetter(value -> Text.of(value + "%"))
             .setSaveConsumer(value ->
             {
-                RadarClient.config.verticalPanelOffset = value/100.f;
+                config.verticalPanelOffset = value / 100f;
                 HudRenderer.updatePanelPosition();
             })
+            .build());
 
-            .build()
-        );
-
-        general.addEntry(entryBuilder
+        general.addEntry(entries
             .startEnumSelector(
-                Text.translatable("option.spawn_radar.panel_horizontal_alignment"),
+                text("option.spawn_radar.panel_horizontal_alignment"),
                 ConfigManager.HudHorizontalAlignment.class,
-                RadarClient.config.panelHorizontalAlignment
-            )
+                config.panelHorizontalAlignment)
             .setEnumNameProvider(e -> Text.translatable(e.toString()))
             .setDefaultValue(ConfigManager.DEFAULT.panelHorizontalAlignment)
             .setSaveConsumer(value ->
             {
-                RadarClient.config.panelHorizontalAlignment = value;
+                config.panelHorizontalAlignment = value;
                 HudRenderer.updatePanelPosition();
             })
-            .build()
-        );
+            .build());
+    }
 
-        ConfigCategory colors = builder.getOrCreateCategory(Text.translatable("option.spawn_radar.colors"));
+    private static void addColorEntries(ConfigCategory colors, ConfigEntryBuilder entries)
+    {
+        var config = RadarClient.config;
 
-        colors.addEntry(entryBuilder
+        colors.addEntry(entries
             .startColorField(
-                Text.translatable("option.spawn_radar.spawner_color"),
-                RadarClient.config.spawnerHighlightColor
-            )
-            .setSaveConsumer(color -> RadarClient.config.spawnerHighlightColor = color)
+                text("option.spawn_radar.spawner_color"),
+                config.spawnerHighlightColor)
+            .setSaveConsumer(color -> config.spawnerHighlightColor = color)
             .setDefaultValue(ConfigManager.DEFAULT.spawnerHighlightColor)
-            .build()
-        );
+            .build());
 
-        for (int i = 0; i < RadarClient.config.clusterColors.size(); i++)
+        for (int i = 0; i < config.clusterColors.size(); i++)
         {
             final int index = i;
-            String key = i < RadarClient.config.clusterColors.size() - 1
-                               ? "option.spawn_radar.cluster_" + (i + 1)
-                               : "option.spawn_radar.cluster_" + (i + 1) + "_plus";
-
-            colors.addEntry(entryBuilder
-                .startColorField(Text.translatable(key), RadarClient.config.clusterColors.get(i))
-                .setSaveConsumer(color -> RadarClient.config.clusterColors.set(index, color))
+            colors.addEntry(entries
+                .startColorField(text(clusterColorKey(i, config.clusterColors.size())), config.clusterColors.get(i))
+                .setSaveConsumer(color -> config.clusterColors.set(index, color))
                 .setDefaultValue(ConfigManager.DEFAULT.clusterColors.get(i))
-                .build()
-            );
+                .build());
         }
 
-        colors.addEntry(entryBuilder
+        colors.addEntry(entries
             .startIntSlider(
-                Text.translatable("option.spawn_radar.spawner_opacity"),
-                RadarClient.config.spawnerHighlightOpacity,
+                text("option.spawn_radar.spawner_opacity"),
+                config.spawnerHighlightOpacity,
                 0,
-                100
-            )
-            .setSaveConsumer(value -> RadarClient.config.spawnerHighlightOpacity = value)
+                100)
+            .setSaveConsumer(value -> config.spawnerHighlightOpacity = value)
             .setDefaultValue(ConfigManager.DEFAULT.spawnerHighlightOpacity)
             .setTextGetter(value -> Text.of(value + "%"))
-            .build()
-        );
+            .build());
 
-        colors.addEntry(entryBuilder
+        colors.addEntry(entries
             .startIntSlider(
-                Text.translatable("option.spawn_radar.region_opacity"),
-                RadarClient.config.regionHighlightOpacity,
+                text("option.spawn_radar.region_opacity"),
+                config.regionHighlightOpacity,
                 0,
-                100
-            )
-            .setSaveConsumer(value -> RadarClient.config.regionHighlightOpacity = value)
+                100)
+            .setSaveConsumer(value -> config.regionHighlightOpacity = value)
             .setDefaultValue(ConfigManager.DEFAULT.regionHighlightOpacity)
             .setTextGetter(value -> Text.of(value + "%"))
-            .build()
-        );
+            .build());
+    }
 
-        return builder.build();
+    private static Text text(String key)
+    {
+        return Text.translatable(key);
+    }
+
+    private static String clusterColorKey(int index, int total)
+    {
+        boolean isLastSlot = index == total - 1;
+        String suffix = isLastSlot ? "_plus" : "";
+        return "option.spawn_radar.cluster_" + (index + 1) + suffix;
     }
 }

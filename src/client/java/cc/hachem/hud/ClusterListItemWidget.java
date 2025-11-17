@@ -123,21 +123,7 @@ public class ClusterListItemWidget extends Widget
     public void render(DrawContext context)
     {
         TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
-
-        expandButton.setText(expanded ? "-" : "+");
-        expandButton.setY(y);
-        boolean highlighted = ClusterManager.isHighlighted(cluster.id());
-
-        String statusMarker = highlighted ? "[*]" : "[ ]";
-        String clusterText = statusMarker + " " + baseLabel;
-        clusterButton.setText(clusterText);
-        clusterButton.setY(y);
-
-        int accentColor = 0xFF000000 | ConfigManager.getClusterColor(cluster.spawners().size());
-        clusterButton.setColor(highlighted ? accentColor : Colors.LIGHT_GRAY);
-        int clusterTextWidth = textRenderer.getWidth(clusterText);
-        layoutClusterRow(clusterTextWidth);
-
+        updateClusterRow(textRenderer);
         expandButton.render(context);
         clusterButton.render(context);
 
@@ -166,6 +152,23 @@ public class ClusterListItemWidget extends Widget
     public void setAlignment(ConfigManager.HudHorizontalAlignment alignment)
     {
         this.alignment = alignment == null ? ConfigManager.HudHorizontalAlignment.LEFT : alignment;
+    }
+
+    private void updateClusterRow(TextRenderer textRenderer)
+    {
+        expandButton.setText(expanded ? "-" : "+");
+        expandButton.setY(y);
+        boolean highlighted = ClusterManager.isHighlighted(cluster.id());
+
+        String statusMarker = highlighted ? "[*]" : "[ ]";
+        String clusterText = statusMarker + " " + baseLabel;
+        clusterButton.setText(clusterText);
+        clusterButton.setY(y);
+
+        int accentColor = 0xFF000000 | ConfigManager.getClusterColor(cluster.spawners().size());
+        clusterButton.setColor(highlighted ? accentColor : Colors.LIGHT_GRAY);
+        int clusterTextWidth = textRenderer.getWidth(clusterText);
+        layoutClusterRow(clusterTextWidth);
     }
 
     private void layoutClusterRow(int clusterTextWidth)

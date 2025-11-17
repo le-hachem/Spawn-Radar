@@ -18,9 +18,20 @@ public class ConfigSerializer
 
     public static void save()
     {
+        save(RadarClient.config);
+    }
+
+    public static void save(ConfigManager config)
+    {
+        if (config == null)
+        {
+            RadarClient.LOGGER.error("Attempted to save config, but the instance was null.");
+            return;
+        }
+
         try (FileWriter writer = new FileWriter(CONFIG_FILE))
         {
-            GSON.toJson(RadarClient.config, writer);
+            GSON.toJson(config, writer);
         }
         catch (IOException e)
         {
@@ -30,37 +41,43 @@ public class ConfigSerializer
 
     public static void load()
     {
+        RadarClient.config = readOrCreateConfig();
+    }
+
+    private static ConfigManager readOrCreateConfig()
+    {
         if (!CONFIG_FILE.exists())
         {
-            RadarClient.config = new ConfigManager();
-            RadarClient.config.ensureColorPalette();
-            RadarClient.config.ensureHudAlignment();
-            save();
+            ConfigManager defaults = createDefaultConfig();
+            save(defaults);
+            return defaults;
         }
 
         try (FileReader reader = new FileReader(CONFIG_FILE))
         {
-            RadarClient.config = GSON.fromJson(reader, ConfigManager.class);
-            if (RadarClient.config == null)
+            ConfigManager loaded = GSON.fromJson(reader, ConfigManager.class);
+            if (loaded == null)
             {
                 RadarClient.LOGGER.error("Config file was empty or invalid. Recreating default config.");
-                RadarClient.config = new ConfigManager();
-                RadarClient.config.ensureColorPalette();
-                RadarClient.config.ensureHudAlignment();
-                save();
-            }
-            else
-            {
-                RadarClient.config.ensureColorPalette();
-                RadarClient.config.ensureHudAlignment();
+                ConfigManager defaults = createDefaultConfig();
+                save(defaults);
+                return defaults;
             }
 
-        } catch (IOException e)
+            loaded.normalize();
+            return loaded;
+        }
+        catch (IOException e)
         {
             RadarClient.LOGGER.error("Failed to load config: {}", e.getMessage());
-            RadarClient.config = new ConfigManager();
-            RadarClient.config.ensureColorPalette();
-            RadarClient.config.ensureHudAlignment();
+            return createDefaultConfig();
         }
+    }
+
+    private static ConfigManager createDefaultConfig()
+    {
+        ConfigManager config = new ConfigManager();
+        config.normalize();
+        return config;
     }
 }
