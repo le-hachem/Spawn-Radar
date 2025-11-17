@@ -42,7 +42,7 @@ public class ConfigManager
     public int regionHighlightOpacity = 30;
 
     public boolean highlightAfterScan = false;
-    public boolean frustumCullingEnabled = false;
+    public boolean frustumCullingEnabled = true;
 
     public double verticalPanelOffset = 0.1;
     public int panelElementCount = 5;

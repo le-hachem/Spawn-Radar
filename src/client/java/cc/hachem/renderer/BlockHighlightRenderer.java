@@ -271,7 +271,7 @@ public class BlockHighlightRenderer
 
         Boolean manualResult = frustumCheck(box);
         if (manualResult != null)
-            return manualResult;
+            return !manualResult;
         return false;
     }
 
