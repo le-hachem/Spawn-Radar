@@ -7,11 +7,13 @@ import cc.hachem.core.ClusterManager;
 import cc.hachem.core.CommandManager;
 import cc.hachem.core.KeyManager;
 import cc.hachem.core.SpawnerCluster;
+import cc.hachem.core.SpawnerInfo;
 import cc.hachem.hud.HudRenderer;
 import cc.hachem.hud.PanelWidget;
 import cc.hachem.network.RadarHandshakePayload;
 import cc.hachem.renderer.BlockHighlightRenderer;
 import cc.hachem.renderer.FloatingTextRenderer;
+import cc.hachem.renderer.ItemTextureRenderer;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -19,6 +21,8 @@ import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.Items;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import org.slf4j.Logger;
@@ -54,7 +58,7 @@ public class RadarClient implements ClientModInitializer
 
     public static void generateClustersChild(ClientPlayerEntity source, String argument)
     {
-        List<BlockPos> spawners = BlockBank.getAll();
+        List<SpawnerInfo> spawners = BlockBank.getAll();
         if (!validateSpawnerResults(source, spawners))
             return;
 
@@ -97,7 +101,6 @@ public class RadarClient implements ClientModInitializer
             Set<Integer> highlightedIds = ClusterManager.getHighlightedClusterIds();
             renderHighlightedBlocks(context);
             renderHighlightedRegions(context, highlightedIds);
-            BlockHighlightRenderer.submit(MinecraftClient.getInstance());
         }
         catch (Exception e)
         {
@@ -105,7 +108,6 @@ public class RadarClient implements ClientModInitializer
         }
     }
 
-    @Override
     public void onInitializeClient()
     {
         initializeSubsystems();
@@ -136,6 +138,8 @@ public class RadarClient implements ClientModInitializer
         LOGGER.info("KeyManager initialized.");
         HudRenderer.init();
         LOGGER.info("KeyManager initialized.");
+        ItemTextureRenderer.init();
+        LOGGER.info("ItemTextureRenderer initialized.");
     }
 
     private void registerEventHandlers()
@@ -192,7 +196,7 @@ public class RadarClient implements ClientModInitializer
         PanelWidget.refresh();
     }
 
-    private static boolean validateSpawnerResults(ClientPlayerEntity source, List<BlockPos> spawners)
+    private static boolean validateSpawnerResults(ClientPlayerEntity source, List<SpawnerInfo> spawners)
     {
         if (!spawners.isEmpty())
             return true;
@@ -270,8 +274,9 @@ public class RadarClient implements ClientModInitializer
 
     private void renderHighlightedBlocks(WorldRenderContext context)
     {
-        for (BlockPos pos : ClusterManager.getHighlights())
+        for (SpawnerInfo info : ClusterManager.getHighlights())
         {
+            BlockPos pos = info.pos();
             BlockHighlightRenderer.draw(context, pos, config.spawnerHighlightColor, config.spawnerHighlightOpacity / 100f);
             renderClusterLabel(context, pos);
         }

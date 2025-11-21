@@ -3,12 +3,16 @@ package cc.hachem.hud;
 import cc.hachem.config.ConfigManager;
 import cc.hachem.core.ClusterManager;
 import cc.hachem.core.SpawnerCluster;
+import cc.hachem.core.SpawnerInfo;
+import cc.hachem.renderer.ItemTextureRenderer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
 import net.minecraft.util.Colors;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.SpawnEggItem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,13 +25,15 @@ public class ClusterListItemWidget extends Widget
 
     private final ButtonWidget expandButton;
     private final ButtonWidget clusterButton;
-    private final List<ButtonWidget> children = new ArrayList<>();
+    private final List<ChildRow> childRows = new ArrayList<>();
     private int rowWidth;
     private final int branchGlyphWidth;
     private int requiredWidth;
     private static final int CLUSTER_GAP = 5;
     private static final int CHILD_INDENT = 10;
     private static final int BRANCH_GAP = 4;
+    private static final int ICON_GAP = 4;
+    private static final int CHILD_VERTICAL_GAP = 6;
     private static final String LEFT_BRANCH_CONTINUE = "┠━━";
     private static final String LEFT_BRANCH_END = "┗━━";
     private static final String RIGHT_BRANCH_CONTINUE = "━━┫";
@@ -45,6 +51,7 @@ public class ClusterListItemWidget extends Widget
         this.width = width;
         this.rowWidth = width;
         this.height = textRenderer.fontHeight + 5;
+        float baseIconSize = textRenderer.fontHeight + 2;
 
         expandButton = new ButtonWidget(x, y, "+", Colors.WHITE, this::toggleExpanded);
         expandButton.setDecorated(false);
@@ -66,8 +73,9 @@ public class ClusterListItemWidget extends Widget
         requiredWidth = expandButton.getWidth() + CLUSTER_GAP + textRenderer.getWidth("[*] " + baseLabel);
 
         int index = 1;
-        for (BlockPos pos : cluster.spawners())
+        for (SpawnerInfo spawner : cluster.spawners())
         {
+            BlockPos pos = spawner.pos();
             String label = String.format("%d. (%d, %d, %d)", index++, pos.getX(), pos.getY(), pos.getZ());
             ButtonWidget childButton = new ButtonWidget(
                 x + CHILD_INDENT,
@@ -82,9 +90,13 @@ public class ClusterListItemWidget extends Widget
                 }
             );
             childButton.setDecorated(false);
-            children.add(childButton);
+            ItemStack iconStack = createSpawnEggStack(spawner);
+            float iconSize = iconStack.isEmpty() ? 0f : baseIconSize;
+            childRows.add(new ChildRow(childButton, iconStack, iconSize));
 
-            int childContentWidth = expandButton.getWidth() + CHILD_INDENT + branchGlyphWidth + BRANCH_GAP + childButton.getContentWidth();
+            int iconSpace = iconStack.isEmpty() ? 0 : (int) Math.ceil(iconSize) + ICON_GAP;
+            int childContentWidth = expandButton.getWidth() + CHILD_INDENT + branchGlyphWidth + BRANCH_GAP
+                + iconSpace + childButton.getContentWidth();
             if (childContentWidth > requiredWidth)
                 requiredWidth = childContentWidth;
         }
@@ -104,8 +116,8 @@ public class ClusterListItemWidget extends Widget
         clusterButton.onMouseClick(mx, my, mouseButton);
 
         if (expanded)
-            for (ButtonWidget child : children)
-                child.onMouseClick(mx, my, mouseButton);
+        for (ChildRow row : childRows)
+            row.button().onMouseClick(mx, my, mouseButton);
     }
 
     @Override
@@ -115,8 +127,8 @@ public class ClusterListItemWidget extends Widget
         clusterButton.onMouseMove(mx, my);
 
         if (expanded)
-            for (ButtonWidget child : children)
-                child.onMouseMove(mx, my);
+        for (ChildRow row : childRows)
+            row.button().onMouseMove(mx, my);
     }
 
     @Override
@@ -134,9 +146,16 @@ public class ClusterListItemWidget extends Widget
     @Override
     public int getHeight()
     {
-        if (!expanded || children.isEmpty())
+        if (!expanded || childRows.isEmpty())
             return expandButton.getHeight();
-        return expandButton.getHeight() + children.size() * (children.getFirst().getHeight() + 2);
+        int total = expandButton.getHeight();
+        for (int i = 0; i < childRows.size(); i++)
+        {
+            total += getRowHeight(childRows.get(i));
+            if (i < childRows.size() - 1)
+                total += CHILD_VERTICAL_GAP;
+        }
+        return total;
     }
 
     private void toggleExpanded()
@@ -196,34 +215,44 @@ public class ClusterListItemWidget extends Widget
     private void renderChildren(DrawContext context, TextRenderer textRenderer)
     {
         boolean mirror = alignment == ConfigManager.HudHorizontalAlignment.RIGHT;
-        int childY = y + expandButton.getHeight() + 2;
+        int childY = y + expandButton.getHeight() + CHILD_VERTICAL_GAP;
 
-        for (int i = 0; i < children.size(); i++)
+        for (int i = 0; i < childRows.size(); i++)
         {
-            ButtonWidget child = children.get(i);
-            child.setY(childY);
-            String branch = getBranchGlyph(i == children.size() - 1, mirror);
+            ChildRow row = childRows.get(i);
+            ButtonWidget child = row.button();
+            int rowHeight = getRowHeight(row);
+            String branch = getBranchGlyph(i == childRows.size() - 1, mirror);
             int branchWidth = textRenderer.getWidth(branch);
             int childWidth = Math.max(child.getContentWidth(), 80);
+            ItemStack iconStack = row.iconStack();
+            int iconSpace = iconStack.isEmpty() ? 0 : (int) Math.ceil(row.iconSize()) + ICON_GAP;
+            int branchY = childY + (rowHeight - textRenderer.fontHeight) / 2;
+            int textY = childY + (rowHeight - child.getHeight()) / 2;
+            child.setY(textY);
 
             if (!mirror)
             {
                 int branchX = expandButton.getX() + expandButton.getWidth() + CHILD_INDENT;
-                int childX = branchX + branchWidth + BRANCH_GAP;
+                int childX = branchX + branchWidth + BRANCH_GAP + iconSpace;
                 child.setX(childX);
-                context.drawText(textRenderer, branch, branchX, childY, Colors.DARK_GRAY, false);
+                context.drawText(textRenderer, branch, branchX, branchY, Colors.DARK_GRAY, false);
+                if (!iconStack.isEmpty())
+                    renderSpawnEgg(iconStack, childX - iconSpace, childY + (rowHeight - Math.round(row.iconSize())) / 2, row.iconSize());
             }
             else
             {
                 int branchX = expandButton.getX() - CHILD_INDENT - branchWidth;
-                int childX = branchX - BRANCH_GAP - childWidth;
+                int childX = branchX - BRANCH_GAP - iconSpace - childWidth;
                 child.setX(childX);
-                context.drawText(textRenderer, branch, branchX, childY, Colors.DARK_GRAY, false);
+                context.drawText(textRenderer, branch, branchX, branchY, Colors.DARK_GRAY, false);
+                if (!iconStack.isEmpty())
+                    renderSpawnEgg(iconStack, childX + childWidth + ICON_GAP, childY + (rowHeight - Math.round(row.iconSize())) / 2, row.iconSize());
             }
 
             child.setWidth(childWidth);
             child.render(context);
-            childY += child.getHeight() + 2;
+            childY += rowHeight + CHILD_VERTICAL_GAP;
         }
     }
 
@@ -233,4 +262,25 @@ public class ClusterListItemWidget extends Widget
             return isLast ? RIGHT_BRANCH_END : RIGHT_BRANCH_CONTINUE;
         return isLast ? LEFT_BRANCH_END : LEFT_BRANCH_CONTINUE;
     }
+
+    private static ItemStack createSpawnEggStack(SpawnerInfo spawner)
+    {
+        if (spawner == null || !spawner.hasKnownMob())
+            return ItemStack.EMPTY;
+        SpawnEggItem spawnEgg = SpawnEggItem.forEntity(spawner.entityType());
+        return spawnEgg == null ? ItemStack.EMPTY : new ItemStack(spawnEgg);
+    }
+
+    private static void renderSpawnEgg(ItemStack iconStack, int x, int y, float size)
+    {
+        int renderSize = Math.round(size);
+        ItemTextureRenderer.render(iconStack, x, y, renderSize, renderSize);
+    }
+
+    private static int getRowHeight(ChildRow row)
+    {
+        return Math.max(row.button().getHeight(), Math.round(row.iconSize()));
+    }
+
+    private record ChildRow(ButtonWidget button, ItemStack iconStack, float iconSize) {}
 }

@@ -122,10 +122,19 @@ public class CommandManager
                     SpawnerCluster cluster = clusters.get(id - 1);
                     int sid = 1;
 
-                    for (BlockPos pos : cluster.spawners())
+                    for (SpawnerInfo spawner : cluster.spawners())
                     {
+                        BlockPos pos = spawner.pos();
+                        String label = String.format(
+                            "    - %s spawner #%d @ [%d, %d, %d]",
+                            spawner.mobName(),
+                            sid,
+                            pos.getX(),
+                            pos.getY(),
+                            pos.getZ()
+                        );
                         MutableText spawnerText = Text.literal(
-                                "    - Spawner " + sid + " @ [" + pos.getX() + ", " + pos.getY() + ", " + pos.getZ() + "]")
+                                label)
                                 .styled(style -> style.withColor(Formatting.GREEN)
                                 .withClickEvent(new ClickEvent.RunCommand(
                                         String.format("/tp %d %d %d", pos.getX(), pos.getY(), pos.getZ())))

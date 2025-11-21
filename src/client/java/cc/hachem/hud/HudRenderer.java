@@ -24,7 +24,7 @@ public class HudRenderer
     private static int lastScreenWidth = -1;
     private static int lastScreenHeight = -1;
 
-    private HudRenderer() {}
+    private HudRenderer() { }
 
     public static void init()
     {

@@ -2,8 +2,11 @@ package cc.hachem.core;
 
 import cc.hachem.RadarClient;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.entity.MobSpawnerBlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -16,7 +19,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class BlockBank
 {
-    private static final List<BlockPos> HIGHLIGHTED_BLOCKS = new CopyOnWriteArrayList<>();
+    private static final List<SpawnerInfo> SPAWNERS = new CopyOnWriteArrayList<>();
 
     private BlockBank() {}
 
@@ -35,7 +38,7 @@ public class BlockBank
         int playerChunkX = playerPos.getX() >> 4;
         int playerChunkZ = playerPos.getZ() >> 4;
 
-        List<BlockPos> foundSpawners = Collections.synchronizedList(new ArrayList<>());
+        List<SpawnerInfo> foundSpawners = Collections.synchronizedList(new ArrayList<>());
         List<Thread> workers = startWorkers(player, chunkRadius, playerChunkX, playerChunkZ, foundSpawners);
 
         waitForWorkers(workers);
@@ -49,7 +52,7 @@ public class BlockBank
 
     private static List<Thread> startWorkers(ClientPlayerEntity player, int chunkRadius,
                                              int playerChunkX, int playerChunkZ,
-                                             List<BlockPos> foundSpawners)
+                                             List<SpawnerInfo> foundSpawners)
     {
         List<Thread> workers = new ArrayList<>();
         for (Quadrant quadrant : createQuadrants(chunkRadius))
@@ -92,7 +95,7 @@ public class BlockBank
 
     private static void scanQuadrant(ClientPlayerEntity player, Quadrant quadrant,
                                      int playerChunkX, int playerChunkZ,
-                                     List<BlockPos> foundSpawners)
+                                     List<SpawnerInfo> foundSpawners)
     {
         RadarClient.LOGGER.debug("Thread {} scanning quadrant X[{}..{}], Z[{}..{}].",
             Thread.currentThread().getName(),
@@ -119,7 +122,7 @@ public class BlockBank
         return chunkOffsets;
     }
 
-    private static void scanChunk(World world, int chunkX, int chunkZ, List<BlockPos> foundSpawners)
+    private static void scanChunk(World world, int chunkX, int chunkZ, List<SpawnerInfo> foundSpawners)
     {
         if (!world.isChunkLoaded(chunkX, chunkZ))
             return;
@@ -137,9 +140,10 @@ public class BlockBank
                     BlockPos pos = new BlockPos(baseX + x, y, baseZ + z);
                     if (world.getBlockState(pos).isOf(Blocks.SPAWNER))
                     {
-                        foundSpawners.add(pos);
-                        BlockBank.add(pos);
-                        RadarClient.LOGGER.trace("Found spawner at {}", pos);
+                        SpawnerInfo info = createSpawnerInfo(world, pos);
+                        foundSpawners.add(info);
+                        BlockBank.add(info);
+                        RadarClient.LOGGER.trace("Found {} spawner at {}", info.mobName(), pos);
                     }
                 }
     }
@@ -172,24 +176,57 @@ public class BlockBank
         }
     }
 
-    public static void add(BlockPos pos)
+    public static void add(SpawnerInfo info)
     {
-        if (!HIGHLIGHTED_BLOCKS.contains(pos))
-        {
-            HIGHLIGHTED_BLOCKS.add(pos);
-            RadarClient.LOGGER.trace("Added spawner to highlight list: {}", pos);
-        }
+        int index = indexOf(info.pos());
+        if (index >= 0)
+            SPAWNERS.set(index, info);
+        else
+            SPAWNERS.add(info);
+        RadarClient.LOGGER.trace("Added {} spawner to highlight list: {}", info.mobName(), info.pos());
     }
 
     public static void clear()
     {
-        int count = HIGHLIGHTED_BLOCKS.size();
-        HIGHLIGHTED_BLOCKS.clear();
-        RadarClient.LOGGER.debug("Cleared {} highlighted blocks.", count);
+        int count = SPAWNERS.size();
+        SPAWNERS.clear();
+        RadarClient.LOGGER.debug("Cleared {} highlighted spawners.", count);
     }
 
-    public static List<BlockPos> getAll()
+    public static List<SpawnerInfo> getAll()
     {
-        return Collections.unmodifiableList(HIGHLIGHTED_BLOCKS);
+        return Collections.unmodifiableList(SPAWNERS);
+    }
+
+    private static int indexOf(BlockPos pos)
+    {
+        for (int i = 0; i < SPAWNERS.size(); i++)
+        {
+            if (SPAWNERS.get(i).pos().equals(pos))
+                return i;
+        }
+        return -1;
+    }
+
+    private static SpawnerInfo createSpawnerInfo(World world, BlockPos pos)
+    {
+        EntityType<?> entityType = null;
+        try
+        {
+            var blockEntity = world.getBlockEntity(pos);
+            if (blockEntity instanceof MobSpawnerBlockEntity mobSpawner)
+                entityType = resolveSpawnerEntityType(world, pos, mobSpawner);
+        }
+        catch (Exception e)
+        {
+            RadarClient.LOGGER.debug("Unable to resolve mob type for spawner at {}", pos, e);
+        }
+        return new SpawnerInfo(pos, entityType);
+    }
+
+    private static EntityType<?> resolveSpawnerEntityType(World world, BlockPos pos, MobSpawnerBlockEntity mobSpawner)
+    {
+        Entity renderedEntity = mobSpawner.getLogic().getRenderedEntity(world, pos);
+        return renderedEntity != null ? renderedEntity.getType() : null;
     }
 }

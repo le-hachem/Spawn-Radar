@@ -28,7 +28,7 @@ public class ClusterManager
     {
         List<Integer> ids = new ArrayList<>();
         for (SpawnerCluster c : clusters)
-            if (c.spawners().contains(pos)) ids.add(c.id());
+            if (c.spawners().stream().anyMatch(info -> info.pos().equals(pos))) ids.add(c.id());
         return ids;
     }
 
@@ -82,12 +82,12 @@ public class ClusterManager
         return new HashSet<>(highlightedClusterIds);
     }
 
-    public static List<BlockPos> getHighlights()
+    public static List<SpawnerInfo> getHighlights()
     {
         if (highlightedClusterIds.isEmpty())
             return BlockBank.getAll();
 
-        List<BlockPos> activeHighlights = new ArrayList<>();
+        List<SpawnerInfo> activeHighlights = new ArrayList<>();
         for (SpawnerCluster c : clusters)
             if (highlightedClusterIds.contains(c.id()))
                 activeHighlights.addAll(c.spawners());
