@@ -1,14 +1,14 @@
 {
 	"schemaVersion": 1,
 	"id": "spawn-radar",
-	"version": "1.2",
+	"version": "1.2.1",
 	"name": "Spawn Radar",
 	"description": "A mod designed to locate spawners.",
 	"authors": [
 		"le_hachem"
 	],
 	"contact": {
-		"homepage": "https://github.com/le-hachem",
+		"homepage": "https://modrinth.com/mod/spawn-radar",
 		"sources": "https://github.com/le-hachem/spawn-radar"
 	},
 	"license": "MIT",
