@@ -199,6 +199,7 @@ public class RadarClient implements ClientModInitializer
         ClusterManager.unhighlightAllClusters();
         ClusterManager.getClusters().clear();
         BlockHighlightRenderer.clearRegionMeshCache();
+        BoxOutlineRenderer.clearMeshCache();
         BlockBank.clear();
         VolumeHighlightManager.clear();
         PanelWidget.refresh();
@@ -227,6 +228,7 @@ public class RadarClient implements ClientModInitializer
     {
         ClusterManager.setClusters(clusters);
         BlockHighlightRenderer.clearRegionMeshCache();
+        BoxOutlineRenderer.clearMeshCache();
         LOGGER.info("Generated {} clusters using sort type {}", clusters.size(), sortType);
 
         if (config.highlightAfterScan)

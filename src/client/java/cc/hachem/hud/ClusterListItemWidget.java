@@ -10,6 +10,7 @@ import cc.hachem.renderer.ItemTextureRenderer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.text.Text;
 import net.minecraft.util.Colors;
 import net.minecraft.util.math.BlockPos;
@@ -40,8 +41,6 @@ public class ClusterListItemWidget extends Widget
     private static final int TOGGLE_GAP = 6;
     private static final int TOGGLE_SPACING = 4;
     private static final int TREE_HOVER_PADDING = 6;
-    private static final int TOGGLE_ACTIVE_COLOR = 0xFF4CAF50;
-    private static final int TOGGLE_ACTIVE_SECONDARY_COLOR = 0xFFFFB74D;
     private static final int TOGGLE_INACTIVE_COLOR = Colors.ALTERNATE_WHITE;
     private static final String LEFT_BRANCH_EXPAND = "┏━━";
     private static final String LEFT_BRANCH_CONTINUE = "┠━━";
@@ -104,12 +103,13 @@ public class ClusterListItemWidget extends Widget
             ItemStack iconStack = createSpawnEggStack(spawner);
             float iconSize = iconStack.isEmpty() ? 0f : baseIconSize;
             ChildRow row = new ChildRow(childButton, iconStack, iconSize, spawner);
-
-            ButtonWidget spawnToggle = createSpawnToggleButton(row);
-            ButtonWidget mobCapToggle = createMobCapToggleButton(row);
-            row.setToggles(spawnToggle, mobCapToggle);
-
-            syncToggleColors(row);
+            if (row.supportsVolumeToggles())
+            {
+                ButtonWidget spawnToggle = createSpawnToggleButton(row);
+                ButtonWidget mobCapToggle = createMobCapToggleButton(row);
+                row.setToggles(spawnToggle, mobCapToggle);
+                syncToggleColors(row);
+            }
             childRows.add(row);
 
             int iconSpace = iconStack.isEmpty() ? 0 : (int) Math.ceil(iconSize) + ICON_GAP;
@@ -138,8 +138,10 @@ public class ClusterListItemWidget extends Widget
             for (ChildRow row : childRows)
             {
                 row.button().onMouseClick(mx, my, mouseButton);
-                row.spawnToggle().onMouseClick(mx, my, mouseButton);
-                row.mobCapToggle().onMouseClick(mx, my, mouseButton);
+                if (row.spawnToggle() != null)
+                    row.spawnToggle().onMouseClick(mx, my, mouseButton);
+                if (row.mobCapToggle() != null)
+                    row.mobCapToggle().onMouseClick(mx, my, mouseButton);
             }
     }
 
@@ -154,8 +156,10 @@ public class ClusterListItemWidget extends Widget
             for (ChildRow row : childRows)
             {
                 row.button().onMouseMove(mx, my);
-                row.spawnToggle().onMouseMove(mx, my);
-                row.mobCapToggle().onMouseMove(mx, my);
+                if (row.spawnToggle() != null)
+                    row.spawnToggle().onMouseMove(mx, my);
+                if (row.mobCapToggle() != null)
+                    row.mobCapToggle().onMouseMove(mx, my);
                 boolean hovered = row.button().isHovered() || row.isWithinTree(mx, my);
                 row.setHoverActive(hovered);
             }
@@ -252,7 +256,8 @@ public class ClusterListItemWidget extends Widget
         {
             ChildRow row = childRows.get(i);
             ButtonWidget child = row.button();
-            syncToggleColors(row);
+            if (row.supportsVolumeToggles())
+                syncToggleColors(row);
             boolean rowActive = isRowActive(row);
             int rowHeight = getRowHeight(row);
             String branch = getBranchGlyph(i == childRows.size() - 1, mirror);
@@ -286,7 +291,7 @@ public class ClusterListItemWidget extends Widget
             child.setWidth(childWidth);
             child.render(context);
 
-            if (rowActive)
+            if (rowActive && MinecraftClient.getInstance().currentScreen instanceof ChatScreen && row.supportsVolumeToggles())
                 renderToggleBranch(context, textRenderer, row, child, childWidth, textY, mirror);
             else
                 row.clearTreeBounds();
@@ -310,7 +315,7 @@ public class ClusterListItemWidget extends Widget
             if (!row.hoverActive())
                 return;
             boolean enabled = VolumeHighlightManager.toggleSpawnVolume(row.spawner().pos(), RadarClient.config.showSpawnerSpawnVolume);
-            holder[0].setColor(enabled ? TOGGLE_ACTIVE_COLOR : TOGGLE_INACTIVE_COLOR);
+            holder[0].setColor(enabled ? (255 << 24) | RadarClient.config.spawnVolumeColor : TOGGLE_INACTIVE_COLOR);
         });
         return holder[0];
     }
@@ -323,13 +328,15 @@ public class ClusterListItemWidget extends Widget
             if (!row.hoverActive())
                 return;
             boolean enabled = VolumeHighlightManager.toggleMobCapVolume(row.spawner().pos(), RadarClient.config.showSpawnerMobCapVolume);
-            holder[0].setColor(enabled ? TOGGLE_ACTIVE_SECONDARY_COLOR : TOGGLE_INACTIVE_COLOR);
+            holder[0].setColor(enabled ? (255 << 24) | RadarClient.config.mobCapVolumeColor : TOGGLE_INACTIVE_COLOR);
         });
         return holder[0];
     }
 
     private int toggleBlockWidth(ChildRow row)
     {
+        if (!row.supportsVolumeToggles())
+            return 0;
         return TOGGLE_GAP + branchGlyphWidth + BRANCH_GAP
             + row.spawnToggle().getContentWidth()
             + TOGGLE_SPACING + row.mobCapToggle().getContentWidth();
@@ -338,6 +345,11 @@ public class ClusterListItemWidget extends Widget
     private void renderToggleBranch(DrawContext context, TextRenderer textRenderer, ChildRow row,
                                     ButtonWidget child, int childWidth, int textY, boolean mirror)
     {
+        if (row.spawnToggle() == null || row.mobCapToggle() == null)
+        {
+            row.clearTreeBounds();
+            return;
+        }
         ToggleBounds spawnBounds = renderToggleRow(
             context, textRenderer, row.spawnToggle(), child, childWidth, textY, mirror, true);
 
@@ -391,16 +403,18 @@ public class ClusterListItemWidget extends Widget
 
     private void syncToggleColors(ChildRow row)
     {
+        if (!row.supportsVolumeToggles())
+            return;
         BlockPos pos = row.spawner().pos();
         boolean spawnEnabled = VolumeHighlightManager.isSpawnVolumeEnabled(pos, RadarClient.config.showSpawnerSpawnVolume);
         boolean mobCapEnabled = VolumeHighlightManager.isMobCapVolumeEnabled(pos, RadarClient.config.showSpawnerMobCapVolume);
-        row.spawnToggle().setColor(spawnEnabled ? TOGGLE_ACTIVE_COLOR : TOGGLE_INACTIVE_COLOR);
-        row.mobCapToggle().setColor(mobCapEnabled ? TOGGLE_ACTIVE_SECONDARY_COLOR : TOGGLE_INACTIVE_COLOR);
+        row.spawnToggle().setColor(spawnEnabled ? (255 << 24) | RadarClient.config.spawnVolumeColor : TOGGLE_INACTIVE_COLOR);
+        row.mobCapToggle().setColor(mobCapEnabled ? (255 << 24) | RadarClient.config.mobCapVolumeColor : TOGGLE_INACTIVE_COLOR);
     }
 
     private boolean isRowActive(ChildRow row)
     {
-        return row.hoverActive();
+        return row.hoverActive() && row.supportsVolumeToggles();
     }
 
     private static ItemStack createSpawnEggStack(SpawnerInfo spawner)
@@ -428,6 +442,7 @@ public class ClusterListItemWidget extends Widget
         private final ItemStack iconStack;
         private final float iconSize;
         private final SpawnerInfo spawner;
+        private final boolean supportsVolumeToggles;
         private ButtonWidget spawnToggle;
         private ButtonWidget mobCapToggle;
         private boolean hoverActive;
@@ -442,6 +457,7 @@ public class ClusterListItemWidget extends Widget
             this.iconStack = iconStack;
             this.iconSize = iconSize;
             this.spawner = spawner;
+            this.supportsVolumeToggles = spawner != null && spawner.hasKnownMob();
         }
 
         ButtonWidget button()
@@ -480,6 +496,11 @@ public class ClusterListItemWidget extends Widget
             return mobCapToggle;
         }
 
+        boolean supportsVolumeToggles()
+        {
+            return supportsVolumeToggles;
+        }
+
         void setHoverActive(boolean active)
         {
             this.hoverActive = active;
@@ -500,6 +521,8 @@ public class ClusterListItemWidget extends Widget
 
         boolean isWithinTree(int mx, int my)
         {
+            if (!supportsVolumeToggles)
+                return false;
             return mx >= treeMinX && mx <= treeMaxX && my >= treeMinY && my <= treeMaxY;
         }
 

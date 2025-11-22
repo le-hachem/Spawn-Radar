@@ -26,8 +26,12 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.lwjgl.system.MemoryUtil;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class BoxOutlineRenderer
 {
@@ -44,6 +48,7 @@ public final class BoxOutlineRenderer
 
     private static BufferBuilder buffer;
     private static MappableRingBuffer vertexBuffer;
+    private static final Map<MeshKey, List<Quad>> MESH_CACHE = new ConcurrentHashMap<>();
 
     private static final int[][] EDGE_INDEXES = new int[][]
     {
@@ -55,6 +60,13 @@ public final class BoxOutlineRenderer
         {5, 7},
         {6, 7}
     };
+
+    private record MeshKey(double width, double height, double depth, double thickness) {}
+
+    private record Quad(float x1, float y1, float z1,
+                        float x2, float y2, float z2,
+                        float x3, float y3, float z3,
+                        float x4, float y4, float z4) {}
 
     private BoxOutlineRenderer() {}
 
@@ -83,22 +95,9 @@ public final class BoxOutlineRenderer
         matrices.translate(-camera.x, -camera.y, -camera.z);
 
         Matrix4f matrix = matrices.peek().getPositionMatrix();
-        Vec3d[] corners = buildCorners(bounds);
         float[] rgba = decodeColor(color, alpha);
-        double diameter = Math.max(0.01, thickness / 16.0);
-        double half = diameter * 0.5;
-        double edgeInset = half;
-
-        for (Vec3d corner : corners)
-            emitCornerCube(matrix, corner, half, rgba);
-
-        for (int[] edge : EDGE_INDEXES)
-        {
-            Vec3d from = corners[edge[0]];
-            Vec3d to = corners[edge[1]];
-            Axis axis = determineAxis(from, to);
-            emitEdge(matrix, from, to, rgba, half, axis, edgeInset);
-        }
+        List<Quad> mesh = getOrCreateMesh(width, height, depth, thickness);
+        emitMesh(matrix, mesh, rgba, originX, originY, originZ);
 
         matrices.pop();
     }
@@ -126,13 +125,68 @@ public final class BoxOutlineRenderer
             buffer = new BufferBuilder(ALLOCATOR, PIPELINE.getVertexFormatMode(), PIPELINE.getVertexFormat());
     }
 
-    private static void emitEdge(Matrix4f matrix,
-                                 Vec3d from,
-                                 Vec3d to,
-                                 float[] rgba,
-                                 double halfThickness,
-                                 Axis axis,
-                                 double edgeInset)
+    private static List<Quad> getOrCreateMesh(double width, double height, double depth, double thickness)
+    {
+        MeshKey key = new MeshKey(width, height, depth, thickness);
+        return MESH_CACHE.computeIfAbsent(key, ignored -> buildMesh(width, height, depth, thickness));
+    }
+
+    private static List<Quad> buildMesh(double width, double height, double depth, double thickness)
+    {
+        Box baseBounds = new Box(0, 0, 0, width, height, depth);
+        Vec3d[] corners = buildCorners(baseBounds);
+
+        double diameter = Math.max(0.01, thickness / 16.0);
+        double half = diameter * 0.5;
+        double edgeInset = half;
+
+        List<Quad> quads = new ArrayList<>();
+        for (Vec3d corner : corners)
+            addCornerCubeQuads(quads, corner, half);
+
+        for (int[] edge : EDGE_INDEXES)
+        {
+            Vec3d from = corners[edge[0]];
+            Vec3d to = corners[edge[1]];
+            Axis axis = determineAxis(from, to);
+            addEdgeQuads(quads, from, to, half, axis, edgeInset);
+        }
+
+        return List.copyOf(quads);
+    }
+
+    private static void emitMesh(Matrix4f matrix, List<Quad> mesh, float[] rgba,
+                                 double originX, double originY, double originZ)
+    {
+        for (Quad quad : mesh)
+            emitQuad(matrix, quad, rgba, originX, originY, originZ);
+    }
+
+    private static void emitQuad(Matrix4f matrix, Quad quad, float[] rgba,
+                                 double originX, double originY, double originZ)
+    {
+        double x1 = quad.x1 + originX;
+        double y1 = quad.y1 + originY;
+        double z1 = quad.z1 + originZ;
+        double x2 = quad.x2 + originX;
+        double y2 = quad.y2 + originY;
+        double z2 = quad.z2 + originZ;
+        double x3 = quad.x3 + originX;
+        double y3 = quad.y3 + originY;
+        double z3 = quad.z3 + originZ;
+        double x4 = quad.x4 + originX;
+        double y4 = quad.y4 + originY;
+        double z4 = quad.z4 + originZ;
+
+        emitDoubleSidedQuad(matrix, x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, rgba);
+    }
+
+    private static void addEdgeQuads(List<Quad> quads,
+                                     Vec3d from,
+                                     Vec3d to,
+                                     double halfThickness,
+                                     Axis axis,
+                                     double edgeInset)
     {
         double minX = Math.min(from.x, to.x);
         double maxX = Math.max(from.x, to.x);
@@ -179,10 +233,10 @@ public final class BoxOutlineRenderer
             maxZ += halfThickness;
         }
 
-        emitPrism(matrix, minX, minY, minZ, maxX, maxY, maxZ, rgba);
+        addPrismQuads(quads, minX, minY, minZ, maxX, maxY, maxZ);
     }
 
-    private static void emitCornerCube(Matrix4f matrix, Vec3d corner, double halfSize, float[] rgba)
+    private static void addCornerCubeQuads(List<Quad> quads, Vec3d corner, double halfSize)
     {
         double minX = corner.x - halfSize;
         double maxX = corner.x + halfSize;
@@ -191,20 +245,33 @@ public final class BoxOutlineRenderer
         double minZ = corner.z - halfSize;
         double maxZ = corner.z + halfSize;
 
-        emitPrism(matrix, minX, minY, minZ, maxX, maxY, maxZ, rgba);
+        addPrismQuads(quads, minX, minY, minZ, maxX, maxY, maxZ);
     }
 
-    private static void emitPrism(Matrix4f matrix,
-                                  double x0, double y0, double z0,
-                                  double x1, double y1, double z1,
-                                  float[] rgba)
+    private static void addPrismQuads(List<Quad> quads,
+                                      double x0, double y0, double z0,
+                                      double x1, double y1, double z1)
     {
-        emitDoubleSidedQuad(matrix, x0, y0, z0, x1, y0, z0, x1, y1, z0, x0, y1, z0, rgba); // front
-        emitDoubleSidedQuad(matrix, x0, y0, z1, x1, y0, z1, x1, y1, z1, x0, y1, z1, rgba); // back
-        emitDoubleSidedQuad(matrix, x0, y0, z0, x0, y0, z1, x0, y1, z1, x0, y1, z0, rgba); // left
-        emitDoubleSidedQuad(matrix, x1, y0, z0, x1, y1, z0, x1, y1, z1, x1, y0, z1, rgba); // right
-        emitDoubleSidedQuad(matrix, x0, y1, z0, x1, y1, z0, x1, y1, z1, x0, y1, z1, rgba); // top
-        emitDoubleSidedQuad(matrix, x0, y0, z0, x0, y0, z1, x1, y0, z1, x1, y0, z0, rgba); // bottom
+        addQuadVertices(quads, x0, y0, z0, x1, y0, z0, x1, y1, z0, x0, y1, z0); // front
+        addQuadVertices(quads, x0, y0, z1, x1, y0, z1, x1, y1, z1, x0, y1, z1); // back
+        addQuadVertices(quads, x0, y0, z0, x0, y0, z1, x0, y1, z1, x0, y1, z0); // left
+        addQuadVertices(quads, x1, y0, z0, x1, y1, z0, x1, y1, z1, x1, y0, z1); // right
+        addQuadVertices(quads, x0, y1, z0, x1, y1, z0, x1, y1, z1, x0, y1, z1); // top
+        addQuadVertices(quads, x0, y0, z0, x0, y0, z1, x1, y0, z1, x1, y0, z0); // bottom
+    }
+
+    private static void addQuadVertices(List<Quad> quads,
+                                        double x1, double y1, double z1,
+                                        double x2, double y2, double z2,
+                                        double x3, double y3, double z3,
+                                        double x4, double y4, double z4)
+    {
+        quads.add(new Quad(
+            (float) x1, (float) y1, (float) z1,
+            (float) x2, (float) y2, (float) z2,
+            (float) x3, (float) y3, (float) z3,
+            (float) x4, (float) y4, (float) z4
+        ));
     }
 
     private static void emitDoubleSidedQuad(Matrix4f matrix,
@@ -292,6 +359,11 @@ public final class BoxOutlineRenderer
         builtBuffer.close();
     }
 
+    public static void clearMeshCache()
+    {
+        MESH_CACHE.clear();
+    }
+
     public static void close()
     {
         ALLOCATOR.close();
@@ -300,6 +372,7 @@ public final class BoxOutlineRenderer
             vertexBuffer.close();
             vertexBuffer = null;
         }
+        clearMeshCache();
     }
 
     private static boolean shouldCull(Box box)
