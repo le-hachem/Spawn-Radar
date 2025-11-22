@@ -38,6 +38,16 @@ public class ConfigManager
         public String toString() { return name; }
     }
 
+    public enum SpawnerIconMode
+    {
+        MOB_PUPPET("option.spawn_radar.spawner_icon_mode.mob_puppet"),
+        SPAWN_EGG("option.spawn_radar.spawner_icon_mode.spawn_egg");
+
+        private final String name;
+        SpawnerIconMode(String name) { this.name = name; }
+        public String toString() { return name; }
+    }
+
     public SpawnerCluster.SortType defaultSortType = SpawnerCluster.SortType.NO_SORT;
     public SortOrder clusterProximitySortOrder = SortOrder.ASCENDING;
     public SortOrder clusterSizeSortOrder = SortOrder.DESCENDING;
@@ -65,6 +75,7 @@ public class ConfigManager
     public double verticalPanelOffset = 0.1;
     public int panelElementCount = 5;
     public HudHorizontalAlignment panelHorizontalAlignment = HudHorizontalAlignment.LEFT;
+    public SpawnerIconMode spawnerIconMode = SpawnerIconMode.MOB_PUPPET;
 
     public List<Integer> clusterColors = defaultClusterColors();
 
@@ -73,6 +84,7 @@ public class ConfigManager
         ensureColorPalette();
         ensureHudAlignment();
         ensureScanThreadCount();
+        ensureSpawnerIconMode();
     }
 
     public void ensureColorPalette()
@@ -125,6 +137,12 @@ public class ConfigManager
     {
         if (panelHorizontalAlignment == null)
             panelHorizontalAlignment = DEFAULT.panelHorizontalAlignment;
+    }
+
+    public void ensureSpawnerIconMode()
+    {
+        if (spawnerIconMode == null)
+            spawnerIconMode = DEFAULT.spawnerIconMode;
     }
 
     public void ensureScanThreadCount()

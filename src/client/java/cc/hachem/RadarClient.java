@@ -16,6 +16,7 @@ import cc.hachem.renderer.BlockHighlightRenderer;
 import cc.hachem.renderer.BoxOutlineRenderer;
 import cc.hachem.renderer.FloatingTextRenderer;
 import cc.hachem.renderer.ItemTextureRenderer;
+import cc.hachem.renderer.MobPuppetRenderer;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -144,7 +145,7 @@ public class RadarClient implements ClientModInitializer
         KeyManager.init();
         LOGGER.info("KeyManager initialized.");
         HudRenderer.init();
-        LOGGER.info("KeyManager initialized.");
+        LOGGER.info("HudRenderer initialized.");
         ItemTextureRenderer.init();
         LOGGER.info("ItemTextureRenderer initialized.");
     }
@@ -174,7 +175,11 @@ public class RadarClient implements ClientModInitializer
         );
 
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> handleJoinEvent(client));
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> serverSupportsRadar = false);
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) ->
+        {
+            serverSupportsRadar = false;
+            MobPuppetRenderer.clearCache();
+        });
     }
 
     private static void handleJoinEvent(MinecraftClient client)
@@ -202,6 +207,7 @@ public class RadarClient implements ClientModInitializer
         BoxOutlineRenderer.clearMeshCache();
         BlockBank.clear();
         VolumeHighlightManager.clear();
+        MobPuppetRenderer.clearCache();
         PanelWidget.refresh();
     }
 

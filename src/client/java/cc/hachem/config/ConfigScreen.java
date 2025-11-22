@@ -191,6 +191,21 @@ public class ConfigScreen
                 HudRenderer.updatePanelPosition();
             })
             .build());
+
+        hud.addEntry(entries
+            .startEnumSelector(
+                text("option.spawn_radar.spawner_icon_mode"),
+                ConfigManager.SpawnerIconMode.class,
+                config.spawnerIconMode)
+            .setEnumNameProvider(e -> Text.translatable(e.toString()))
+            .setDefaultValue(ConfigManager.DEFAULT.spawnerIconMode)
+            .setTooltip(text("option.spawn_radar.spawner_icon_mode.tooltip"))
+            .setSaveConsumer(value ->
+            {
+                config.spawnerIconMode = value == null ? ConfigManager.DEFAULT.spawnerIconMode : value;
+                PanelWidget.refresh();
+            })
+            .build());
     }
 
     private static void addColorEntries(ConfigCategory colors, ConfigEntryBuilder entries)

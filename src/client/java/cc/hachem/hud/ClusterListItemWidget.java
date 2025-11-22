@@ -7,6 +7,7 @@ import cc.hachem.core.SpawnerCluster;
 import cc.hachem.core.SpawnerInfo;
 import cc.hachem.core.VolumeHighlightManager;
 import cc.hachem.renderer.ItemTextureRenderer;
+import cc.hachem.renderer.MobPuppetRenderer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
@@ -101,9 +102,10 @@ public class ClusterListItemWidget extends Widget
             );
             childButton.setDecorated(false);
 
-            ItemStack iconStack = createSpawnEggStack(spawner);
-            float iconSize = iconStack.isEmpty() ? 0f : baseIconSize;
-            ChildRow row = new ChildRow(childButton, iconStack, iconSize, spawner);
+            boolean knownMob = spawner != null && spawner.hasKnownMob();
+            float iconSize = knownMob ? baseIconSize : 0f;
+            ItemStack spawnEgg = knownMob ? createSpawnEggStack(spawner) : ItemStack.EMPTY;
+            ChildRow row = new ChildRow(childButton, iconSize, spawner, spawnEgg);
             if (row.supportsVolumeToggles())
             {
                 ButtonWidget spawnToggle = createSpawnToggleButton(row);
@@ -113,7 +115,7 @@ public class ClusterListItemWidget extends Widget
             }
             childRows.add(row);
 
-            int iconSpace = iconStack.isEmpty() ? 0 : (int) Math.ceil(iconSize) + ICON_GAP;
+            int iconSpace = row.hasMobIcon() ? (int) Math.ceil(iconSize) + ICON_GAP : 0;
             int toggleWidth = toggleBlockWidth(row);
             int childContentWidth = expandButton.getWidth() + CHILD_INDENT + branchGlyphWidth + BRANCH_GAP
                 + iconSpace + childButton.getContentWidth() + toggleWidth;
@@ -264,8 +266,8 @@ public class ClusterListItemWidget extends Widget
             String branch = getBranchGlyph(i == childRows.size() - 1, mirror);
             int branchWidth = textRenderer.getWidth(branch);
             int childWidth = Math.max(child.getContentWidth(), 80);
-            ItemStack iconStack = row.iconStack();
-            int iconSpace = iconStack.isEmpty() ? 0 : (int) Math.ceil(row.iconSize()) + ICON_GAP;
+            boolean hasIcon = row.hasMobIcon();
+            int iconSpace = hasIcon ? (int) Math.ceil(row.iconSize()) + ICON_GAP : 0;
             int branchY = childY + (rowHeight - textRenderer.fontHeight) / 2;
             int textY = childY + (rowHeight - child.getHeight()) / 2;
             child.setY(textY);
@@ -276,8 +278,8 @@ public class ClusterListItemWidget extends Widget
                 int childX = branchX + branchWidth + BRANCH_GAP + iconSpace;
                 child.setX(childX);
                 context.drawText(textRenderer, branch, branchX, branchY, Colors.DARK_GRAY, false);
-                if (!iconStack.isEmpty())
-                    renderSpawnEgg(iconStack, childX - iconSpace, childY + (rowHeight - Math.round(row.iconSize())) / 2, row.iconSize());
+                if (hasIcon)
+                    renderSpawnerIcon(context, row, childX - iconSpace, childY + (rowHeight - Math.round(row.iconSize())) / 2);
             }
             else
             {
@@ -285,8 +287,8 @@ public class ClusterListItemWidget extends Widget
                 int childX = branchX - BRANCH_GAP - iconSpace - childWidth;
                 child.setX(childX);
                 context.drawText(textRenderer, branch, branchX, branchY, Colors.DARK_GRAY, false);
-                if (!iconStack.isEmpty())
-                    renderSpawnEgg(iconStack, childX + childWidth + ICON_GAP, childY + (rowHeight - Math.round(row.iconSize())) / 2, row.iconSize());
+                if (hasIcon)
+                    renderSpawnerIcon(context, row, childX + childWidth + ICON_GAP, childY + (rowHeight - Math.round(row.iconSize())) / 2);
             }
 
             child.setWidth(childWidth);
@@ -418,9 +420,32 @@ public class ClusterListItemWidget extends Widget
         return row.hoverActive() && row.supportsVolumeToggles();
     }
 
+    private static void renderSpawnerIcon(DrawContext context, ChildRow row, int x, int y)
+    {
+        if (!row.hasMobIcon())
+            return;
+
+        SpawnerInfo spawner = row.spawner();
+        if (spawner == null || spawner.entityType() == null)
+            return;
+
+        ConfigManager.SpawnerIconMode mode = resolveIconMode();
+        if (mode == ConfigManager.SpawnerIconMode.SPAWN_EGG && !row.spawnEggStack().isEmpty())
+            renderSpawnEgg(row.spawnEggStack(), x, y, row.iconSize());
+        else
+            MobPuppetRenderer.render(context, spawner.entityType(), x, y, row.iconSize());
+    }
+
+    private static ConfigManager.SpawnerIconMode resolveIconMode()
+    {
+        if (RadarClient.config == null || RadarClient.config.spawnerIconMode == null)
+            return ConfigManager.DEFAULT.spawnerIconMode;
+        return RadarClient.config.spawnerIconMode;
+    }
+
     private static ItemStack createSpawnEggStack(SpawnerInfo spawner)
     {
-        if (spawner == null || !spawner.hasKnownMob())
+        if (spawner == null || spawner.entityType() == null)
             return ItemStack.EMPTY;
         SpawnEggItem spawnEgg = SpawnEggItem.forEntity(spawner.entityType());
         return spawnEgg == null ? ItemStack.EMPTY : new ItemStack(spawnEgg);
@@ -440,9 +465,10 @@ public class ClusterListItemWidget extends Widget
     private static class ChildRow
     {
         private final ButtonWidget button;
-        private final ItemStack iconStack;
         private final float iconSize;
         private final SpawnerInfo spawner;
+        private final ItemStack spawnEggStack;
+        private final boolean hasMobIcon;
         private final boolean supportsVolumeToggles;
         private ButtonWidget spawnToggle;
         private ButtonWidget mobCapToggle;
@@ -452,23 +478,19 @@ public class ClusterListItemWidget extends Widget
         private int treeMinY;
         private int treeMaxY;
 
-        ChildRow(ButtonWidget button, ItemStack iconStack, float iconSize, SpawnerInfo spawner)
+        ChildRow(ButtonWidget button, float iconSize, SpawnerInfo spawner, ItemStack spawnEggStack)
         {
             this.button = button;
-            this.iconStack = iconStack;
             this.iconSize = iconSize;
             this.spawner = spawner;
-            this.supportsVolumeToggles = spawner != null && spawner.hasKnownMob();
+            this.spawnEggStack = spawnEggStack == null ? ItemStack.EMPTY : spawnEggStack;
+            this.hasMobIcon = iconSize > 0f && spawner != null && spawner.hasKnownMob();
+            this.supportsVolumeToggles = hasMobIcon;
         }
 
         ButtonWidget button()
         {
             return button;
-        }
-
-        ItemStack iconStack()
-        {
-            return iconStack;
         }
 
         float iconSize()
@@ -479,6 +501,16 @@ public class ClusterListItemWidget extends Widget
         SpawnerInfo spawner()
         {
             return spawner;
+        }
+
+        ItemStack spawnEggStack()
+        {
+            return spawnEggStack;
+        }
+
+        boolean hasMobIcon()
+        {
+            return hasMobIcon;
         }
 
         void setToggles(ButtonWidget spawnToggle, ButtonWidget mobCapToggle)

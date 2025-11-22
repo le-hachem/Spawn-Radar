@@ -36,6 +36,10 @@
   "option.spawn_radar.panel_element_count": "Nombre de clusters par page",
   "option.spawn_radar.panel_vertical_offset": "Décalage vertical du panneau",
   "option.spawn_radar.panel_horizontal_alignment": "Alignement horizontal du panneau",
+  "option.spawn_radar.spawner_icon_mode": "Style d'icône du spawner",
+  "option.spawn_radar.spawner_icon_mode.tooltip": "Choisissez si le HUD affiche le modèle 3D du mob ou son œuf d'apparition.",
+  "option.spawn_radar.spawner_icon_mode.mob_puppet": "Modèle du mob",
+  "option.spawn_radar.spawner_icon_mode.spawn_egg": "Œuf d'apparition",
 
   "option.spawn_radar.sort_type.none": "Aucun tri",
   "option.spawn_radar.sort_type.proximity": "Trier par proximité",
