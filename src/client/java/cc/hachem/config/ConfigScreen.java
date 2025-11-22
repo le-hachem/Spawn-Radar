@@ -45,6 +45,7 @@ public class ConfigScreen
                 config.defaultSearchRadius)
             .setSaveConsumer(value -> config.defaultSearchRadius = value)
             .setDefaultValue(ConfigManager.DEFAULT.defaultSearchRadius)
+            .setTooltip(text("option.spawn_radar.chunk_search_radius.tooltip"))
             .build());
 
         scanning.addEntry(entries.startIntSlider(
@@ -66,6 +67,7 @@ public class ConfigScreen
                 config.minimumSpawnersForRegion)
             .setSaveConsumer(value -> config.minimumSpawnersForRegion = value)
             .setDefaultValue(ConfigManager.DEFAULT.minimumSpawnersForRegion)
+            .setTooltip(text("option.spawn_radar.min_spawners.tooltip"))
             .build());
 
         scanning.addEntry(entries.startBooleanToggle(
@@ -73,6 +75,7 @@ public class ConfigScreen
                 config.highlightAfterScan)
             .setSaveConsumer(value -> config.highlightAfterScan = value)
             .setDefaultValue(ConfigManager.DEFAULT.highlightAfterScan)
+            .setTooltip(text("option.spawn_radar.highlight_after_scan.tooltip"))
             .build());
 
         scanning.addEntry(entries
@@ -83,6 +86,7 @@ public class ConfigScreen
             .setEnumNameProvider(e -> Text.translatable(e.toString()))
             .setDefaultValue(ConfigManager.DEFAULT.defaultSortType)
             .setSaveConsumer(value -> config.defaultSortType = value)
+            .setTooltip(text("option.spawn_radar.default_cluster_sort_type.tooltip"))
             .build());
 
         scanning.addEntry(entries
@@ -93,6 +97,7 @@ public class ConfigScreen
             .setEnumNameProvider(e -> Text.translatable(e.toString()))
             .setDefaultValue(ConfigManager.DEFAULT.clusterProximitySortOrder)
             .setSaveConsumer(value -> config.clusterProximitySortOrder = value)
+            .setTooltip(text("option.spawn_radar.cluster_proximity_sort_order.tooltip"))
             .build());
 
         scanning.addEntry(entries
@@ -103,6 +108,7 @@ public class ConfigScreen
             .setEnumNameProvider(e -> Text.translatable(e.toString()))
             .setDefaultValue(ConfigManager.DEFAULT.clusterSizeSortOrder)
             .setSaveConsumer(value -> config.clusterSizeSortOrder = value)
+            .setTooltip(text("option.spawn_radar.cluster_size_sort_order.tooltip"))
             .build());
 
         scanning.addEntry(entries.startBooleanToggle(
@@ -110,6 +116,7 @@ public class ConfigScreen
                 config.frustumCullingEnabled)
             .setSaveConsumer(value -> config.frustumCullingEnabled = value)
             .setDefaultValue(ConfigManager.DEFAULT.frustumCullingEnabled)
+            .setTooltip(text("option.spawn_radar.frustum_culling.tooltip"))
             .build());
     }
 
@@ -122,6 +129,7 @@ public class ConfigScreen
                 config.useOutlineSpawnerHighlight)
             .setSaveConsumer(value -> config.useOutlineSpawnerHighlight = value)
             .setDefaultValue(ConfigManager.DEFAULT.useOutlineSpawnerHighlight)
+            .setTooltip(text("option.spawn_radar.use_outline_highlight.tooltip"))
             .build());
 
         rendering.addEntry(entries.startBooleanToggle(
@@ -129,6 +137,7 @@ public class ConfigScreen
                 config.showSpawnerSpawnVolume)
             .setSaveConsumer(value -> config.showSpawnerSpawnVolume = value)
             .setDefaultValue(ConfigManager.DEFAULT.showSpawnerSpawnVolume)
+            .setTooltip(text("option.spawn_radar.show_spawn_volume.tooltip"))
             .build());
 
         rendering.addEntry(entries.startBooleanToggle(
@@ -136,6 +145,7 @@ public class ConfigScreen
                 config.showSpawnerMobCapVolume)
             .setSaveConsumer(value -> config.showSpawnerMobCapVolume = value)
             .setDefaultValue(ConfigManager.DEFAULT.showSpawnerMobCapVolume)
+            .setTooltip(text("option.spawn_radar.show_mob_cap_volume.tooltip"))
             .build());
 
         rendering.addEntry(entries.startFloatField(
@@ -144,6 +154,7 @@ public class ConfigScreen
             .setMin(0.05f)
             .setSaveConsumer(value -> config.spawnerOutlineThickness = Math.max(0.05f, value))
             .setDefaultValue(ConfigManager.DEFAULT.spawnerOutlineThickness)
+            .setTooltip(text("option.spawn_radar.outline_thickness.tooltip"))
             .build());
     }
 
@@ -161,6 +172,7 @@ public class ConfigScreen
                 config.panelElementCount = value;
                 PanelWidget.setElementCount(value);
             })
+            .setTooltip(text("option.spawn_radar.panel_element_count.tooltip"))
             .build());
 
         hud.addEntry(entries
@@ -176,6 +188,7 @@ public class ConfigScreen
                 config.verticalPanelOffset = value / 100f;
                 HudRenderer.updatePanelPosition();
             })
+            .setTooltip(text("option.spawn_radar.panel_vertical_offset.tooltip"))
             .build());
 
         hud.addEntry(entries
@@ -190,6 +203,7 @@ public class ConfigScreen
                 config.panelHorizontalAlignment = value;
                 HudRenderer.updatePanelPosition();
             })
+            .setTooltip(text("option.spawn_radar.panel_horizontal_alignment.tooltip"))
             .build());
 
         hud.addEntry(entries
