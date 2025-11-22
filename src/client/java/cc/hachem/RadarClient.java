@@ -12,6 +12,7 @@ import cc.hachem.hud.HudRenderer;
 import cc.hachem.hud.PanelWidget;
 import cc.hachem.network.RadarHandshakePayload;
 import cc.hachem.renderer.BlockHighlightRenderer;
+import cc.hachem.renderer.BoxOutlineRenderer;
 import cc.hachem.renderer.FloatingTextRenderer;
 import cc.hachem.renderer.ItemTextureRenderer;
 import net.fabricmc.api.ClientModInitializer;
@@ -21,8 +22,6 @@ import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.Items;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import org.slf4j.Logger;
@@ -105,6 +104,11 @@ public class RadarClient implements ClientModInitializer
         catch (Exception e)
         {
             LOGGER.error("Error during rendering: ", e);
+        }
+        finally
+        {
+            BlockHighlightRenderer.submit(MinecraftClient.getInstance());
+            BoxOutlineRenderer.submit(MinecraftClient.getInstance());
         }
     }
 
@@ -274,10 +278,17 @@ public class RadarClient implements ClientModInitializer
 
     private void renderHighlightedBlocks(WorldRenderContext context)
     {
+        boolean useOutline = config.useOutlineSpawnerHighlight;
+        int outlineColor = config.spawnerOutlineColor;
+        float outlineThickness = Math.max(0.05f, config.spawnerOutlineThickness);
+        float alpha = config.spawnerHighlightOpacity / 100f;
         for (SpawnerInfo info : ClusterManager.getHighlights())
         {
             BlockPos pos = info.pos();
-            BlockHighlightRenderer.draw(context, pos, config.spawnerHighlightColor, config.spawnerHighlightOpacity / 100f);
+            if (useOutline)
+                BoxOutlineRenderer.draw(context, pos, outlineColor, alpha, outlineThickness);
+            else
+                BlockHighlightRenderer.draw(context, pos, config.spawnerHighlightColor, alpha);
             renderClusterLabel(context, pos);
         }
     }

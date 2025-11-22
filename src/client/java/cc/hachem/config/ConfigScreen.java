@@ -64,6 +64,21 @@ public class ConfigScreen
             .setDefaultValue(ConfigManager.DEFAULT.frustumCullingEnabled)
             .build());
 
+        general.addEntry(entries.startBooleanToggle(
+                text("option.spawn_radar.use_outline_highlight"),
+                config.useOutlineSpawnerHighlight)
+            .setSaveConsumer(value -> config.useOutlineSpawnerHighlight = value)
+            .setDefaultValue(ConfigManager.DEFAULT.useOutlineSpawnerHighlight)
+            .build());
+
+        general.addEntry(entries.startFloatField(
+                text("option.spawn_radar.outline_thickness"),
+                config.spawnerOutlineThickness)
+            .setMin(0.05f)
+            .setSaveConsumer(value -> config.spawnerOutlineThickness = Math.max(0.05f, value))
+            .setDefaultValue(ConfigManager.DEFAULT.spawnerOutlineThickness)
+            .build());
+
         general.addEntry(entries
             .startEnumSelector(
                 text("option.spawn_radar.default_cluster_sort_type"),
@@ -146,6 +161,14 @@ public class ConfigScreen
                 config.spawnerHighlightColor)
             .setSaveConsumer(color -> config.spawnerHighlightColor = color)
             .setDefaultValue(ConfigManager.DEFAULT.spawnerHighlightColor)
+            .build());
+
+        colors.addEntry(entries
+            .startColorField(
+                text("option.spawn_radar.outline_color"),
+                config.spawnerOutlineColor)
+            .setSaveConsumer(color -> config.spawnerOutlineColor = color)
+            .setDefaultValue(ConfigManager.DEFAULT.spawnerOutlineColor)
             .build());
 
         for (int i = 0; i < config.clusterColors.size(); i++)

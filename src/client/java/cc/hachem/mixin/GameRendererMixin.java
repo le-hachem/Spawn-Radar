@@ -1,6 +1,7 @@
 package cc.hachem.mixin;
 
 import cc.hachem.renderer.BlockHighlightRenderer;
+import cc.hachem.renderer.BoxOutlineRenderer;
 import net.minecraft.client.render.GameRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -14,5 +15,6 @@ public class GameRendererMixin
 	private void onGameRendererClose(CallbackInfo ci)
 	{
 		BlockHighlightRenderer.close();
+		BoxOutlineRenderer.close();
 	}
 }

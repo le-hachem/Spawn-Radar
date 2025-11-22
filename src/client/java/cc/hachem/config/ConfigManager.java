@@ -48,6 +48,9 @@ public class ConfigManager
 
     public int spawnerHighlightOpacity = 50;
     public int regionHighlightOpacity = 30;
+    public boolean useOutlineSpawnerHighlight = false;
+    public int spawnerOutlineColor = 0xFFFFFF;
+    public float spawnerOutlineThickness = 0.5f;
 
     public boolean highlightAfterScan = false;
     public boolean frustumCullingEnabled = true;
