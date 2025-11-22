@@ -198,6 +198,14 @@ public class BlockBank
         return Collections.unmodifiableList(SPAWNERS);
     }
 
+    public static SpawnerInfo get(BlockPos pos)
+    {
+        for (SpawnerInfo info : SPAWNERS)
+            if (info.pos().equals(pos))
+                return info;
+        return null;
+    }
+
     private static int indexOf(BlockPos pos)
     {
         for (int i = 0; i < SPAWNERS.size(); i++)

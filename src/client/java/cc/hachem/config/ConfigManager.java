@@ -49,6 +49,12 @@ public class ConfigManager
     public int spawnerHighlightOpacity = 50;
     public int regionHighlightOpacity = 30;
     public boolean useOutlineSpawnerHighlight = false;
+    public boolean showSpawnerSpawnVolume = false;
+    public int spawnVolumeColor = 0x4BA3FF;
+    public int spawnVolumeOpacity = 45;
+    public boolean showSpawnerMobCapVolume = false;
+    public int mobCapVolumeColor = 0xFFAA00;
+    public int mobCapVolumeOpacity = 25;
     public int spawnerOutlineColor = 0xFFFFFF;
     public float spawnerOutlineThickness = 0.5f;
 

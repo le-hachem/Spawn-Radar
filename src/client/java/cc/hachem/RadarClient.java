@@ -8,6 +8,7 @@ import cc.hachem.core.CommandManager;
 import cc.hachem.core.KeyManager;
 import cc.hachem.core.SpawnerCluster;
 import cc.hachem.core.SpawnerInfo;
+import cc.hachem.core.VolumeHighlightManager;
 import cc.hachem.hud.HudRenderer;
 import cc.hachem.hud.PanelWidget;
 import cc.hachem.network.RadarHandshakePayload;
@@ -22,6 +23,8 @@ import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.entity.EntityDimensions;
+import net.minecraft.entity.EntityType;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import org.slf4j.Logger;
@@ -197,6 +200,7 @@ public class RadarClient implements ClientModInitializer
         ClusterManager.getClusters().clear();
         BlockHighlightRenderer.clearRegionMeshCache();
         BlockBank.clear();
+        VolumeHighlightManager.clear();
         PanelWidget.refresh();
     }
 
@@ -279,18 +283,37 @@ public class RadarClient implements ClientModInitializer
     private void renderHighlightedBlocks(WorldRenderContext context)
     {
         boolean useOutline = config.useOutlineSpawnerHighlight;
+        boolean defaultSpawnVolume = config.showSpawnerSpawnVolume;
+        boolean defaultMobCapVolume = config.showSpawnerMobCapVolume;
         int outlineColor = config.spawnerOutlineColor;
         float outlineThickness = Math.max(0.05f, config.spawnerOutlineThickness);
         float alpha = config.spawnerHighlightOpacity / 100f;
+        float spawnVolumeAlpha = clamp01(config.spawnVolumeOpacity / 100f);
+        float mobCapVolumeAlpha = clamp01(config.mobCapVolumeOpacity / 100f);
         for (SpawnerInfo info : ClusterManager.getHighlights())
         {
             BlockPos pos = info.pos();
             if (useOutline)
+            {
                 BoxOutlineRenderer.draw(context, pos, outlineColor, alpha, outlineThickness);
+                boolean spawnEnabled = VolumeHighlightManager.isSpawnVolumeEnabled(pos, defaultSpawnVolume);
+                if (spawnEnabled && spawnVolumeAlpha > 0f)
+                {
+                    float volumeThickness = Math.max(0.05f, outlineThickness * 0.65f);
+                    renderSpawnVolume(context, info, config.spawnVolumeColor, spawnVolumeAlpha, volumeThickness);
+                }
+                boolean mobEnabled = VolumeHighlightManager.isMobCapVolumeEnabled(pos, defaultMobCapVolume);
+                if (mobEnabled && mobCapVolumeAlpha > 0f)
+                {
+                    float mobCapThickness = Math.max(0.05f, outlineThickness * 0.45f);
+                    renderMobCapVolume(context, info, config.mobCapVolumeColor, mobCapVolumeAlpha, mobCapThickness);
+                }
+            }
             else
                 BlockHighlightRenderer.draw(context, pos, config.spawnerHighlightColor, alpha);
             renderClusterLabel(context, pos);
         }
+        renderManualVolumes(context, defaultSpawnVolume, defaultMobCapVolume);
     }
 
     private void renderClusterLabel(WorldRenderContext context, BlockPos pos)
@@ -329,5 +352,122 @@ public class RadarClient implements ClientModInitializer
             List<BlockPos> region = cluster.intersectionRegion();
             BlockHighlightRenderer.fillRegionMesh(context, cluster.id(), region, clusterColor, config.regionHighlightOpacity / 100f);
         }
+    }
+
+    private void renderSpawnVolume(WorldRenderContext context, SpawnerInfo info, int color, float alpha, float thickness)
+    {
+        SpawnVolume volume = computeSpawnVolume(info);
+        if (volume == null)
+            return;
+
+        BoxOutlineRenderer.draw(
+            context,
+            volume.originX(),
+            volume.originY(),
+            volume.originZ(),
+            volume.width(),
+            volume.height(),
+            volume.depth(),
+            color,
+            alpha,
+            thickness);
+    }
+
+    private static SpawnVolume computeSpawnVolume(SpawnerInfo info)
+    {
+        BlockPos pos = info.pos();
+        double centerX = pos.getX() + 0.5;
+        double centerZ = pos.getZ() + 0.5;
+
+        double horizontalSpan = 9.0;
+        double verticalSpan = 3.0;
+
+        EntityType<?> entityType = info.entityType();
+        if (entityType != null)
+        {
+            EntityDimensions dims = entityType.getDimensions();
+            horizontalSpan = Math.max(horizontalSpan, 8.0 + dims.width());
+            verticalSpan   = Math.max(verticalSpan, 2.0 + dims.height());
+        }
+
+        double originY = pos.getY() - 1.0;
+        double originX = centerX - horizontalSpan / 2.0;
+        double originZ = centerZ - horizontalSpan / 2.0;
+
+        return new SpawnVolume(originX, originY, originZ, horizontalSpan, verticalSpan, horizontalSpan);
+    }
+
+    private void renderManualVolumes(WorldRenderContext context, boolean defaultSpawnVolume, boolean defaultMobCapVolume)
+    {
+        float spawnAlpha = clamp01(config.spawnVolumeOpacity / 100f);
+        float mobAlpha = clamp01(config.mobCapVolumeOpacity / 100f);
+
+        if (!defaultSpawnVolume && spawnAlpha > 0f)
+        {
+            float spawnThickness = Math.max(0.05f, config.spawnerOutlineThickness * 0.65f);
+            for (BlockPos pos : VolumeHighlightManager.getForcedSpawnShows())
+            {
+                SpawnerInfo info = resolveSpawner(pos);
+                if (info != null)
+                    renderSpawnVolume(context, info, config.spawnVolumeColor, spawnAlpha, spawnThickness);
+            }
+        }
+
+        if (!defaultMobCapVolume && mobAlpha > 0f)
+        {
+            float mobThickness = Math.max(0.05f, config.spawnerOutlineThickness * 0.45f);
+            for (BlockPos pos : VolumeHighlightManager.getForcedMobCapShows())
+            {
+                SpawnerInfo info = resolveSpawner(pos);
+                if (info != null)
+                    renderMobCapVolume(context, info, config.mobCapVolumeColor, mobAlpha, mobThickness);
+            }
+        }
+    }
+
+    private SpawnerInfo resolveSpawner(BlockPos pos)
+    {
+        SpawnerInfo info = BlockBank.get(pos);
+        if (info != null)
+            return info;
+
+        for (SpawnerCluster cluster : ClusterManager.getClusters())
+            for (SpawnerInfo candidate : cluster.spawners())
+                if (candidate.pos().equals(pos))
+                    return candidate;
+        return null;
+    }
+
+    private void renderMobCapVolume(WorldRenderContext context, SpawnerInfo info, int color, float alpha, float thickness)
+    {
+        BlockPos pos = info.pos();
+        double centerX = pos.getX() + 0.5;
+        double centerY = pos.getY() + 0.5;
+        double centerZ = pos.getZ() + 0.5;
+
+        double span = 9.0;
+        double originX = centerX - span / 2.0;
+        double originY = centerY - span / 2.0;
+        double originZ = centerZ - span / 2.0;
+
+        BoxOutlineRenderer.draw(
+            context,
+            originX,
+            originY,
+            originZ,
+            span,
+            span,
+            span,
+            color,
+            alpha,
+            thickness);
+    }
+
+    private record SpawnVolume(double originX, double originY, double originZ,
+                               double width, double height, double depth) {}
+
+    private static float clamp01(float value)
+    {
+        return Math.max(0f, Math.min(1f, value));
     }
 }

@@ -71,6 +71,20 @@ public class ConfigScreen
             .setDefaultValue(ConfigManager.DEFAULT.useOutlineSpawnerHighlight)
             .build());
 
+        general.addEntry(entries.startBooleanToggle(
+                text("option.spawn_radar.show_spawn_volume"),
+                config.showSpawnerSpawnVolume)
+            .setSaveConsumer(value -> config.showSpawnerSpawnVolume = value)
+            .setDefaultValue(ConfigManager.DEFAULT.showSpawnerSpawnVolume)
+            .build());
+
+        general.addEntry(entries.startBooleanToggle(
+                text("option.spawn_radar.show_mob_cap_volume"),
+                config.showSpawnerMobCapVolume)
+            .setSaveConsumer(value -> config.showSpawnerMobCapVolume = value)
+            .setDefaultValue(ConfigManager.DEFAULT.showSpawnerMobCapVolume)
+            .build());
+
         general.addEntry(entries.startFloatField(
                 text("option.spawn_radar.outline_thickness"),
                 config.spawnerOutlineThickness)
@@ -169,6 +183,44 @@ public class ConfigScreen
                 config.spawnerOutlineColor)
             .setSaveConsumer(color -> config.spawnerOutlineColor = color)
             .setDefaultValue(ConfigManager.DEFAULT.spawnerOutlineColor)
+            .build());
+
+        colors.addEntry(entries
+            .startColorField(
+                text("option.spawn_radar.spawn_volume_color"),
+                config.spawnVolumeColor)
+            .setSaveConsumer(color -> config.spawnVolumeColor = color)
+            .setDefaultValue(ConfigManager.DEFAULT.spawnVolumeColor)
+            .build());
+
+        colors.addEntry(entries
+            .startIntSlider(
+                text("option.spawn_radar.spawn_volume_opacity"),
+                config.spawnVolumeOpacity,
+                0,
+                100)
+            .setSaveConsumer(value -> config.spawnVolumeOpacity = value)
+            .setDefaultValue(ConfigManager.DEFAULT.spawnVolumeOpacity)
+            .setTextGetter(value -> Text.of(value + "%"))
+            .build());
+
+        colors.addEntry(entries
+            .startColorField(
+                text("option.spawn_radar.mob_cap_volume_color"),
+                config.mobCapVolumeColor)
+            .setSaveConsumer(color -> config.mobCapVolumeColor = color)
+            .setDefaultValue(ConfigManager.DEFAULT.mobCapVolumeColor)
+            .build());
+
+        colors.addEntry(entries
+            .startIntSlider(
+                text("option.spawn_radar.mob_cap_volume_opacity"),
+                config.mobCapVolumeOpacity,
+                0,
+                100)
+            .setSaveConsumer(value -> config.mobCapVolumeOpacity = value)
+            .setDefaultValue(ConfigManager.DEFAULT.mobCapVolumeOpacity)
+            .setTextGetter(value -> Text.of(value + "%"))
             .build());
 
         for (int i = 0; i < config.clusterColors.size(); i++)

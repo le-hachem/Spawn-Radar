@@ -118,4 +118,9 @@ public class ButtonWidget extends Widget
     {
         return contentWidth;
     }
+
+    public boolean isHovered()
+    {
+        return hovered;
+    }
 }
