@@ -47,6 +47,20 @@ public class ConfigScreen
             .setDefaultValue(ConfigManager.DEFAULT.defaultSearchRadius)
             .build());
 
+        scanning.addEntry(entries.startIntSlider(
+                text("option.spawn_radar.scan_thread_count"),
+                config.scanThreadCount,
+                1, 16)
+            .setTextGetter(value -> Text.of(String.valueOf(normalizeThreadCountInput(value))))
+            .setSaveConsumer(value ->
+            {
+                config.scanThreadCount = normalizeThreadCountInput(value);
+                config.ensureScanThreadCount();
+            })
+            .setDefaultValue(ConfigManager.DEFAULT.scanThreadCount)
+            .setTooltip(text("option.spawn_radar.scan_thread_count.tooltip"))
+            .build());
+
         scanning.addEntry(entries.startIntField(
                 text("option.spawn_radar.min_spawners"),
                 config.minimumSpawnersForRegion)
@@ -280,5 +294,13 @@ public class ConfigScreen
         boolean isLastSlot = index == total - 1;
         String suffix = isLastSlot ? "_plus" : "";
         return "option.spawn_radar.cluster_" + (index + 1) + suffix;
+    }
+
+    private static int normalizeThreadCountInput(int value)
+    {
+        int normalized = Math.max(1, Math.min(16, value));
+        if (normalized <= 1)
+            return 1;
+        return (normalized & 1) == 0 ? normalized : Math.min(16, normalized + 1);
     }
 }

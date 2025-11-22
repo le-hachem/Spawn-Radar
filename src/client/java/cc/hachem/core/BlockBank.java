@@ -1,6 +1,7 @@
 package cc.hachem.core;
 
 import cc.hachem.RadarClient;
+import cc.hachem.config.ConfigManager;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.MobSpawnerBlockEntity;
 import net.minecraft.client.MinecraftClient;
@@ -54,15 +55,25 @@ public class BlockBank
                                              int playerChunkX, int playerChunkZ,
                                              List<SpawnerInfo> foundSpawners)
     {
+        List<ChunkOffset> offsets = buildChunkOffsets(chunkRadius);
+        int workerCount = resolveThreadCount(offsets.size());
+        List<List<ChunkOffset>> batches = partitionOffsets(offsets, workerCount);
+
         List<Thread> workers = new ArrayList<>();
-        for (Quadrant quadrant : createQuadrants(chunkRadius))
+        for (int i = 0; i < batches.size(); i++)
         {
+            List<ChunkOffset> batch = batches.get(i);
+            if (batch.isEmpty())
+                continue;
+            final int workerIndex = i;
             Thread thread = new Thread(() ->
-                scanQuadrant(player, quadrant, playerChunkX, playerChunkZ, foundSpawners),
-                quadrant.threadName());
+                scanChunkBatch(player, batch, playerChunkX, playerChunkZ, foundSpawners),
+                "SpawnerScanner-" + workerIndex);
             workers.add(thread);
             thread.start();
         }
+        RadarClient.LOGGER.debug("Spawned {} scan workers (requested {}) for {} chunk offsets.",
+            workers.size(), workerCount, offsets.size());
         return workers;
     }
 
@@ -93,33 +104,49 @@ public class BlockBank
             callback.run();
     }
 
-    private static void scanQuadrant(ClientPlayerEntity player, Quadrant quadrant,
-                                     int playerChunkX, int playerChunkZ,
-                                     List<SpawnerInfo> foundSpawners)
+    private static void scanChunkBatch(ClientPlayerEntity player, List<ChunkOffset> offsets,
+                                       int playerChunkX, int playerChunkZ,
+                                       List<SpawnerInfo> foundSpawners)
     {
-        RadarClient.LOGGER.debug("Thread {} scanning quadrant X[{}..{}], Z[{}..{}].",
-            Thread.currentThread().getName(),
-            quadrant.minChunkX(), quadrant.maxChunkX(),
-            quadrant.minChunkZ(), quadrant.maxChunkZ());
-
         var world = player.getEntityWorld();
-        List<ChunkOffset> chunkOffsets = buildChunkOffsets(quadrant);
-
-        for (ChunkOffset offset : chunkOffsets)
+        RadarClient.LOGGER.debug("{} scanning {} chunk offsets.", Thread.currentThread().getName(), offsets.size());
+        for (ChunkOffset offset : offsets)
             scanChunk(world, playerChunkX + offset.dx(), playerChunkZ + offset.dz(), foundSpawners);
-
-        RadarClient.LOGGER.debug("Thread {} finished scanning.", Thread.currentThread().getName());
+        RadarClient.LOGGER.debug("{} finished scanning.", Thread.currentThread().getName());
     }
 
-    private static List<ChunkOffset> buildChunkOffsets(Quadrant quadrant)
+    private static List<ChunkOffset> buildChunkOffsets(int chunkRadius)
     {
         List<ChunkOffset> chunkOffsets = new ArrayList<>();
-        for (int dx = quadrant.minChunkX(); dx <= quadrant.maxChunkX(); dx++)
-            for (int dz = quadrant.minChunkZ(); dz <= quadrant.maxChunkZ(); dz++)
+        int halfRadius = Math.max(0, chunkRadius / 2);
+        for (int dx = -halfRadius; dx <= halfRadius; dx++)
+            for (int dz = -halfRadius; dz <= halfRadius; dz++)
                 chunkOffsets.add(new ChunkOffset(dx, dz));
 
         chunkOffsets.sort(Comparator.comparingInt(ChunkOffset::distance));
         return chunkOffsets;
+    }
+
+    private static List<List<ChunkOffset>> partitionOffsets(List<ChunkOffset> offsets, int partitions)
+    {
+        List<List<ChunkOffset>> batches = new ArrayList<>(partitions);
+        if (partitions <= 0)
+        {
+            batches.add(offsets);
+            return batches;
+        }
+
+        int batchSize = (int) Math.ceil((double) offsets.size() / partitions);
+        for (int i = 0; i < partitions; i++)
+        {
+            int start = i * batchSize;
+            int end = Math.min(offsets.size(), start + batchSize);
+            if (start >= end)
+                batches.add(Collections.emptyList());
+            else
+                batches.add(new ArrayList<>(offsets.subList(start, end)));
+        }
+        return batches;
     }
 
     private static void scanChunk(World world, int chunkX, int chunkZ, List<SpawnerInfo> foundSpawners)
@@ -148,24 +175,22 @@ public class BlockBank
                 }
     }
 
-    private static Quadrant[] createQuadrants(int chunkRadius)
+    private static int resolveThreadCount(int workSize)
     {
-        int halfRadius = chunkRadius / 2;
-        return new Quadrant[]
-        {
-            new Quadrant(-halfRadius, 0, -halfRadius, 0),
-            new Quadrant(1, halfRadius, -halfRadius, 0),
-            new Quadrant(-halfRadius, 0, 1, halfRadius),
-            new Quadrant(1, halfRadius, 1, halfRadius)
-        };
+        int configured = RadarClient.config != null ? RadarClient.config.scanThreadCount : ConfigManager.DEFAULT.scanThreadCount;
+        if (configured <= 1 || workSize <= 1)
+            return 1;
+
+        int desired = ensureEven(Math.max(2, Math.min(16, configured)));
+        int limited = Math.min(desired, Math.max(2, workSize));
+        if ((limited & 1) != 0)
+            limited = Math.max(2, limited - 1);
+        return Math.max(2, limited);
     }
 
-    private record Quadrant(int minChunkX, int maxChunkX, int minChunkZ, int maxChunkZ)
+    private static int ensureEven(int value)
     {
-        String threadName()
-        {
-            return "SpawnerScanner-" + minChunkX + "-" + minChunkZ;
-        }
+        return (value & 1) == 0 ? value : value + 1;
     }
 
     private record ChunkOffset(int dx, int dz)

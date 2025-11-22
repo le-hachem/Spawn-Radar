@@ -9,6 +9,8 @@
   "option.spawn_radar.category.rendering": "Rendering & Overlays",
   "option.spawn_radar.category.hud": "HUD & Panel",
   "option.spawn_radar.chunk_search_radius": "Chunk search radius",
+  "option.spawn_radar.scan_thread_count": "Scan worker threads",
+  "option.spawn_radar.scan_thread_count.tooltip": "Even number of worker threads used for chunk scanning",
   "option.spawn_radar.highlight_after_scan": "Automatically highlight cluster active region after scan",
   "option.spawn_radar.use_outline_highlight": "Use outline rendering for spawner highlights",
   "option.spawn_radar.show_spawn_volume": "Show mob spawn volume",

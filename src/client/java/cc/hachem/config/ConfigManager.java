@@ -45,6 +45,7 @@ public class ConfigManager
     public int spawnerHighlightColor = 0xFFFFFF;
     public int minimumSpawnersForRegion = 1;
     public int defaultSearchRadius = 64;
+    public int scanThreadCount = 4;
 
     public int spawnerHighlightOpacity = 50;
     public int regionHighlightOpacity = 30;
@@ -71,6 +72,7 @@ public class ConfigManager
     {
         ensureColorPalette();
         ensureHudAlignment();
+        ensureScanThreadCount();
     }
 
     public void ensureColorPalette()
@@ -123,5 +125,13 @@ public class ConfigManager
     {
         if (panelHorizontalAlignment == null)
             panelHorizontalAlignment = DEFAULT.panelHorizontalAlignment;
+    }
+
+    public void ensureScanThreadCount()
+    {
+        int clamped = Math.max(1, Math.min(16, scanThreadCount));
+        if (clamped != 1 && (clamped & 1) != 0)
+            clamped = Math.min(16, clamped + 1);
+        scanThreadCount = clamped;
     }
 }
