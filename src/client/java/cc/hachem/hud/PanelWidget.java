@@ -365,6 +365,12 @@ public class PanelWidget extends Widget
         resetButton.setY(baseY);
     }
 
+    public static void dispose()
+    {
+        clusterList.clear();
+        instance = null;
+    }
+
     private static String mapSortType(SpawnerCluster.SortType type)
     {
         return switch (type)

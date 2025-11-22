@@ -106,11 +106,15 @@ public class HudRenderer
     {
         var client = MinecraftClient.getInstance();
         int yOffset = (int) (RadarClient.config.verticalPanelOffset * client.getWindow().getScaledHeight());
+
+        children.removeIf(widget -> widget instanceof PanelWidget);
+        PanelWidget.dispose();
+
         children.add(new PanelWidget(10, 50 + yOffset));
         Window window = client.getWindow();
         lastScreenWidth = window.getScaledWidth();
         lastScreenHeight = window.getScaledHeight();
-        updatePanelPosition();
+        PanelWidget.refresh();
     }
 
     private static void onMouseMove(int mx, int my)
