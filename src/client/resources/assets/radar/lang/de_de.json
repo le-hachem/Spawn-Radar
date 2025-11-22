@@ -5,7 +5,9 @@
   "key.spawn_radar.reset": "Daten zurücksetzen",
 
   "option.spawn_radar.title": "Spawn Radar",
-  "option.spawn_radar.general": "Allgemein",
+  "option.spawn_radar.category.scanning": "Scannen & Cluster",
+  "option.spawn_radar.category.rendering": "Darstellung & Overlays",
+  "option.spawn_radar.category.hud": "HUD & Panel",
   "option.spawn_radar.chunk_search_radius": "Chunk-Suchradius",
   "option.spawn_radar.highlight_after_scan": "Cluster-Aktivregion nach Scan automatisch hervorheben",
   "option.spawn_radar.use_outline_highlight": "Spawner mit Kontur statt Fläche hervorheben",

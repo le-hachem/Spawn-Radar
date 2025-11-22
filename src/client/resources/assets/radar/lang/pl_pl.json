@@ -5,7 +5,9 @@
   "key.spawn_radar.reset": "Resetuj dane",
 
   "option.spawn_radar.title": "Radar Spawnerów",
-  "option.spawn_radar.general": "Ogólne",
+  "option.spawn_radar.category.scanning": "Skanowanie i klastry",
+  "option.spawn_radar.category.rendering": "Renderowanie i nakładki",
+  "option.spawn_radar.category.hud": "HUD i panel",
   "option.spawn_radar.chunk_search_radius": "Promień wyszukiwania chunków",
   "option.spawn_radar.highlight_after_scan": "Automatycznie podświetl region aktywny klastra po skanie",
   "option.spawn_radar.use_outline_highlight": "Używaj konturu zamiast pełnego podświetlenia spawnerów",

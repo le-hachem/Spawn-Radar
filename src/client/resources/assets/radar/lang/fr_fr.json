@@ -5,7 +5,9 @@
   "key.spawn_radar.reset": "Réinitialiser les données",
 
   "option.spawn_radar.title": "Spawn Radar",
-  "option.spawn_radar.general": "Général",
+  "option.spawn_radar.category.scanning": "Analyse et clusters",
+  "option.spawn_radar.category.rendering": "Rendu et superpositions",
+  "option.spawn_radar.category.hud": "HUD et panneau",
   "option.spawn_radar.chunk_search_radius": "Rayon de recherche de chunks",
   "option.spawn_radar.frustum_culling": "Activer le frustum culling",
   "option.spawn_radar.use_outline_highlight": "Utiliser un contour pour surligner les spawners",

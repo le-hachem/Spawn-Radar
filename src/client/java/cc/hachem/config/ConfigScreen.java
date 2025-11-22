@@ -23,77 +23,45 @@ public class ConfigScreen
             .setParentScreen(parent);
 
         ConfigEntryBuilder entries = builder.entryBuilder();
-        ConfigCategory general = builder.getOrCreateCategory(text("option.spawn_radar.general"));
+        ConfigCategory scanning = builder.getOrCreateCategory(text("option.spawn_radar.category.scanning"));
+        ConfigCategory rendering = builder.getOrCreateCategory(text("option.spawn_radar.category.rendering"));
+        ConfigCategory hud = builder.getOrCreateCategory(text("option.spawn_radar.category.hud"));
         ConfigCategory colors = builder.getOrCreateCategory(text("option.spawn_radar.colors"));
 
-        addGeneralEntries(general, entries);
+        addScanningEntries(scanning, entries);
+        addRenderingEntries(rendering, entries);
+        addHudEntries(hud, entries);
         addColorEntries(colors, entries);
 
         return builder.build();
     }
 
-    private static void addGeneralEntries(ConfigCategory general, ConfigEntryBuilder entries)
+    private static void addScanningEntries(ConfigCategory scanning, ConfigEntryBuilder entries)
     {
         var config = RadarClient.config;
 
-        general.addEntry(entries.startIntField(
+        scanning.addEntry(entries.startIntField(
                 text("option.spawn_radar.chunk_search_radius"),
                 config.defaultSearchRadius)
             .setSaveConsumer(value -> config.defaultSearchRadius = value)
             .setDefaultValue(ConfigManager.DEFAULT.defaultSearchRadius)
             .build());
 
-        general.addEntry(entries.startIntField(
+        scanning.addEntry(entries.startIntField(
                 text("option.spawn_radar.min_spawners"),
                 config.minimumSpawnersForRegion)
             .setSaveConsumer(value -> config.minimumSpawnersForRegion = value)
             .setDefaultValue(ConfigManager.DEFAULT.minimumSpawnersForRegion)
             .build());
 
-        general.addEntry(entries.startBooleanToggle(
+        scanning.addEntry(entries.startBooleanToggle(
                 text("option.spawn_radar.highlight_after_scan"),
                 config.highlightAfterScan)
             .setSaveConsumer(value -> config.highlightAfterScan = value)
             .setDefaultValue(ConfigManager.DEFAULT.highlightAfterScan)
             .build());
 
-        general.addEntry(entries.startBooleanToggle(
-                text("option.spawn_radar.frustum_culling"),
-                config.frustumCullingEnabled)
-            .setSaveConsumer(value -> config.frustumCullingEnabled = value)
-            .setDefaultValue(ConfigManager.DEFAULT.frustumCullingEnabled)
-            .build());
-
-        general.addEntry(entries.startBooleanToggle(
-                text("option.spawn_radar.use_outline_highlight"),
-                config.useOutlineSpawnerHighlight)
-            .setSaveConsumer(value -> config.useOutlineSpawnerHighlight = value)
-            .setDefaultValue(ConfigManager.DEFAULT.useOutlineSpawnerHighlight)
-            .build());
-
-        general.addEntry(entries.startBooleanToggle(
-                text("option.spawn_radar.show_spawn_volume"),
-                config.showSpawnerSpawnVolume)
-            .setSaveConsumer(value -> config.showSpawnerSpawnVolume = value)
-            .setDefaultValue(ConfigManager.DEFAULT.showSpawnerSpawnVolume)
-            .build());
-
-        general.addEntry(entries.startBooleanToggle(
-                text("option.spawn_radar.show_mob_cap_volume"),
-                config.showSpawnerMobCapVolume)
-            .setSaveConsumer(value -> config.showSpawnerMobCapVolume = value)
-            .setDefaultValue(ConfigManager.DEFAULT.showSpawnerMobCapVolume)
-            .build());
-
-        general.addEntry(entries.startFloatField(
-                text("option.spawn_radar.outline_thickness"),
-                config.spawnerOutlineThickness)
-            .setMin(0.05f)
-            .setSaveConsumer(value -> config.spawnerOutlineThickness = Math.max(0.05f, value))
-            .setDefaultValue(ConfigManager.DEFAULT.spawnerOutlineThickness)
-            .build());
-
-        general.addEntry(entries
+        scanning.addEntry(entries
             .startEnumSelector(
                 text("option.spawn_radar.default_cluster_sort_type"),
                 SpawnerCluster.SortType.class,
@@ -103,7 +71,7 @@ public class ConfigScreen
             .setSaveConsumer(value -> config.defaultSortType = value)
             .build());
 
-        general.addEntry(entries
+        scanning.addEntry(entries
             .startEnumSelector(
                 text("option.spawn_radar.cluster_proximity_sort_order"),
                 ConfigManager.SortOrder.class,
@@ -113,7 +81,7 @@ public class ConfigScreen
             .setSaveConsumer(value -> config.clusterProximitySortOrder = value)
             .build());
 
-        general.addEntry(entries
+        scanning.addEntry(entries
             .startEnumSelector(
                 text("option.spawn_radar.cluster_size_sort_order"),
                 ConfigManager.SortOrder.class,
@@ -123,7 +91,53 @@ public class ConfigScreen
             .setSaveConsumer(value -> config.clusterSizeSortOrder = value)
             .build());
 
-        general.addEntry(entries
+        scanning.addEntry(entries.startBooleanToggle(
+                text("option.spawn_radar.frustum_culling"),
+                config.frustumCullingEnabled)
+            .setSaveConsumer(value -> config.frustumCullingEnabled = value)
+            .setDefaultValue(ConfigManager.DEFAULT.frustumCullingEnabled)
+            .build());
+    }
+
+    private static void addRenderingEntries(ConfigCategory rendering, ConfigEntryBuilder entries)
+    {
+        var config = RadarClient.config;
+
+        rendering.addEntry(entries.startBooleanToggle(
+                text("option.spawn_radar.use_outline_highlight"),
+                config.useOutlineSpawnerHighlight)
+            .setSaveConsumer(value -> config.useOutlineSpawnerHighlight = value)
+            .setDefaultValue(ConfigManager.DEFAULT.useOutlineSpawnerHighlight)
+            .build());
+
+        rendering.addEntry(entries.startBooleanToggle(
+                text("option.spawn_radar.show_spawn_volume"),
+                config.showSpawnerSpawnVolume)
+            .setSaveConsumer(value -> config.showSpawnerSpawnVolume = value)
+            .setDefaultValue(ConfigManager.DEFAULT.showSpawnerSpawnVolume)
+            .build());
+
+        rendering.addEntry(entries.startBooleanToggle(
+                text("option.spawn_radar.show_mob_cap_volume"),
+                config.showSpawnerMobCapVolume)
+            .setSaveConsumer(value -> config.showSpawnerMobCapVolume = value)
+            .setDefaultValue(ConfigManager.DEFAULT.showSpawnerMobCapVolume)
+            .build());
+
+        rendering.addEntry(entries.startFloatField(
+                text("option.spawn_radar.outline_thickness"),
+                config.spawnerOutlineThickness)
+            .setMin(0.05f)
+            .setSaveConsumer(value -> config.spawnerOutlineThickness = Math.max(0.05f, value))
+            .setDefaultValue(ConfigManager.DEFAULT.spawnerOutlineThickness)
+            .build());
+    }
+
+    private static void addHudEntries(ConfigCategory hud, ConfigEntryBuilder entries)
+    {
+        var config = RadarClient.config;
+
+        hud.addEntry(entries
             .startIntField(
                 text("option.spawn_radar.panel_element_count"),
                 config.panelElementCount)
@@ -135,7 +149,7 @@ public class ConfigScreen
             })
             .build());
 
-        general.addEntry(entries
+        hud.addEntry(entries
             .startIntSlider(
                 text("option.spawn_radar.panel_vertical_offset"),
                 (int) (config.verticalPanelOffset * 100),
@@ -150,7 +164,7 @@ public class ConfigScreen
             })
             .build());
 
-        general.addEntry(entries
+        hud.addEntry(entries
             .startEnumSelector(
                 text("option.spawn_radar.panel_horizontal_alignment"),
                 ConfigManager.HudHorizontalAlignment.class,
