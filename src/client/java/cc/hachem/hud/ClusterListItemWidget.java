@@ -39,6 +39,7 @@ public class ClusterListItemWidget extends Widget
     private static final int TOGGLE_VERTICAL_GAP = 3;
     private static final int TOGGLE_GAP = 6;
     private static final int TOGGLE_SPACING = 4;
+    private static final int TREE_HOVER_PADDING = 6;
     private static final int TOGGLE_ACTIVE_COLOR = 0xFF4CAF50;
     private static final int TOGGLE_ACTIVE_SECONDARY_COLOR = 0xFFFFB74D;
     private static final int TOGGLE_INACTIVE_COLOR = Colors.ALTERNATE_WHITE;
@@ -345,10 +346,10 @@ public class ClusterListItemWidget extends Widget
             child, childWidth, textY + row.button().getHeight() + TOGGLE_VERTICAL_GAP, mirror, false);
 
         row.setTreeBounds(
-            Math.min(spawnBounds.minX(), mobBounds.minX()),
-            Math.max(spawnBounds.maxX(), mobBounds.maxX()),
-            Math.min(spawnBounds.minY(), mobBounds.minY()),
-            Math.max(spawnBounds.maxY(), mobBounds.maxY())
+            Math.min(spawnBounds.minX(), mobBounds.minX()) - TREE_HOVER_PADDING,
+            Math.max(spawnBounds.maxX(), mobBounds.maxX()) + TREE_HOVER_PADDING,
+            Math.min(spawnBounds.minY(), mobBounds.minY()) - TREE_HOVER_PADDING,
+            Math.max(spawnBounds.maxY(), mobBounds.maxY()) + TREE_HOVER_PADDING
         );
     }
 

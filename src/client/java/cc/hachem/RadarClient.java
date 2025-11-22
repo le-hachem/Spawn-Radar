@@ -379,17 +379,20 @@ public class RadarClient implements ClientModInitializer
         double centerX = pos.getX() + 0.5;
         double centerZ = pos.getZ() + 0.5;
 
-        double horizontalSpan = 9.0;
-        double verticalSpan = 3.0;
-
+        double baseHorizontalSpan = 8.0;
+        double baseVerticalSpan = 3.0;
+        double entityWidth = 0.0;
+        double entityHeight = 0.0;
         EntityType<?> entityType = info.entityType();
         if (entityType != null)
         {
             EntityDimensions dims = entityType.getDimensions();
-            horizontalSpan = Math.max(horizontalSpan, 8.0 + dims.width());
-            verticalSpan   = Math.max(verticalSpan, 2.0 + dims.height());
+            entityWidth = Math.max(0.0, dims.width());
+            entityHeight = Math.max(0.0, dims.height());
         }
 
+        double horizontalSpan = entityWidth+8.0;
+        double verticalSpan = entityHeight+2.0;
         double originY = pos.getY() - 1.0;
         double originX = centerX - horizontalSpan / 2.0;
         double originZ = centerZ - horizontalSpan / 2.0;
