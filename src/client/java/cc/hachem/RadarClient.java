@@ -359,8 +359,6 @@ public class RadarClient implements ClientModInitializer
     private void renderSpawnVolume(WorldRenderContext context, SpawnerInfo info, int color, float alpha, float thickness)
     {
         SpawnVolume volume = computeSpawnVolume(info);
-        if (volume == null)
-            return;
 
         BoxOutlineRenderer.draw(
             context,
@@ -381,8 +379,6 @@ public class RadarClient implements ClientModInitializer
         double centerX = pos.getX() + 0.5;
         double centerZ = pos.getZ() + 0.5;
 
-        double baseHorizontalSpan = 8.0;
-        double baseVerticalSpan = 3.0;
         double entityWidth = 0.0;
         double entityHeight = 0.0;
         EntityType<?> entityType = info.entityType();
