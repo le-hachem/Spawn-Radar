@@ -5,19 +5,57 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.text.*;
+import net.minecraft.text.ClickEvent;
+import net.minecraft.text.HoverEvent;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.List;
+import java.util.Locale;
 
 public class CommandManager
 {
     private CommandManager() {}
+
+    private static final String[] HELP_TOPICS = new String[] {"scan", "toggle", "info", "reset"};
+
+    private static final SuggestionProvider<FabricClientCommandSource> SORTING_SUGGESTIONS = (context, builder) ->
+    {
+        builder.suggest("proximity", Text.translatable("command.spawn_radar.scan.suggestion.proximity"));
+        builder.suggest("size", Text.translatable("command.spawn_radar.scan.suggestion.size"));
+        return builder.buildFuture();
+    };
+
+    private static final SuggestionProvider<FabricClientCommandSource> TOGGLE_SUGGESTIONS = (context, builder) ->
+    {
+        builder.suggest("all", Text.translatable("command.spawn_radar.toggle.suggestion.all"));
+        List<SpawnerCluster> clusters = ClusterManager.getClusters();
+        for (int i = 1; i <= clusters.size(); i++)
+            builder.suggest(String.valueOf(i));
+        return builder.buildFuture();
+    };
+
+    private static final SuggestionProvider<FabricClientCommandSource> CLUSTER_ID_SUGGESTIONS = (context, builder) ->
+    {
+        List<SpawnerCluster> clusters = ClusterManager.getClusters();
+        for (int i = 1; i <= clusters.size(); i++)
+            builder.suggest(String.valueOf(i));
+        return builder.buildFuture();
+    };
+
+    private static final SuggestionProvider<FabricClientCommandSource> HELP_TOPIC_SUGGESTIONS = (context, builder) ->
+    {
+        for (String topic : HELP_TOPICS)
+            builder.suggest(topic);
+        return builder.buildFuture();
+    };
 
     public static void init()
     {
@@ -47,15 +85,10 @@ public class CommandManager
                 return 0;
             })
             .then(ClientCommandManager.argument("sorting", StringArgumentType.word())
-                .suggests((context, builder) ->
-                {
-                    builder.suggest("proximity");
-                    builder.suggest("size");
-                    return builder.buildFuture();
-                })
+                .suggests(SORTING_SUGGESTIONS)
                 .executes(context ->
                 {
-                    String sorting = StringArgumentType.getString(context, "sorting").toLowerCase();
+                    String sorting = normalizeSorting(StringArgumentType.getString(context, "sorting"));
                     if (RadarClient.generateClusters(context.getSource().getPlayer(), RadarClient.config.defaultSearchRadius, sorting))
                     {
                         context.getSource().sendFeedback(Text.translatable("chat.spawn_radar.scan_started"));
@@ -84,13 +117,7 @@ public class CommandManager
     {
         dispatcher.register(ClientCommandManager.literal("radar:toggle")
             .then(ClientCommandManager.argument("target", StringArgumentType.word())
-                .suggests((context, builder) ->
-                {
-                    builder.suggest("all");
-                    for (int i = 1; i <= ClusterManager.getClusters().size(); i++)
-                        builder.suggest(String.valueOf(i));
-                    return builder.buildFuture();
-                })
+                .suggests(TOGGLE_SUGGESTIONS)
                 .executes(context ->
                 {
                     String target = StringArgumentType.getString(context, "target").toLowerCase();
@@ -109,42 +136,13 @@ public class CommandManager
     {
         dispatcher.register(ClientCommandManager.literal("radar:info")
             .then(ClientCommandManager.argument("id", IntegerArgumentType.integer(1))
+                .suggests(CLUSTER_ID_SUGGESTIONS)
                 .executes(context ->
-                {
-                    int id = IntegerArgumentType.getInteger(context, "id");
-                    List<SpawnerCluster> clusters = ClusterManager.getClusters();
-                    if (clusters == null || clusters.isEmpty() || id > clusters.size())
-                    {
-                        context.getSource().sendFeedback(Text.translatable("chat.spawn_radar.invalid_id"));
-                        return 0;
-                    }
-
-                    SpawnerCluster cluster = clusters.get(id - 1);
-                    int sid = 1;
-
-                    for (SpawnerInfo spawner : cluster.spawners())
-                    {
-                        BlockPos pos = spawner.pos();
-                        String label = String.format(
-                            "    - %s spawner #%d @ [%d, %d, %d]",
-                            spawner.mobName(),
-                            sid,
-                            pos.getX(),
-                            pos.getY(),
-                            pos.getZ()
-                        );
-                        MutableText spawnerText = Text.literal(
-                                label)
-                                .styled(style -> style.withColor(Formatting.GREEN)
-                                .withClickEvent(new ClickEvent.RunCommand(
-                                        String.format("/tp %d %d %d", pos.getX(), pos.getY(), pos.getZ())))
-                                .withHoverEvent(new HoverEvent.ShowText(Text.translatable("command.spawn_radar.teleport_hover"))));
-                        context.getSource().getPlayer().sendMessage(spawnerText, false);
-                        sid++;
-                    }
-
-                    return Command.SINGLE_SUCCESS;
-                })
+                    showClusterInfo(
+                        context.getSource(),
+                        IntegerArgumentType.getInteger(context, "id")
+                    )
+                )
             )
         );
     }
@@ -167,18 +165,164 @@ public class CommandManager
     private static void registerHelpCommand(CommandDispatcher<FabricClientCommandSource> dispatcher)
     {
         dispatcher.register(ClientCommandManager.literal("radar:help")
-            .executes(context ->
-            {
-                FabricClientCommandSource source = context.getSource();
-
-                source.sendFeedback(Text.translatable("command.spawn_radar.help.scan"));
-                source.sendFeedback(Text.translatable("command.spawn_radar.help.toggle"));
-                source.sendFeedback(Text.translatable("command.spawn_radar.help.info"));
-                source.sendFeedback(Text.translatable("command.spawn_radar.help.reset"));
-                source.sendFeedback(Text.translatable("command.spawn_radar.help.help"));
-
-                return Command.SINGLE_SUCCESS;
-            })
+            .executes(context -> showHelp(context.getSource(), null))
+            .then(ClientCommandManager.argument("command", StringArgumentType.word())
+                .suggests(HELP_TOPIC_SUGGESTIONS)
+                .executes(context -> showHelp(
+                    context.getSource(),
+                    StringArgumentType.getString(context, "command")
+                ))
+            )
         );
+        dispatcher.register(ClientCommandManager.literal("radar")
+            .then(ClientCommandManager.literal("help")
+                .executes(context -> showHelp(context.getSource(), null))
+                .then(ClientCommandManager.argument("command", StringArgumentType.word())
+                    .suggests(HELP_TOPIC_SUGGESTIONS)
+                    .executes(context -> showHelp(
+                        context.getSource(),
+                        StringArgumentType.getString(context, "command")
+                    ))
+                )
+            ));
+    }
+
+    private static int showHelp(FabricClientCommandSource source, String topic)
+    {
+        if (topic == null || topic.isBlank())
+        {
+            source.sendFeedback(Text.literal("=== Spawn Radar ===").formatted(Formatting.GOLD));
+            sendHelpBlock(source, "scan", false);
+            sendHelpBlock(source, "toggle", false);
+            sendHelpBlock(source, "info", false);
+            sendHelpBlock(source, "reset", false);
+            source.sendFeedback(Text.translatable("command.spawn_radar.help.misc").formatted(Formatting.GRAY));
+            return Command.SINGLE_SUCCESS;
+        }
+
+        String normalized = topic.toLowerCase(Locale.ROOT);
+        boolean handled = switch (normalized)
+        {
+            case "scan" -> { sendHelpBlock(source, "scan", true); yield true; }
+            case "toggle" -> { sendHelpBlock(source, "toggle", true); yield true; }
+            case "info" -> { sendHelpBlock(source, "info", true); yield true; }
+            case "reset" -> { sendHelpBlock(source, "reset", true); yield true; }
+            default -> false;
+        };
+
+        if (!handled)
+        {
+            source.sendFeedback(Text.translatable("command.spawn_radar.help.unknown", topic).formatted(Formatting.RED));
+            source.sendFeedback(Text.translatable("command.spawn_radar.help.misc").formatted(Formatting.GRAY));
+            return 0;
+        }
+
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static void sendHelpBlock(FabricClientCommandSource source, String key, boolean detailed)
+    {
+        String base = "command.spawn_radar.help." + key;
+        source.sendFeedback(Text.translatable(base + ".title").formatted(Formatting.YELLOW));
+        source.sendFeedback(Text.translatable(base));
+        if (detailed)
+            source.sendFeedback(Text.translatable(base + ".detail").formatted(Formatting.WHITE));
+        source.sendFeedback(Text.translatable(base + ".usage").formatted(Formatting.GRAY));
+        source.sendFeedback(Text.literal(""));
+    }
+
+    private static int showClusterInfo(FabricClientCommandSource source, int id)
+    {
+        List<SpawnerCluster> clusters = ClusterManager.getClusters();
+        if (clusters == null || clusters.isEmpty() || id < 1 || id > clusters.size())
+        {
+            source.sendFeedback(Text.translatable("chat.spawn_radar.invalid_id").formatted(Formatting.RED));
+            return 0;
+        }
+
+        SpawnerCluster cluster = clusters.get(id - 1);
+        sendClusterSummary(source, cluster);
+
+        int sid = 1;
+        for (SpawnerInfo spawner : cluster.spawners())
+            sendSpawnerLine(source, sid++, spawner);
+
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static void sendClusterSummary(FabricClientCommandSource source, SpawnerCluster cluster)
+    {
+        source.sendFeedback(
+            Text.translatable("command.spawn_radar.info.header", cluster.id(), cluster.spawners().size())
+                .formatted(Formatting.GOLD)
+        );
+
+        boolean highlighted = ClusterManager.isHighlighted(cluster.id());
+        String key = highlighted
+            ? "command.spawn_radar.info.highlighted.on"
+            : "command.spawn_radar.info.highlighted.off";
+        source.sendFeedback(Text.translatable(key).formatted(highlighted ? Formatting.GREEN : Formatting.GRAY));
+
+        MutableText actions = Text.translatable("command.spawn_radar.info.actions").formatted(Formatting.DARK_GRAY)
+            .append(Text.literal(" "))
+            .append(createCommandButton(
+                "command.spawn_radar.info.toggle_label",
+                "/radar:toggle " + cluster.id(),
+                Formatting.AQUA,
+                "command.spawn_radar.info.toggle_hover"
+            ));
+
+        source.sendFeedback(actions);
+        source.sendFeedback(Text.literal(""));
+    }
+
+    private static void sendSpawnerLine(FabricClientCommandSource source, int index, SpawnerInfo spawner)
+    {
+        BlockPos pos = spawner.pos();
+        MutableText line = Text.translatable("command.spawn_radar.info.spawner_line", index, spawner.mobName())
+            .formatted(Formatting.GREEN)
+            .append(createCoordinateComponent(pos))
+            .append(Text.literal(" "))
+            .append(createTeleportButton(pos));
+        source.sendFeedback(line);
+    }
+
+    private static MutableText createCommandButton(String labelKey, String command, Formatting color, String hoverKey)
+    {
+        return Text.translatable(labelKey)
+            .formatted(color)
+            .styled(style -> style
+                .withClickEvent(new ClickEvent.RunCommand(command))
+                .withHoverEvent(new HoverEvent.ShowText(Text.translatable(hoverKey)))
+            );
+    }
+
+    private static MutableText createTeleportButton(BlockPos pos)
+    {
+        String cmd = String.format("/tp %d %d %d", pos.getX(), pos.getY(), pos.getZ());
+        return Text.translatable("command.spawn_radar.info.teleport_label")
+            .formatted(Formatting.AQUA)
+            .styled(style -> style
+                .withClickEvent(new ClickEvent.RunCommand(cmd))
+                .withHoverEvent(new HoverEvent.ShowText(Text.translatable("command.spawn_radar.teleport_hover")))
+            );
+    }
+
+    private static MutableText createCoordinateComponent(BlockPos pos)
+    {
+        String coords = String.format("%d, %d, %d", pos.getX(), pos.getY(), pos.getZ());
+        return Text.literal("[" + coords + "]")
+            .formatted(Formatting.YELLOW)
+            .styled(style -> style
+                .withClickEvent(new ClickEvent.CopyToClipboard(coords))
+                .withHoverEvent(new HoverEvent.ShowText(Text.translatable("command.spawn_radar.info.coords_hover")))
+            );
+    }
+
+    private static String normalizeSorting(String value)
+    {
+        if (value == null)
+            return "";
+        return value.toLowerCase(Locale.ROOT);
     }
 }
