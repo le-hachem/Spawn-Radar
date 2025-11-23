@@ -1,6 +1,7 @@
 package cc.hachem.config;
 
 import cc.hachem.RadarClient;
+import cc.hachem.core.ChunkProcessingManager;
 import cc.hachem.core.SpawnerCluster;
 import cc.hachem.hud.HudRenderer;
 import cc.hachem.hud.PanelWidget;
@@ -118,6 +119,43 @@ public class ConfigScreen
             .setDefaultValue(ConfigManager.DEFAULT.frustumCullingEnabled)
             .setTooltip(text("option.spawn_radar.frustum_culling.tooltip"))
             .build());
+
+        scanning.addEntry(entries.startBooleanToggle(
+                text("option.spawn_radar.use_cached_spawners"),
+                config.useCachedSpawnersForScan)
+            .setSaveConsumer(value -> config.useCachedSpawnersForScan = value)
+            .setDefaultValue(ConfigManager.DEFAULT.useCachedSpawnersForScan)
+            .setTooltip(text("option.spawn_radar.use_cached_spawners.tooltip"))
+            .build());
+
+        scanning.addEntry(entries.startBooleanToggle(
+                text("option.spawn_radar.background_processing"),
+                config.processChunksOnGeneration)
+            .setSaveConsumer(value ->
+            {
+                config.processChunksOnGeneration = value;
+                if (value)
+                    ChunkProcessingManager.rescanCurrentWorld();
+            })
+            .setDefaultValue(ConfigManager.DEFAULT.processChunksOnGeneration)
+            .setTooltip(text("option.spawn_radar.background_processing.tooltip"))
+            .build());
+
+        scanning.addEntry(entries.startIntField(
+                text("option.spawn_radar.background_alert_threshold"),
+                config.backgroundClusterAlertThreshold)
+            .setSaveConsumer(value -> config.backgroundClusterAlertThreshold = Math.max(2, value))
+            .setDefaultValue(ConfigManager.DEFAULT.backgroundClusterAlertThreshold)
+            .setTooltip(text("option.spawn_radar.background_alert_threshold.tooltip"))
+            .build());
+
+        scanning.addEntry(entries.startIntField(
+                text("option.spawn_radar.background_proximity"),
+                config.backgroundClusterProximity)
+            .setSaveConsumer(value -> config.backgroundClusterProximity = Math.max(8, value))
+            .setDefaultValue(ConfigManager.DEFAULT.backgroundClusterProximity)
+            .setTooltip(text("option.spawn_radar.background_proximity.tooltip"))
+            .build());
     }
 
     private static void addRenderingEntries(ConfigCategory rendering, ConfigEntryBuilder entries)
@@ -146,6 +184,14 @@ public class ConfigScreen
             .setSaveConsumer(value -> config.showSpawnerMobCapVolume = value)
             .setDefaultValue(ConfigManager.DEFAULT.showSpawnerMobCapVolume)
             .setTooltip(text("option.spawn_radar.show_mob_cap_volume.tooltip"))
+            .build());
+
+        rendering.addEntry(entries.startBooleanToggle(
+                text("option.spawn_radar.auto_highlight_alerts"),
+                config.autoHighlightAlertedClusters)
+            .setSaveConsumer(value -> config.autoHighlightAlertedClusters = value)
+            .setDefaultValue(ConfigManager.DEFAULT.autoHighlightAlertedClusters)
+            .setTooltip(text("option.spawn_radar.auto_highlight_alerts.tooltip"))
             .build());
 
         rendering.addEntry(entries.startFloatField(

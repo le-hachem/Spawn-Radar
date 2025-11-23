@@ -3,6 +3,7 @@ package cc.hachem;
 import cc.hachem.config.ConfigManager;
 import cc.hachem.config.ConfigSerializer;
 import cc.hachem.core.BlockBank;
+import cc.hachem.core.ChunkProcessingManager;
 import cc.hachem.core.ClusterManager;
 import cc.hachem.core.CommandManager;
 import cc.hachem.core.KeyManager;
@@ -31,6 +32,7 @@ import net.minecraft.util.math.BlockPos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -54,6 +56,18 @@ public class RadarClient implements ClientModInitializer
         if (!ensureServerEnabled(source))
             return false;
 
+        if (config.useCachedSpawnersForScan && BlockBank.hasCachedSpawners())
+        {
+            List<SpawnerInfo> cached = BlockBank.getWithinChunkRadius(source.getBlockPos(), radius);
+            if (!cached.isEmpty())
+            {
+                List<SpawnerInfo> snapshot = new ArrayList<>(cached);
+                MinecraftClient.getInstance().execute(() -> runClusterPipeline(source, snapshot, sorting));
+                LOGGER.debug("Used cached spawner data for cluster generation ({} entries).", snapshot.size());
+                return true;
+            }
+        }
+
         BlockBank.scanForSpawners(source, radius, () -> generateClustersChild(source, sorting));
         RadarClient.LOGGER.debug("Scheduled cluster generation after scanning for spawners.");
         return true;
@@ -61,7 +75,12 @@ public class RadarClient implements ClientModInitializer
 
     public static void generateClustersChild(ClientPlayerEntity source, String argument)
     {
-        List<SpawnerInfo> spawners = BlockBank.getAll();
+        List<SpawnerInfo> spawners = new ArrayList<>(BlockBank.getAll());
+        runClusterPipeline(source, spawners, argument);
+    }
+
+    private static void runClusterPipeline(ClientPlayerEntity source, List<SpawnerInfo> spawners, String argument)
+    {
         if (!validateSpawnerResults(source, spawners))
             return;
 
@@ -146,6 +165,8 @@ public class RadarClient implements ClientModInitializer
         LOGGER.info("KeyManager initialized.");
         HudRenderer.init();
         LOGGER.info("HudRenderer initialized.");
+        ChunkProcessingManager.init();
+        LOGGER.info("ChunkProcessingManager initialized.");
         ItemTextureRenderer.init();
         LOGGER.info("ItemTextureRenderer initialized.");
     }
@@ -179,6 +200,7 @@ public class RadarClient implements ClientModInitializer
         {
             serverSupportsRadar = false;
             MobPuppetRenderer.clearCache();
+            ChunkProcessingManager.clear();
         });
     }
 
@@ -197,6 +219,7 @@ public class RadarClient implements ClientModInitializer
 
         HudRenderer.build();
         LOGGER.info("Built HudRenderer widgets.");
+        ChunkProcessingManager.processLoadedChunks(client.world);
     }
 
     private static void clearClientState()
@@ -208,6 +231,7 @@ public class RadarClient implements ClientModInitializer
         BlockBank.clear();
         VolumeHighlightManager.clear();
         MobPuppetRenderer.clearCache();
+        ChunkProcessingManager.clear();
         PanelWidget.refresh();
     }
 
@@ -236,6 +260,15 @@ public class RadarClient implements ClientModInitializer
         BlockHighlightRenderer.clearRegionMeshCache();
         BoxOutlineRenderer.clearMeshCache();
         LOGGER.info("Generated {} clusters using sort type {}", clusters.size(), sortType);
+
+        if (config.autoHighlightAlertedClusters)
+        {
+            for (SpawnerCluster cluster : clusters)
+            {
+                if (ChunkProcessingManager.consumeAlertForCluster(cluster))
+                    ClusterManager.highlightCluster(cluster.id());
+            }
+        }
 
         if (config.highlightAfterScan)
             ClusterManager.highlightAllClusters();
@@ -476,5 +509,10 @@ public class RadarClient implements ClientModInitializer
     private static float clamp01(float value)
     {
         return Math.max(0f, Math.min(1f, value));
+    }
+
+    public static double getActivationRadius()
+    {
+        return ACTIVATION_RADIUS;
     }
 }

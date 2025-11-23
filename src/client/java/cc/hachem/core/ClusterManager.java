@@ -71,6 +71,12 @@ public class ClusterManager
         RadarClient.LOGGER.info("Highlighted all {} clusters.", clusters.size());
     }
 
+    public static void highlightCluster(int clusterId)
+    {
+        if (isValidClusterId(clusterId))
+            highlightedClusterIds.add(clusterId);
+    }
+
     public static void unhighlightAllClusters()
     {
         highlightedClusterIds.clear();

@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class BlockBank
@@ -241,7 +242,7 @@ public class BlockBank
         return -1;
     }
 
-    private static SpawnerInfo createSpawnerInfo(World world, BlockPos pos)
+    public static SpawnerInfo createSpawnerInfo(World world, BlockPos pos)
     {
         EntityType<?> entityType = null;
         try
@@ -255,6 +256,45 @@ public class BlockBank
             RadarClient.LOGGER.debug("Unable to resolve mob type for spawner at {}", pos, e);
         }
         return new SpawnerInfo(pos, entityType);
+    }
+
+    public static void remove(BlockPos pos)
+    {
+        SPAWNERS.removeIf(info -> info.pos().equals(pos));
+    }
+
+    public static void removeAll(Set<BlockPos> positions)
+    {
+        if (positions == null || positions.isEmpty())
+            return;
+        SPAWNERS.removeIf(info -> positions.contains(info.pos()));
+    }
+
+    public static boolean hasCachedSpawners()
+    {
+        return !SPAWNERS.isEmpty();
+    }
+
+    public static List<SpawnerInfo> getWithinChunkRadius(BlockPos center, int chunkRadius)
+    {
+        List<SpawnerInfo> result = new ArrayList<>();
+        int half = Math.max(0, chunkRadius / 2);
+        int centerChunkX = center.getX() >> 4;
+        int centerChunkZ = center.getZ() >> 4;
+        int minChunkX = centerChunkX - half;
+        int maxChunkX = centerChunkX + half;
+        int minChunkZ = centerChunkZ - half;
+        int maxChunkZ = centerChunkZ + half;
+
+        for (SpawnerInfo info : SPAWNERS)
+        {
+            BlockPos pos = info.pos();
+            int chunkX = pos.getX() >> 4;
+            int chunkZ = pos.getZ() >> 4;
+            if (chunkX >= minChunkX && chunkX <= maxChunkX && chunkZ >= minChunkZ && chunkZ <= maxChunkZ)
+                result.add(info);
+        }
+        return result;
     }
 
     private static EntityType<?> resolveSpawnerEntityType(World world, BlockPos pos, MobSpawnerBlockEntity mobSpawner)

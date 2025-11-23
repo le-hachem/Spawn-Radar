@@ -76,6 +76,11 @@ public class ConfigManager
     public int panelElementCount = 5;
     public HudHorizontalAlignment panelHorizontalAlignment = HudHorizontalAlignment.LEFT;
     public SpawnerIconMode spawnerIconMode = SpawnerIconMode.MOB_PUPPET;
+    public boolean useCachedSpawnersForScan = false;
+    public boolean autoHighlightAlertedClusters = false;
+    public boolean processChunksOnGeneration = false;
+    public int backgroundClusterAlertThreshold = 4;
+    public int backgroundClusterProximity = 48;
 
     public List<Integer> clusterColors = defaultClusterColors();
 
@@ -85,6 +90,7 @@ public class ConfigManager
         ensureHudAlignment();
         ensureScanThreadCount();
         ensureSpawnerIconMode();
+        ensureBackgroundProcessing();
     }
 
     public void ensureColorPalette()
@@ -143,6 +149,12 @@ public class ConfigManager
     {
         if (spawnerIconMode == null)
             spawnerIconMode = DEFAULT.spawnerIconMode;
+    }
+
+    public void ensureBackgroundProcessing()
+    {
+        backgroundClusterAlertThreshold = Math.max(2, backgroundClusterAlertThreshold);
+        backgroundClusterProximity = Math.max(8, backgroundClusterProximity);
     }
 
     public void ensureScanThreadCount()
