@@ -24,7 +24,7 @@ public class CommandManager
 {
     private CommandManager() {}
 
-    private static final String[] HELP_TOPICS = new String[] {"scan", "toggle", "info", "reset"};
+    private static final String[] HELP_TOPICS = new String[] {"scan", "toggle", "info", "reset", "guide"};
 
     private static final SuggestionProvider<FabricClientCommandSource> SORTING_SUGGESTIONS = (context, builder) ->
     {
@@ -70,6 +70,7 @@ public class CommandManager
         registerInfoCommand(dispatcher);
         registerResetCommand(dispatcher);
         registerHelpCommand(dispatcher);
+        registerGuideCommand(dispatcher);
     }
 
     private static void registerScanCommand(CommandDispatcher<FabricClientCommandSource> dispatcher)
@@ -165,6 +166,18 @@ public class CommandManager
         );
     }
 
+    private static void registerGuideCommand(CommandDispatcher<FabricClientCommandSource> dispatcher)
+    {
+        dispatcher.register(ClientCommandManager.literal("radar:guide")
+            .executes(context ->
+            {
+                GuideBookManager.openGuide();
+                context.getSource().sendFeedback(Text.translatable("chat.spawn_radar.guide_opened"));
+                return Command.SINGLE_SUCCESS;
+            })
+        );
+    }
+
     private static void registerHelpCommand(CommandDispatcher<FabricClientCommandSource> dispatcher)
     {
         dispatcher.register(ClientCommandManager.literal("radar:help")
@@ -199,6 +212,7 @@ public class CommandManager
             sendHelpBlock(source, "toggle", false);
             sendHelpBlock(source, "info", false);
             sendHelpBlock(source, "reset", false);
+            sendHelpBlock(source, "guide", false);
             source.sendFeedback(Text.translatable("command.spawn_radar.help.misc").formatted(Formatting.GRAY));
             return Command.SINGLE_SUCCESS;
         }
@@ -210,6 +224,7 @@ public class CommandManager
             case "toggle" -> { sendHelpBlock(source, "toggle", true); yield true; }
             case "info" -> { sendHelpBlock(source, "info", true); yield true; }
             case "reset" -> { sendHelpBlock(source, "reset", true); yield true; }
+            case "guide" -> { sendHelpBlock(source, "guide", true); yield true; }
             default -> false;
         };
 

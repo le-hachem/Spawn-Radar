@@ -1,0 +1,45 @@
+@center &6Spawn Radar Manual
+@center &7by Hachem
+@page
+&lTable of Contents
+Chapter I — About the Mod
+Chapter II — Commands
+Chapter III — Config Options
+@page
+&lAbout the Mod — Foundations
+Spawn Radar watches each chunk you load and logs every mob spawner it sees. Those entries live entirely on the client, so nothing depends on server support.
+Manual scans read that block bank around you and bundle nearby spawners into numbered clusters. Background processing can keep that list fresh while you travel.
+Think of the workflow as explore ➜ scan ➜ review. Each pass adds context, and the HUD remembers which spawner belongs to which cluster.
+@page
+&lAbout the Mod — HUD & Alerts
+The HUD widgets show cluster IDs, mob icons (puppet or spawn egg), spawn and mob-cap volumes, page controls, and quick actions like [Scan] or [Reset].
+Alerts are shared everywhere: if background processing finds a dense cluster you’ll see a chat ping, and the HUD can highlight it as soon as you open the panel.
+Use the HUD to teleport, toggle highlights, and compare activation spheres before you ever break blocks.
+@page
+&lSpawner Generation — Where they appear
+Overworld dungeons roll spawners in stone noise caves between Y=-32 and Y=64, while strongholds guarantee libraries with a silverfish spawner. Nether fortresses place blaze spawners on the crossing platforms, bastion remnants hide magma cube spawners in treasure rooms, and Ancient Cities never spawn spawners at all. Spawn Radar doesn’t guess: it reads real block entities, so custom datapacks or worldgen mods are supported automatically.
+@page
+&lActivation Zones & Spawn Regions
+Every vanilla spawner activates when a player is within 16 blocks (Euclidean) horizontally and within 4 blocks vertically. Once active, it rolls spawns in a 9×9×3 area centered on the cage and enforces a mob-cap check that looks 4 blocks around the cage plus up/down 1 block. Spawn Radar draws both regions: the purple box is the activation bubble, the cyan box is the spawn volume, and the amber box is the mob-cap check. If you see one of these volumes clipped by terrain, that’s your cue to dig or slab.
+@page
+&lMod Tooling — Beyond vanilla rules
+Because every spawner entry is stored, you can page through dozens of clusters, sort them by proximity or size, and jump to any of them with a single click. Background scanning means you can fly through terrain once and let the mod ping you whenever a dungeon or fortress rolls more spawners than you expected. Alerts only fire when the configured density threshold is met, so explorers aren’t spammed during casual travel.
+@page
+&lCommands — Overview
+Every command is instantaneous and runs on the client. Bind them, macro them, or trigger them from the HUD without waiting for a server tick.
+/radar:scan [manual] [sorting] [radius] discovers spawners around you. Add “manual” to ignore cached data, choose proximity|size, and override radius (1–256).
+/radar:toggle <id|all> flips highlights, and /radar:info <id> prints detailed lines with teleport + copy-to-clipboard helpers.
+@page
+&lCommands — Extras
+/radar:reset wipes the block bank, clusters, highlights, and HUD state (perfect before sharing screenshots).
+/radar:guide reopens this book, and /radar:help <command> reminds you of arguments and usage.
+Tip: bind scan/reset to spare keys (or mouse buttons) so cached sweeps become muscle memory.
+@page
+&lConfig Options — Scans & Alerts
+Open Mod Menu ➜ Spawn Radar ➜ Config to tune scan radius, worker threads, cached-scan behaviour, and background alert thresholds or proximity.
+Cached scans are great for quick refreshes; manual scans are best after large terrain edits, schematic pastes, or when you revisit old bases.
+@page
+&lConfig Options — HUD & Sharing
+Rendering controls let you pick puppets vs eggs, outline colours, opacity, HUD position, and page size. Volume colours can be set per cluster.
+Share your config with teammates so everyone sees identical colours and layouts. Export it before big base tours so highlights match on every client.
+
