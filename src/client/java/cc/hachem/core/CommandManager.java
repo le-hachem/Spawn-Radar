@@ -75,39 +75,42 @@ public class CommandManager
     private static void registerScanCommand(CommandDispatcher<FabricClientCommandSource> dispatcher)
     {
         dispatcher.register(ClientCommandManager.literal("radar:scan")
-            .executes(context ->
-            {
-                if (RadarClient.generateClusters(context.getSource().getPlayer(), RadarClient.config.defaultSearchRadius, ""))
-                {
-                    context.getSource().sendFeedback(Text.translatable("chat.spawn_radar.scan_started"));
-                    return Command.SINGLE_SUCCESS;
-                }
-                return 0;
-            })
+            .executes(context -> executeScan(context.getSource(), "", RadarClient.config.defaultSearchRadius, false))
+            .then(ClientCommandManager.literal("manual")
+                .executes(context -> executeScan(context.getSource(), "", RadarClient.config.defaultSearchRadius, true))
+                .then(ClientCommandManager.argument("sorting", StringArgumentType.word())
+                    .suggests(SORTING_SUGGESTIONS)
+                    .executes(context -> executeScan(
+                        context.getSource(),
+                        StringArgumentType.getString(context, "sorting"),
+                        RadarClient.config.defaultSearchRadius,
+                        true
+                    ))
+                    .then(ClientCommandManager.argument("radius", IntegerArgumentType.integer(1, 256))
+                        .executes(context -> executeScan(
+                            context.getSource(),
+                            StringArgumentType.getString(context, "sorting"),
+                            IntegerArgumentType.getInteger(context, "radius"),
+                            true
+                        ))
+                    )
+                )
+            )
             .then(ClientCommandManager.argument("sorting", StringArgumentType.word())
                 .suggests(SORTING_SUGGESTIONS)
-                .executes(context ->
-                {
-                    String sorting = normalizeSorting(StringArgumentType.getString(context, "sorting"));
-                    if (RadarClient.generateClusters(context.getSource().getPlayer(), RadarClient.config.defaultSearchRadius, sorting))
-                    {
-                        context.getSource().sendFeedback(Text.translatable("chat.spawn_radar.scan_started"));
-                        return Command.SINGLE_SUCCESS;
-                    }
-                    return 0;
-                })
+                .executes(context -> executeScan(
+                    context.getSource(),
+                    StringArgumentType.getString(context, "sorting"),
+                    RadarClient.config.defaultSearchRadius,
+                    false
+                ))
                 .then(ClientCommandManager.argument("radius", IntegerArgumentType.integer(1, 256))
-                    .executes(context ->
-                    {
-                        int radius = IntegerArgumentType.getInteger(context, "radius");
-                        String sorting = StringArgumentType.getString(context, "sorting").toLowerCase();
-                        if (RadarClient.generateClusters(context.getSource().getPlayer(), radius, sorting))
-                        {
-                            context.getSource().sendFeedback(Text.translatable("chat.spawn_radar.scan_started"));
-                            return Command.SINGLE_SUCCESS;
-                        }
-                        return 0;
-                    })
+                    .executes(context -> executeScan(
+                        context.getSource(),
+                        StringArgumentType.getString(context, "sorting"),
+                        IntegerArgumentType.getInteger(context, "radius"),
+                        false
+                    ))
                 )
             )
         );
@@ -229,6 +232,17 @@ public class CommandManager
             source.sendFeedback(Text.translatable(base + ".detail").formatted(Formatting.WHITE));
         source.sendFeedback(Text.translatable(base + ".usage").formatted(Formatting.GRAY));
         source.sendFeedback(Text.literal(""));
+    }
+
+    private static int executeScan(FabricClientCommandSource source, String sortingArg, int radius, boolean forceRescan)
+    {
+        String sorting = normalizeSorting(sortingArg);
+        if (RadarClient.generateClusters(source.getPlayer(), radius, sorting, forceRescan))
+        {
+            source.sendFeedback(Text.translatable("chat.spawn_radar.scan_started"));
+            return Command.SINGLE_SUCCESS;
+        }
+        return 0;
     }
 
     private static int showClusterInfo(FabricClientCommandSource source, int id)

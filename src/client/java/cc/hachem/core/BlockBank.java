@@ -22,6 +22,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class BlockBank
 {
     private static final List<SpawnerInfo> SPAWNERS = new CopyOnWriteArrayList<>();
+    private static volatile boolean manualDataReady = false;
 
     private BlockBank() {}
 
@@ -96,6 +97,7 @@ public class BlockBank
 
     private static void notifyPlayer(ClientPlayerEntity player, Runnable callback, int spawnersFound)
     {
+        markManualDataReady();
         if (spawnersFound == 0)
             player.sendMessage(Text.translatable("chat.spawn_radar.none"), false);
         else
@@ -217,6 +219,7 @@ public class BlockBank
         int count = SPAWNERS.size();
         SPAWNERS.clear();
         RadarClient.LOGGER.debug("Cleared {} highlighted spawners.", count);
+        manualDataReady = false;
     }
 
     public static List<SpawnerInfo> getAll()
@@ -273,6 +276,16 @@ public class BlockBank
     public static boolean hasCachedSpawners()
     {
         return !SPAWNERS.isEmpty();
+    }
+
+    public static void markManualDataReady()
+    {
+        manualDataReady = true;
+    }
+
+    public static boolean hasManualResults()
+    {
+        return manualDataReady;
     }
 
     public static List<SpawnerInfo> getWithinChunkRadius(BlockPos center, int chunkRadius)

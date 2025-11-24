@@ -53,10 +53,15 @@ public class RadarClient implements ClientModInitializer
 
     public static boolean generateClusters(ClientPlayerEntity source, int radius, String sorting)
     {
+        return generateClusters(source, radius, sorting, false);
+    }
+
+    public static boolean generateClusters(ClientPlayerEntity source, int radius, String sorting, boolean forceRescan)
+    {
         if (!ensureServerEnabled(source))
             return false;
 
-        if (config.useCachedSpawnersForScan && BlockBank.hasCachedSpawners())
+        if (!forceRescan && config.useCachedSpawnersForScan && BlockBank.hasCachedSpawners())
         {
             List<SpawnerInfo> cached = BlockBank.getWithinChunkRadius(source.getBlockPos(), radius);
             if (!cached.isEmpty())
@@ -84,6 +89,7 @@ public class RadarClient implements ClientModInitializer
         if (!validateSpawnerResults(source, spawners))
             return;
 
+        BlockBank.markManualDataReady();
         SpawnerCluster.SortType sortType = resolveSortType(argument);
         List<SpawnerCluster> clusters = SpawnerCluster.findClusters(source, spawners, ACTIVATION_RADIUS, sortType);
         persistClusterResults(clusters, sortType);

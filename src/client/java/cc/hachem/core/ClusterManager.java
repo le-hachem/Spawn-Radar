@@ -91,7 +91,11 @@ public class ClusterManager
     public static List<SpawnerInfo> getHighlights()
     {
         if (highlightedClusterIds.isEmpty())
-            return BlockBank.getAll();
+        {
+            if (BlockBank.hasManualResults())
+                return BlockBank.getAll();
+            return Collections.emptyList();
+        }
 
         List<SpawnerInfo> activeHighlights = new ArrayList<>();
         for (SpawnerCluster c : clusters)
