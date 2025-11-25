@@ -1,45 +1,56 @@
-@center &6Spawn Radar Manual
-@center &7by Hachem
-@page
-&lTable of Contents
-Chapter I — About the Mod
-Chapter II — Commands
-Chapter III — Config Options
-@page
-&lAbout the Mod — Foundations
-Spawn Radar watches each chunk you load and logs every mob spawner it sees. Those entries live entirely on the client, so nothing depends on server support.
-Manual scans read that block bank around you and bundle nearby spawners into numbered clusters. Background processing can keep that list fresh while you travel.
-Think of the workflow as explore ➜ scan ➜ review. Each pass adds context, and the HUD remembers which spawner belongs to which cluster.
-@page
-&lAbout the Mod — HUD & Alerts
-The HUD widgets show cluster IDs, mob icons (puppet or spawn egg), spawn and mob-cap volumes, page controls, and quick actions like [Scan] or [Reset].
-Alerts are shared everywhere: if background processing finds a dense cluster you’ll see a chat ping, and the HUD can highlight it as soon as you open the panel.
-Use the HUD to teleport, toggle highlights, and compare activation spheres before you ever break blocks.
-@page
-&lSpawner Generation — Where they appear
-Overworld dungeons roll spawners in stone noise caves between Y=-32 and Y=64, while strongholds guarantee libraries with a silverfish spawner. Nether fortresses place blaze spawners on the crossing platforms, bastion remnants hide magma cube spawners in treasure rooms, and Ancient Cities never spawn spawners at all. Spawn Radar doesn’t guess: it reads real block entities, so custom datapacks or worldgen mods are supported automatically.
-@page
-&lActivation Zones & Spawn Regions
-Every vanilla spawner activates when a player is within 16 blocks (Euclidean) horizontally and within 4 blocks vertically. Once active, it rolls spawns in a 9×9×3 area centered on the cage and enforces a mob-cap check that looks 4 blocks around the cage plus up/down 1 block. Spawn Radar draws both regions: the purple box is the activation bubble, the cyan box is the spawn volume, and the amber box is the mob-cap check. If you see one of these volumes clipped by terrain, that’s your cue to dig or slab.
-@page
-&lMod Tooling — Beyond vanilla rules
-Because every spawner entry is stored, you can page through dozens of clusters, sort them by proximity or size, and jump to any of them with a single click. Background scanning means you can fly through terrain once and let the mod ping you whenever a dungeon or fortress rolls more spawners than you expected. Alerts only fire when the configured density threshold is met, so explorers aren’t spammed during casual travel.
-@page
-&lCommands — Overview
-Every command is instantaneous and runs on the client. Bind them, macro them, or trigger them from the HUD without waiting for a server tick.
-/radar:scan [manual] [sorting] [radius] discovers spawners around you. Add “manual” to ignore cached data, choose proximity|size, and override radius (1–256).
-/radar:toggle <id|all> flips highlights, and /radar:info <id> prints detailed lines with teleport + copy-to-clipboard helpers.
-@page
-&lCommands — Extras
-/radar:reset wipes the block bank, clusters, highlights, and HUD state (perfect before sharing screenshots).
-/radar:guide reopens this book, and /radar:help <command> reminds you of arguments and usage.
-Tip: bind scan/reset to spare keys (or mouse buttons) so cached sweeps become muscle memory.
-@page
-&lConfig Options — Scans & Alerts
-Open Mod Menu ➜ Spawn Radar ➜ Config to tune scan radius, worker threads, cached-scan behaviour, and background alert thresholds or proximity.
-Cached scans are great for quick refreshes; manual scans are best after large terrain edits, schematic pastes, or when you revisit old bases.
-@page
-&lConfig Options — HUD & Sharing
-Rendering controls let you pick puppets vs eggs, outline colours, opacity, HUD position, and page size. Volume colours can be set per cluster.
-Share your config with teammates so everyone sees identical colours and layouts. Export it before big base tours so highlights match on every client.
+@centered_page
+@title Spawn Radar Guide
+@author by Hachem
 
+@page
+@centered_page
+@toc
+
+@chapter About the Mod
+The mod scans for spawners around you as you generate or load chunks, allowing you to discover potential farm locations without manually searching. It also provides a command that visualizes the exact region a player must stand within to activate all nearby spawners simultaneously. When the mod detects a group of spawners close enough to form a cluster, it notifies you automatically based on a configurable minimum spawner count.
+
+@section Spawn Regions
+A mob spawner becomes active when the player is within sixteen blocks of it. When multiple spawners are located near one another, their activation spheres overlap, creating a combined region where the player can stand to activate the entire group. The mod highlights this region clearly, making it easier to design farms and identify optimal AFK positions for maximum efficiency.
+
+@section Spawn conditions
+For a spawner to summon mobs, three conditions must be met. First, the player must remain within the 16 block activation radius. Second, the possible spawn area must be valid for the mob type; this volume depends on the mob’s hitbox and spawn rules, and the mod can visualize it directly in the world. Third, the local mob cap must not be exceeded: each spawner checks a 9x9x9 region around itself, and if six or more entities are present, it will not spawn additional mobs. The mod provides a toggle that displays this region, allowing you to diagnose why a spawner may not be producing mobs.
+
+@chapter Commands
+@section Main commands
+Use @command(/radar:scan) whenever you want to locate spawners and clusters in a given area. It opens a HUD which allows you to to toggle different highlights and provides useful information for farm building.
+
+When clusters start piling up, @command(/radar:toggle) is the fastest way to focus on one farm. Toggling a cluster hides every other highlight, so you can walk the activation zone, test lighting fixes, or grab coordinates without visual noise. You can also just click on a corresponding cluster in the HUD and toggle it from there.
+
+@section Useful commands
+Keep @command(/radar:reset) handy for resetting and untoggling the state. It turns off all highlights, regions and the HUD.
+
+The @command(/radar:help) is useful to know the functionality of each command in detail with their corresponding arguments, both optional and mandatory.
+
+@chapter Config Options
+@section Scanning & Clusters
+The chunk search radius sets how many chunks around you will be scanned when using @command(/radar:scan) or the panel’s @italic(Rescan) button. Raising the radius lets you search larger areas but takes more time.
+
+You can also choose how many threads the mod uses when scanning; higher values make scans finish faster on stronger machines.
+
+The @italic(Minimum Spawners for Region) setting decides how many spawners must overlap before their shared activation bubble is displayed in the world. You can also choose a default sorting method such as @italic(none), @italic(proximity), or @italic(size), and this affects both manual scans and the command output.
+
+Additional options help automate scanning. @italic(Highlight After Scan) automatically shows all clusters the moment a scan finishes. @italic(Frustum Culling) hides rendered shapes that are outside your screen to improve performance. If you enable @italic(Cached Spawners), the mod can reuse spawner data gathered from earlier scans or from chunk loading, making repeated scans much faster.
+
+If @italic(Process Chunks on Generation) is active, any chunk that loads around you is scanned automatically in the background. When the mod detects a cluster that matches your alert settings, it sends a chat notification and stores it so it appears the next time you run a scan. Whether these alerts also trigger visual highlights depends on your rendering settings.
+
+@section Rendering & Overlays
+The @italic(Outline) toggle switches the highlight style between filled boxes and wireframes. You can adjust the @italic(outline thickness) to keep highlighted areas readable without covering too much of your screen. You can also choose whether spawn volumes and mob-cap regions should appear by default; the buttons in the HUD simply toggle these on or off per spawner.
+
+@italic(Automatic Highlight Alerts) determines whether clusters detected in the background are shown immediately in the world. If enabled, any qualifying cluster will appear as soon as it is found. If disabled, you still receive chat alerts but will not see visuals until you perform a manual scan. This option only matters if chunk-generation scanning is enabled.
+
+@section HUD & Panel
+@italic(Element Count) determines how many clusters appear per page in the HUD. Increasing it reduces how often you need to switch pages, while lowering it makes the panel more compact. The @italic(vertical offset) slider lets you adjust the panel’s position by a percentage of your screen height, making it easier to place around chat, the hotbar, or other mods’ HUDs.
+
+You can align the panel to either the left or the right side of the screen. The @italic(Spawner Icon Mode) lets you choose whether each entry uses animated mob models or simple spawn-egg icons. The panel updates automatically whenever clusters change, so it will always reflect the current state without needing manual refresh.
+
+@section Color Options
+You can configure separate colors for filled spawner boxes and wireframe outlines. A global @italic(spawner opacity) slider controls how visible spawner highlights appear in the world, and a separate @italic(region opacity) slider adjusts how transparent the shared activation region looks.
+
+Spawn-volume and mob-cap regions each have their own color and opacity settings. These affect both the automatic overlays and the per-spawner overrides you can toggle from the HUD.
+
+Finally, the @italic(cluster color palette) maps different cluster sizes to different colors. Smaller clusters use the earlier colors in the list, while very large clusters reuse the last entry. These colors are applied consistently across the activation-region mesh, HUD labels, and other highlights, keeping the visual language clear no matter how many spawners you are working with.

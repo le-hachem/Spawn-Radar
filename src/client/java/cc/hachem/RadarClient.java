@@ -6,7 +6,7 @@ import cc.hachem.core.BlockBank;
 import cc.hachem.core.ChunkProcessingManager;
 import cc.hachem.core.ClusterManager;
 import cc.hachem.core.CommandManager;
-import cc.hachem.core.GuideBookManager;
+import cc.hachem.guide.GuideBookManager;
 import cc.hachem.core.KeyManager;
 import cc.hachem.core.SpawnerCluster;
 import cc.hachem.core.SpawnerInfo;
@@ -40,7 +40,7 @@ public class RadarClient implements ClientModInitializer {
 
     public static final String MOD_ID = "radar";
     public static Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-
+    
     public static ConfigManager config;
     private static volatile boolean serverSupportsRadar = false;
     private static final double ACTIVATION_RADIUS = 16.0;
@@ -217,11 +217,11 @@ public class RadarClient implements ClientModInitializer {
             RadarHandshakePayload.ID,
             (payload, context) ->
                 MinecraftClient.getInstance().execute(() -> {
-                    serverSupportsRadar = true;
+                serverSupportsRadar = true;
                     LOGGER.info(
                         "Spawn Radar features enabled on the current server."
                     );
-                })
+            })
         );
     }
 
