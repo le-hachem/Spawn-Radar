@@ -157,8 +157,8 @@
   "text.spawn_radar.efficiency_advisor.mobcap_saturated.detail": "La limite de mobs contient %s entités.\nTuez ou éloignez les mobs hors du cube de 8 blocs pour relancer le spawner.",
   "text.spawn_radar.efficiency_advisor.mobcap_crowded.detail": "La limite de mobs est actuellement de %s.\nDéplacez ou retirez les mobs proches du spawner pour récupérer de la marge et augmenter l'efficacité.",
   "text.spawn_radar.efficiency_advisor.summary.title": "Diagnostic du spawner",
-  "text.spawn_radar.efficiency_advisor.summary.efficiency": "\\nEfficacité : %s%%",
-  "text.spawn_radar.efficiency_advisor.summary.volume": "\\nVolume de spawn : %s%% ouvert",
-  "text.spawn_radar.efficiency_advisor.summary.light": "\\nObscurité : %s%%",
-  "text.spawn_radar.efficiency_advisor.summary.mob_cap": "\\nLimite de mobs : %s"
+  "text.spawn_radar.efficiency_advisor.summary.efficiency": "Efficacité : %s%%",
+  "text.spawn_radar.efficiency_advisor.summary.volume": "Volume de spawn : %s%% ouvert",
+  "text.spawn_radar.efficiency_advisor.summary.light": "Obscurité : %s%%",
+  "text.spawn_radar.efficiency_advisor.summary.mob_cap": "Limite de mobs : %s"
 }

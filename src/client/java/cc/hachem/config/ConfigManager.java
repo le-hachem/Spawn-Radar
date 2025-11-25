@@ -79,9 +79,9 @@ public class ConfigManager
     public int panelElementCount = 5;
     public HudHorizontalAlignment panelHorizontalAlignment = HudHorizontalAlignment.LEFT;
     public SpawnerIconMode spawnerIconMode = SpawnerIconMode.MOB_PUPPET;
-    public boolean useCachedSpawnersForScan = false;
+    public boolean useCachedSpawnersForScan = true;
     public boolean autoHighlightAlertedClusters = false;
-    public boolean processChunksOnGeneration = false;
+    public boolean processChunksOnGeneration = true;
     public int backgroundClusterAlertThreshold = 4;
     public int backgroundClusterProximity = 0;
 

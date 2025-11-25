@@ -155,8 +155,8 @@
   "text.spawn_radar.efficiency_advisor.mobcap_saturated.detail": "W limicie mobów znajduje się %s stworzeń.\nZabij lub przenieś moby poza sześcian 8 bloków, aby spawner znów działał.",
   "text.spawn_radar.efficiency_advisor.mobcap_crowded.detail": "Aktualny limit mobów to %s.\nPrzesuń lub usuń moby w pobliżu spawnera, żeby odzyskać zapas i zwiększyć wydajność.",
   "text.spawn_radar.efficiency_advisor.summary.title": "Diagnostyka spawnera",
-  "text.spawn_radar.efficiency_advisor.summary.efficiency": "\\nWydajność: %s%%",
-  "text.spawn_radar.efficiency_advisor.summary.volume": "\\nPrzestrzeń spawnu: %s%% wolne",
-  "text.spawn_radar.efficiency_advisor.summary.light": "\\nCiemność: %s%%",
-  "text.spawn_radar.efficiency_advisor.summary.mob_cap": "\\nLimit mobów: %s"
+  "text.spawn_radar.efficiency_advisor.summary.efficiency": "Wydajność: %s%%",
+  "text.spawn_radar.efficiency_advisor.summary.volume": "Przestrzeń spawnu: %s%% wolne",
+  "text.spawn_radar.efficiency_advisor.summary.light": "Ciemność: %s%%",
+  "text.spawn_radar.efficiency_advisor.summary.mob_cap": "Limit mobów: %s"
 }

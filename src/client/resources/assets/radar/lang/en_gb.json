@@ -158,8 +158,8 @@
   "text.spawn_radar.efficiency_advisor.mobcap_saturated.detail": "The mob cap contains %s mobs.\nKill or move mobs outside the 8-block cube so the spawner can run again.",
   "text.spawn_radar.efficiency_advisor.mobcap_crowded.detail": "The mob cap is currently %s.\nMove or remove mobs near the spawner to regain headroom and raise efficiency.",
   "text.spawn_radar.efficiency_advisor.summary.title": "Spawner Diagnostics",
-  "text.spawn_radar.efficiency_advisor.summary.efficiency": "\\nEfficiency: %s%%",
-  "text.spawn_radar.efficiency_advisor.summary.volume": "\\nSpawn Volume: %s%% open",
-  "text.spawn_radar.efficiency_advisor.summary.light": "\\nDarkness: %s%%",
-  "text.spawn_radar.efficiency_advisor.summary.mob_cap": "\\nMob Cap: %s"
+  "text.spawn_radar.efficiency_advisor.summary.efficiency": "Efficiency: %s%%",
+  "text.spawn_radar.efficiency_advisor.summary.volume": "Spawn Volume: %s%% open",
+  "text.spawn_radar.efficiency_advisor.summary.light": "Darkness: %s%%",
+  "text.spawn_radar.efficiency_advisor.summary.mob_cap": "Mob Cap: %s"
 }

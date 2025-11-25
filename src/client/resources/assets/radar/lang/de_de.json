@@ -155,8 +155,8 @@
   "text.spawn_radar.efficiency_advisor.mobcap_saturated.detail": "Im Mob-Cap befinden sich %s Mobs.\nTöte oder bewege Mobs aus dem 8-Blöcke-Würfel, damit der Spawner wieder läuft.",
   "text.spawn_radar.efficiency_advisor.mobcap_crowded.detail": "Der Mob-Cap-Status liegt derzeit bei %s.\nBewege oder entferne Mobs in der Nähe des Spawners, um wieder Luft zu bekommen und die Effizienz zu erhöhen.",
   "text.spawn_radar.efficiency_advisor.summary.title": "Spawner-Diagnose",
-  "text.spawn_radar.efficiency_advisor.summary.efficiency": "\\nEffizienz: %s%%",
-  "text.spawn_radar.efficiency_advisor.summary.volume": "\\nSpawn-Volumen: %s%% frei",
-  "text.spawn_radar.efficiency_advisor.summary.light": "\\nDunkelheit: %s%%",
-  "text.spawn_radar.efficiency_advisor.summary.mob_cap": "\\nMob-Cap: %s"
+  "text.spawn_radar.efficiency_advisor.summary.efficiency": "Effizienz: %s%%",
+  "text.spawn_radar.efficiency_advisor.summary.volume": "Spawn-Volumen: %s%% frei",
+  "text.spawn_radar.efficiency_advisor.summary.light": "Dunkelheit: %s%%",
+  "text.spawn_radar.efficiency_advisor.summary.mob_cap": "Mob-Cap: %s"
 }

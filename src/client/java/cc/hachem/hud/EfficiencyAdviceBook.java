@@ -45,18 +45,29 @@ public final class EfficiencyAdviceBook
         MutableText summary = Text.empty()
             .append(Text.translatable("text.spawn_radar.efficiency_advisor.summary.title")
                 .formatted(Formatting.DARK_PURPLE, Formatting.BOLD, Formatting.UNDERLINE))
-            .append(Text.literal("\n\n\n"))
-            .append(Text.translatable("text.spawn_radar.efficiency_advisor.summary.efficiency",
-                Math.round(result.overall())).formatted(Formatting.GOLD))
-            .append(Text.translatable("text.spawn_radar.efficiency_advisor.summary.volume",
-                Math.round(result.volumeScore())).formatted(Formatting.GRAY))
-            .append(Text.translatable("text.spawn_radar.efficiency_advisor.summary.light",
-                Math.round(result.lightScore())).formatted(Formatting.GRAY));
+            .append(Text.literal("\n\n\n"));
+
+        summary = appendMetric(summary,
+            "text.spawn_radar.efficiency_advisor.summary.efficiency",
+            Formatting.GOLD,
+            Math.round(result.overall()));
+
+        summary = appendMetric(summary,
+            "text.spawn_radar.efficiency_advisor.summary.volume",
+            Formatting.GRAY,
+            Math.round(result.volumeScore()));
+
+        summary = appendMetric(summary,
+            "text.spawn_radar.efficiency_advisor.summary.light",
+            Formatting.GRAY,
+            Math.round(result.lightScore()));
 
         if (mobCapStatus != null)
         {
-            summary.append(Text.translatable("text.spawn_radar.efficiency_advisor.summary.mob_cap",
-                mobCapStatus.formatted()).formatted(Formatting.RED));
+            summary = appendMetric(summary,
+                "text.spawn_radar.efficiency_advisor.summary.mob_cap",
+                Formatting.RED,
+                mobCapStatus.formatted());
         }
 
         return summary;
@@ -68,6 +79,13 @@ public final class EfficiencyAdviceBook
             .append(entry.title().copy())
             .append(Text.literal("\n\n").formatted(Formatting.RESET))
             .append(entry.description().copy());
+    }
+
+    private static MutableText appendMetric(MutableText base, String translationKey, Formatting color, Object... args)
+    {
+        return base
+            .append(Text.literal("\n"))
+            .append(Text.translatable(translationKey, args).formatted(color));
     }
 }
 
