@@ -25,6 +25,14 @@ public class ClusterManager
         return clusters;
     }
 
+    public static SpawnerCluster getClusterById(int clusterId)
+    {
+        for (SpawnerCluster cluster : clusters)
+            if (cluster.id() == clusterId)
+                return cluster;
+        return null;
+    }
+
     public static List<Integer> getClusterIDAt(BlockPos pos)
     {
         List<Integer> ids = new ArrayList<>();

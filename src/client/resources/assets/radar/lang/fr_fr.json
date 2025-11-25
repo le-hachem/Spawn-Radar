@@ -18,6 +18,10 @@
   "option.spawn_radar.show_spawn_volume.tooltip": "Affiche par défaut le volume d’apparition pour les spawners surlignés.",
   "option.spawn_radar.show_mob_cap_volume": "Afficher le volume limite de mobs",
   "option.spawn_radar.show_mob_cap_volume.tooltip": "Affiche par défaut le volume limite de mobs pour les spawners surlignés.",
+  "option.spawn_radar.show_efficiency_label": "Afficher l'indicateur d'efficacité",
+  "option.spawn_radar.show_efficiency_label.tooltip": "Affiche le pourcentage d'efficacité calculé au-dessus des spawners surlignés.",
+  "option.spawn_radar.show_mob_cap_status": "Afficher l'état du mob-cap",
+  "option.spawn_radar.show_mob_cap_status.tooltip": "Indique combien de mobs se trouvent dans le volume de mob-cap (par ex. 3/6).",
   "option.spawn_radar.outline_thickness": "Épaisseur du contour des spawners (px)",
   "option.spawn_radar.outline_thickness.tooltip": "Épaisseur du contour lorsque le mode contour est actif.",
   "option.spawn_radar.min_spawners": "Nombre minimum de spawners pour surligner un cluster",
@@ -135,5 +139,7 @@
   "command.spawn_radar.info.toggle_hover": "Cliquez pour activer/désactiver le surlignage de ce cluster.",
   "command.spawn_radar.info.spawner_line": "%1$s. Spawner %2$s @ ",
   "command.spawn_radar.info.teleport_label": "[Téléporter]",
-  "command.spawn_radar.info.coords_hover": "Cliquez pour copier ces coordonnées."
+  "command.spawn_radar.info.coords_hover": "Cliquez pour copier ces coordonnées.",
+  "text.spawn_radar.efficiency": "Efficacité : %s%%",
+  "text.spawn_radar.mob_cap_status": "Limite de mobs %s"
 }

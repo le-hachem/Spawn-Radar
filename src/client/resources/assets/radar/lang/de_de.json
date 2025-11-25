@@ -18,6 +18,10 @@
   "option.spawn_radar.show_spawn_volume.tooltip": "Aktiviert standardmäßig die Anzeige des Spawn-Volumens für markierte Spawner.",
   "option.spawn_radar.show_mob_cap_volume": "Mob-Cap-Volumen anzeigen",
   "option.spawn_radar.show_mob_cap_volume.tooltip": "Aktiviert standardmäßig die Anzeige des Mob-Cap-Volumens für markierte Spawner.",
+  "option.spawn_radar.show_efficiency_label": "Effizienz-Anzeige anzeigen",
+  "option.spawn_radar.show_efficiency_label.tooltip": "Zeigt den berechneten Effizienzwert über hervorgehobenen Spawnern an.",
+  "option.spawn_radar.show_mob_cap_status": "Mob-Cap-Status anzeigen",
+  "option.spawn_radar.show_mob_cap_status.tooltip": "Zeigt an, wie viele Mobs sich aktuell im Mob-Cap-Bereich befinden (z. B. 3/6).",
   "option.spawn_radar.outline_thickness": "Linienstärke der Spawner-Kontur (px)",
   "option.spawn_radar.outline_thickness.tooltip": "Linienstärke der Kontur im Umrissmodus.",
   "option.spawn_radar.frustum_culling": "Frustum-Culling aktivieren",
@@ -133,5 +137,7 @@
   "command.spawn_radar.info.toggle_hover": "Klicken, um die Hervorhebung dieses Clusters umzuschalten.",
   "command.spawn_radar.info.spawner_line": "%1$s. %2$s @ ",
   "command.spawn_radar.info.teleport_label": "[Teleportieren]",
-  "command.spawn_radar.info.coords_hover": "Klicken, um diese Koordinaten zu kopieren."
+  "command.spawn_radar.info.coords_hover": "Klicken, um diese Koordinaten zu kopieren.",
+  "text.spawn_radar.efficiency": "Effizienz: %s%%",
+  "text.spawn_radar.mob_cap_status": "Mob-Cap %s"
 }

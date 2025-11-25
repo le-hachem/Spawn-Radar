@@ -18,6 +18,10 @@
   "option.spawn_radar.show_spawn_volume.tooltip": "Domyślnie pokazuje objętość spawnu dla podświetlonych spawnerów.",
   "option.spawn_radar.show_mob_cap_volume": "Pokaż objętość limitu mobów",
   "option.spawn_radar.show_mob_cap_volume.tooltip": "Domyślnie pokazuje objętość limitu mobów dla podświetlonych spawnerów.",
+  "option.spawn_radar.show_efficiency_label": "Pokaż etykietę wydajności",
+  "option.spawn_radar.show_efficiency_label.tooltip": "Wyświetla obliczony procent wydajności nad podświetlonymi spawnerami.",
+  "option.spawn_radar.show_mob_cap_status": "Pokaż status limitu mobów",
+  "option.spawn_radar.show_mob_cap_status.tooltip": "Pokazuje ilu mobów znajduje się obecnie w obszarze limitu (np. 3/6).",
   "option.spawn_radar.outline_thickness": "Grubość konturu spawnerów (px)",
   "option.spawn_radar.outline_thickness.tooltip": "Grubość konturu spawnera w trybie konturu.",
   "option.spawn_radar.frustum_culling": "Włącz frustum culling",
@@ -133,5 +137,7 @@
   "command.spawn_radar.info.toggle_hover": "Kliknij, aby przełączyć podświetlenie tego klastra.",
   "command.spawn_radar.info.spawner_line": "%1$s. Spawner %2$s @ ",
   "command.spawn_radar.info.teleport_label": "[Teleport]",
-  "command.spawn_radar.info.coords_hover": "Kliknij, aby skopiować te współrzędne."
+  "command.spawn_radar.info.coords_hover": "Kliknij, aby skopiować te współrzędne.",
+  "text.spawn_radar.efficiency": "Wydajność: %s%%",
+  "text.spawn_radar.mob_cap_status": "Limit mobów %s"
 }

@@ -20,6 +20,10 @@
   "option.spawn_radar.show_spawn_volume.tooltip": "Show the mob spawn volume overlay by default for highlighted spawners.",
   "option.spawn_radar.show_mob_cap_volume": "Show mob-cap check volume",
   "option.spawn_radar.show_mob_cap_volume.tooltip": "Show the mob-cap check volume overlay by default for highlighted spawners.",
+  "option.spawn_radar.show_efficiency_label": "Show efficiency label",
+  "option.spawn_radar.show_efficiency_label.tooltip": "Display the calculated efficiency percentage above highlighted spawners.",
+  "option.spawn_radar.show_mob_cap_status": "Show mob-cap status label",
+  "option.spawn_radar.show_mob_cap_status.tooltip": "Show how many mobs currently occupy the mob-cap check volume (e.g. 3/6).",
   "option.spawn_radar.outline_thickness": "Spawner outline thickness (px)",
   "option.spawn_radar.outline_thickness.tooltip": "Pixel thickness of the outline when outline highlighting is enabled.",
   "option.spawn_radar.frustum_culling": "Enable frustum culling",
@@ -73,6 +77,8 @@
   "option.spawn_radar.sort_order.descending": "Descending",
   "option.spawn_radar.hud_alignment.left": "Left",
   "option.spawn_radar.hud_alignment.right": "Right",
+
+  "text.spawn_radar.efficiency": "Efficiency: %s%%",
 
   "chat.spawn_radar.searching": "Searching for spawners...",
   "chat.spawn_radar.found": "Found %d spawners.",
@@ -135,5 +141,6 @@
   "command.spawn_radar.info.toggle_hover": "Click to toggle this cluster highlight.",
   "command.spawn_radar.info.spawner_line": "%1$s. %2$s spawner @ ",
   "command.spawn_radar.info.teleport_label": "[Teleport]",
-  "command.spawn_radar.info.coords_hover": "Click to copy these coordinates."
+  "command.spawn_radar.info.coords_hover": "Click to copy these coordinates.",
+  "text.spawn_radar.mob_cap_status": "Mob Cap %s"
 }

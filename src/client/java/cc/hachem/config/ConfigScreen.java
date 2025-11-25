@@ -188,6 +188,22 @@ public class ConfigScreen
             .build());
 
         rendering.addEntry(entries.startBooleanToggle(
+                text("option.spawn_radar.show_efficiency_label"),
+                config.showSpawnerEfficiencyLabel)
+            .setSaveConsumer(value -> config.showSpawnerEfficiencyLabel = value)
+            .setDefaultValue(ConfigManager.DEFAULT.showSpawnerEfficiencyLabel)
+            .setTooltip(text("option.spawn_radar.show_efficiency_label.tooltip"))
+            .build());
+
+        rendering.addEntry(entries.startBooleanToggle(
+                text("option.spawn_radar.show_mob_cap_status"),
+                config.showSpawnerMobCapStatus)
+            .setSaveConsumer(value -> config.showSpawnerMobCapStatus = value)
+            .setDefaultValue(ConfigManager.DEFAULT.showSpawnerMobCapStatus)
+            .setTooltip(text("option.spawn_radar.show_mob_cap_status.tooltip"))
+            .build());
+
+        rendering.addEntry(entries.startBooleanToggle(
                 text("option.spawn_radar.auto_highlight_alerts"),
                 config.autoHighlightAlertedClusters)
             .setSaveConsumer(value ->

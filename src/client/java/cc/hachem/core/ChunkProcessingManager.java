@@ -1,7 +1,6 @@
 package cc.hachem.core;
 
 import cc.hachem.RadarClient;
-import cc.hachem.core.ClusterManager;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientChunkEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.block.entity.MobSpawnerBlockEntity;

@@ -44,6 +44,6 @@ public class FloatingTextRenderer
 
     public static void renderBlockNametag(WorldRenderContext context, BlockPos pos, String text)
     {
-        render(context, pos, text, 0.02f, 0xFFFFFFFF, 0.5f, 1.2f, 0.5f);
+        render(context, pos, text, 0.02f, 0xFFFFFFFF, 0.5f, 1.7f, 0.5f);
     }
 }

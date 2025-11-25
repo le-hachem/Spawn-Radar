@@ -5,6 +5,8 @@ import cc.hachem.config.ConfigManager;
 import cc.hachem.core.ClusterManager;
 import cc.hachem.core.SpawnerCluster;
 import cc.hachem.core.SpawnerInfo;
+import cc.hachem.core.SpawnerEfficiencyManager;
+import cc.hachem.core.SpawnerMobCapStatusManager;
 import cc.hachem.core.VolumeHighlightManager;
 import cc.hachem.renderer.ItemTextureRenderer;
 import cc.hachem.renderer.MobPuppetRenderer;
@@ -110,7 +112,12 @@ public class ClusterListItemWidget extends Widget
             {
                 ButtonWidget spawnToggle = createSpawnToggleButton(row);
                 ButtonWidget mobCapToggle = createMobCapToggleButton(row);
-                row.setToggles(spawnToggle, mobCapToggle);
+                ButtonWidget efficiencyToggle = createEfficiencyToggleButton(row);
+                ButtonWidget mobCapStatusToggle = createMobCapStatusToggleButton(row);
+                row.setSpawnToggle(spawnToggle);
+                row.setMobCapToggle(mobCapToggle);
+                row.setEfficiencyToggle(efficiencyToggle);
+                row.setMobCapStatusToggle(mobCapStatusToggle);
                 syncToggleColors(row);
             }
             childRows.add(row);
@@ -141,10 +148,8 @@ public class ClusterListItemWidget extends Widget
             for (ChildRow row : childRows)
             {
                 row.button().onMouseClick(mx, my, mouseButton);
-                if (row.spawnToggle() != null)
-                    row.spawnToggle().onMouseClick(mx, my, mouseButton);
-                if (row.mobCapToggle() != null)
-                    row.mobCapToggle().onMouseClick(mx, my, mouseButton);
+                for (ButtonWidget toggle : row.activeToggles())
+                    toggle.onMouseClick(mx, my, mouseButton);
             }
     }
 
@@ -159,10 +164,8 @@ public class ClusterListItemWidget extends Widget
             for (ChildRow row : childRows)
             {
                 row.button().onMouseMove(mx, my);
-                if (row.spawnToggle() != null)
-                    row.spawnToggle().onMouseMove(mx, my);
-                if (row.mobCapToggle() != null)
-                    row.mobCapToggle().onMouseMove(mx, my);
+                for (ButtonWidget toggle : row.activeToggles())
+                    toggle.onMouseMove(mx, my);
                 boolean hovered = row.button().isHovered() || row.isWithinTree(mx, my);
                 row.setHoverActive(hovered);
             }
@@ -295,7 +298,7 @@ public class ClusterListItemWidget extends Widget
             child.render(context);
 
             if (rowActive && MinecraftClient.getInstance().currentScreen instanceof ChatScreen && row.supportsVolumeToggles())
-                renderToggleBranch(context, textRenderer, row, child, childWidth, textY, mirror);
+                renderToggleTree(context, textRenderer, row, child, childWidth, textY, mirror);
             else
                 row.clearTreeBounds();
 
@@ -320,6 +323,7 @@ public class ClusterListItemWidget extends Widget
             boolean enabled = VolumeHighlightManager.toggleSpawnVolume(row.spawner().pos(), RadarClient.config.showSpawnerSpawnVolume);
             holder[0].setColor(enabled ? (255 << 24) | RadarClient.config.spawnVolumeColor : TOGGLE_INACTIVE_COLOR);
         });
+        holder[0].setDecorated(false);
         return holder[0];
     }
 
@@ -333,6 +337,35 @@ public class ClusterListItemWidget extends Widget
             boolean enabled = VolumeHighlightManager.toggleMobCapVolume(row.spawner().pos(), RadarClient.config.showSpawnerMobCapVolume);
             holder[0].setColor(enabled ? (255 << 24) | RadarClient.config.mobCapVolumeColor : TOGGLE_INACTIVE_COLOR);
         });
+        holder[0].setDecorated(false);
+        return holder[0];
+    }
+
+    private ButtonWidget createEfficiencyToggleButton(ChildRow row)
+    {
+        final ButtonWidget[] holder = new ButtonWidget[1];
+        holder[0] = new ButtonWidget(0, 0, "Show Efficiency", TOGGLE_INACTIVE_COLOR, () ->
+        {
+            if (!row.hoverActive())
+                return;
+            boolean enabled = SpawnerEfficiencyManager.toggle(row.spawner().pos(), RadarClient.config.showSpawnerEfficiencyLabel);
+            holder[0].setColor(enabled ? Colors.GREEN : TOGGLE_INACTIVE_COLOR);
+        });
+        holder[0].setDecorated(false);
+        return holder[0];
+    }
+
+    private ButtonWidget createMobCapStatusToggleButton(ChildRow row)
+    {
+        final ButtonWidget[] holder = new ButtonWidget[1];
+        holder[0] = new ButtonWidget(0, 0, "Show Mob Cap Status", TOGGLE_INACTIVE_COLOR, () ->
+        {
+            if (!row.hoverActive())
+                return;
+            boolean enabled = SpawnerMobCapStatusManager.toggle(row.spawner().pos(), RadarClient.config.showSpawnerMobCapStatus);
+            holder[0].setColor(enabled ? Colors.CYAN : TOGGLE_INACTIVE_COLOR);
+        });
+        holder[0].setDecorated(false);
         return holder[0];
     }
 
@@ -340,42 +373,82 @@ public class ClusterListItemWidget extends Widget
     {
         if (!row.supportsVolumeToggles())
             return 0;
-        return TOGGLE_GAP + branchGlyphWidth + BRANCH_GAP
-            + row.spawnToggle().getContentWidth()
-            + TOGGLE_SPACING + row.mobCapToggle().getContentWidth();
+        int width = TOGGLE_GAP + branchGlyphWidth + BRANCH_GAP;
+        boolean first = true;
+        for (ButtonWidget toggle : row.activeToggles())
+        {
+            if (!first)
+                width += TOGGLE_SPACING;
+            width += toggle.getContentWidth();
+            first = false;
+        }
+        return width;
     }
 
-    private void renderToggleBranch(DrawContext context, TextRenderer textRenderer, ChildRow row,
-                                    ButtonWidget child, int childWidth, int textY, boolean mirror)
+    private void renderToggleTree(DrawContext context, TextRenderer textRenderer, ChildRow row,
+                                  ButtonWidget child, int childWidth, int textY, boolean mirror)
     {
-        if (row.spawnToggle() == null || row.mobCapToggle() == null)
+        List<ButtonWidget> toggles = row.activeToggles();
+        if (toggles.isEmpty())
         {
             row.clearTreeBounds();
             return;
         }
-        ToggleBounds spawnBounds = renderToggleRow(
-            context, textRenderer, row.spawnToggle(), child, childWidth, textY, mirror, true);
 
-        ToggleBounds mobBounds = renderToggleRow(
-            context, textRenderer, row.mobCapToggle(),
-            child, childWidth, textY + row.button().getHeight() + TOGGLE_VERTICAL_GAP, mirror, false);
+        ToggleBounds combinedBounds = null;
+        int currentY = textY;
+        for (int i = 0; i < toggles.size(); i++)
+        {
+            ButtonWidget toggle = toggles.get(i);
+            ToggleBranchType branchType = ToggleBranchType.EXPAND;
+            if (i == toggles.size() - 1)
+                branchType = ToggleBranchType.END;
+            else if (i > 0)
+                branchType = ToggleBranchType.CONTINUE;
 
-        row.setTreeBounds(
-            Math.min(spawnBounds.minX(), mobBounds.minX()) - TREE_HOVER_PADDING,
-            Math.max(spawnBounds.maxX(), mobBounds.maxX()) + TREE_HOVER_PADDING,
-            Math.min(spawnBounds.minY(), mobBounds.minY()) - TREE_HOVER_PADDING,
-            Math.max(spawnBounds.maxY(), mobBounds.maxY()) + TREE_HOVER_PADDING
-        );
+            ToggleBounds bounds = renderToggleRow(
+                context, textRenderer, toggle, child, childWidth, currentY, mirror, branchType);
+
+            combinedBounds = combinedBounds == null
+                ? bounds
+                : new ToggleBounds(
+                    Math.min(combinedBounds.minX(), bounds.minX()),
+                    Math.max(combinedBounds.maxX(), bounds.maxX()),
+                    Math.min(combinedBounds.minY(), bounds.minY()),
+                    Math.max(combinedBounds.maxY(), bounds.maxY())
+                );
+
+            currentY += toggle.getHeight() + TOGGLE_VERTICAL_GAP;
+        }
+
+        if (combinedBounds != null)
+        {
+            row.setTreeBounds(
+                combinedBounds.minX() - TREE_HOVER_PADDING,
+                combinedBounds.maxX() + TREE_HOVER_PADDING,
+                combinedBounds.minY() - TREE_HOVER_PADDING,
+                combinedBounds.maxY() + TREE_HOVER_PADDING
+            );
+        }
     }
 
     private ToggleBounds renderToggleRow(DrawContext context, TextRenderer textRenderer, ButtonWidget toggle,
-                                 ButtonWidget child, int childWidth, int startY, boolean mirror, boolean useExpand)
+                                 ButtonWidget child, int childWidth, int startY, boolean mirror, ToggleBranchType branchType)
     {
         String branch;
         if (mirror)
-            branch = useExpand ? RIGHT_BRANCH_CONTINUE : RIGHT_BRANCH_END;
+        {
+            branch = branchType == ToggleBranchType.END ? RIGHT_BRANCH_END : RIGHT_BRANCH_CONTINUE;
+        }
         else
-            branch = useExpand ? LEFT_BRANCH_EXPAND : LEFT_BRANCH_END;
+        {
+            branch = switch (branchType)
+            {
+                case EXPAND -> LEFT_BRANCH_EXPAND;
+                case CONTINUE -> LEFT_BRANCH_CONTINUE;
+                case END -> LEFT_BRANCH_END;
+            };
+        }
 
         int branchWidth = textRenderer.getWidth(branch);
         int branchX;
@@ -411,8 +484,20 @@ public class ClusterListItemWidget extends Widget
         BlockPos pos = row.spawner().pos();
         boolean spawnEnabled = VolumeHighlightManager.isSpawnVolumeEnabled(pos, RadarClient.config.showSpawnerSpawnVolume);
         boolean mobCapEnabled = VolumeHighlightManager.isMobCapVolumeEnabled(pos, RadarClient.config.showSpawnerMobCapVolume);
-        row.spawnToggle().setColor(spawnEnabled ? (255 << 24) | RadarClient.config.spawnVolumeColor : TOGGLE_INACTIVE_COLOR);
-        row.mobCapToggle().setColor(mobCapEnabled ? (255 << 24) | RadarClient.config.mobCapVolumeColor : TOGGLE_INACTIVE_COLOR);
+        if (row.spawnToggle() != null)
+            row.spawnToggle().setColor(spawnEnabled ? (255 << 24) | RadarClient.config.spawnVolumeColor : TOGGLE_INACTIVE_COLOR);
+        if (row.mobCapToggle() != null)
+            row.mobCapToggle().setColor(mobCapEnabled ? (255 << 24) | RadarClient.config.mobCapVolumeColor : TOGGLE_INACTIVE_COLOR);
+        if (row.efficiencyToggle() != null)
+        {
+            boolean efficiencyEnabled = SpawnerEfficiencyManager.isEnabled(pos, RadarClient.config.showSpawnerEfficiencyLabel);
+            row.efficiencyToggle().setColor(efficiencyEnabled ? Colors.GREEN : TOGGLE_INACTIVE_COLOR);
+        }
+        if (row.mobCapStatusToggle() != null)
+        {
+            boolean statusEnabled = SpawnerMobCapStatusManager.isEnabled(pos, RadarClient.config.showSpawnerMobCapStatus);
+            row.mobCapStatusToggle().setColor(statusEnabled ? Colors.CYAN : TOGGLE_INACTIVE_COLOR);
+        }
     }
 
     private boolean isRowActive(ChildRow row)
@@ -472,6 +557,8 @@ public class ClusterListItemWidget extends Widget
         private final boolean supportsVolumeToggles;
         private ButtonWidget spawnToggle;
         private ButtonWidget mobCapToggle;
+        private ButtonWidget efficiencyToggle;
+        private ButtonWidget mobCapStatusToggle;
         private boolean hoverActive;
         private int treeMinX;
         private int treeMaxX;
@@ -513,10 +600,24 @@ public class ClusterListItemWidget extends Widget
             return hasMobIcon;
         }
 
-        void setToggles(ButtonWidget spawnToggle, ButtonWidget mobCapToggle)
+        void setSpawnToggle(ButtonWidget spawnToggle)
         {
             this.spawnToggle = spawnToggle;
+        }
+
+        void setMobCapToggle(ButtonWidget mobCapToggle)
+        {
             this.mobCapToggle = mobCapToggle;
+        }
+
+        void setEfficiencyToggle(ButtonWidget efficiencyToggle)
+        {
+            this.efficiencyToggle = efficiencyToggle;
+        }
+
+        void setMobCapStatusToggle(ButtonWidget mobCapStatusToggle)
+        {
+            this.mobCapStatusToggle = mobCapStatusToggle;
         }
 
         ButtonWidget spawnToggle()
@@ -527,6 +628,30 @@ public class ClusterListItemWidget extends Widget
         ButtonWidget mobCapToggle()
         {
             return mobCapToggle;
+        }
+
+        ButtonWidget efficiencyToggle()
+        {
+            return efficiencyToggle;
+        }
+
+        ButtonWidget mobCapStatusToggle()
+        {
+            return mobCapStatusToggle;
+        }
+
+        List<ButtonWidget> activeToggles()
+        {
+            List<ButtonWidget> toggles = new ArrayList<>();
+            if (spawnToggle != null)
+                toggles.add(spawnToggle);
+            if (mobCapToggle != null)
+                toggles.add(mobCapToggle);
+            if (efficiencyToggle != null)
+                toggles.add(efficiencyToggle);
+            if (mobCapStatusToggle != null)
+                toggles.add(mobCapStatusToggle);
+            return toggles;
         }
 
         boolean supportsVolumeToggles()
@@ -563,6 +688,13 @@ public class ClusterListItemWidget extends Widget
         {
             treeMinX = treeMaxX = treeMinY = treeMaxY = 0;
         }
+    }
+
+    private enum ToggleBranchType
+    {
+        EXPAND,
+        CONTINUE,
+        END
     }
 
     private record ToggleBounds(int minX, int maxX, int minY, int maxY) {}

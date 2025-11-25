@@ -10,6 +10,10 @@ import cc.hachem.guide.GuideBookManager;
 import cc.hachem.core.KeyManager;
 import cc.hachem.core.SpawnerCluster;
 import cc.hachem.core.SpawnerInfo;
+import cc.hachem.core.SpawnVolumeHelper;
+import cc.hachem.core.SpawnerEfficiencyAdvisor;
+import cc.hachem.core.SpawnerEfficiencyManager;
+import cc.hachem.core.SpawnerMobCapStatusManager;
 import cc.hachem.core.VolumeHighlightManager;
 import cc.hachem.hud.HudRenderer;
 import cc.hachem.hud.PanelWidget;
@@ -20,7 +24,12 @@ import cc.hachem.renderer.FloatingTextRenderer;
 import cc.hachem.renderer.ItemTextureRenderer;
 import cc.hachem.renderer.MobPuppetRenderer;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -29,8 +38,6 @@ import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.entity.EntityDimensions;
-import net.minecraft.entity.EntityType;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import org.slf4j.Logger;
@@ -204,6 +211,8 @@ public class RadarClient implements ClientModInitializer {
         LOGGER.info("ChunkProcessingManager initialized.");
         ItemTextureRenderer.init();
         LOGGER.info("ItemTextureRenderer initialized.");
+        SpawnerEfficiencyAdvisor.init();
+        LOGGER.info("SpawnerEfficiencyAdvisor initialized.");
     }
 
     private void registerEventHandlers() {
@@ -262,6 +271,8 @@ public class RadarClient implements ClientModInitializer {
         BoxOutlineRenderer.clearMeshCache();
         BlockBank.clear();
         VolumeHighlightManager.clear();
+        SpawnerEfficiencyManager.clear();
+        SpawnerMobCapStatusManager.clear();
         MobPuppetRenderer.clearCache();
         ChunkProcessingManager.clear();
         PanelWidget.refresh();
@@ -373,6 +384,8 @@ public class RadarClient implements ClientModInitializer {
         boolean useOutline = config.useOutlineSpawnerHighlight;
         boolean defaultSpawnVolume = config.showSpawnerSpawnVolume;
         boolean defaultMobCapVolume = config.showSpawnerMobCapVolume;
+        boolean defaultEfficiencyLabel = config.showSpawnerEfficiencyLabel;
+        boolean defaultMobCapStatus = config.showSpawnerMobCapStatus;
         int outlineColor = config.spawnerOutlineColor;
         float outlineThickness = Math.max(
             0.05f,
@@ -381,8 +394,10 @@ public class RadarClient implements ClientModInitializer {
         float alpha = config.spawnerHighlightOpacity / 100f;
         float spawnVolumeAlpha = clamp01(config.spawnVolumeOpacity / 100f);
         float mobCapVolumeAlpha = clamp01(config.mobCapVolumeOpacity / 100f);
+        Set<BlockPos> highlightedPositions = new HashSet<>();
         for (SpawnerInfo info : ClusterManager.getHighlights()) {
             BlockPos pos = info.pos();
+            highlightedPositions.add(pos);
             if (useOutline) {
                 BoxOutlineRenderer.draw(
                     context,
@@ -433,29 +448,96 @@ public class RadarClient implements ClientModInitializer {
                 config.spawnerHighlightColor,
                 alpha
             );
-            renderClusterLabel(context, pos);
+            renderSpawnerLabel(context, info, defaultEfficiencyLabel, defaultMobCapStatus);
         }
         renderManualVolumes(context, defaultSpawnVolume, defaultMobCapVolume);
+        renderForcedEfficiencyLabels(context, defaultEfficiencyLabel, defaultMobCapStatus, highlightedPositions);
+        renderForcedMobCapStatusLabels(context, defaultEfficiencyLabel, defaultMobCapStatus, highlightedPositions);
     }
 
-    private void renderClusterLabel(WorldRenderContext context, BlockPos pos) {
+    private void renderSpawnerLabel(WorldRenderContext context, SpawnerInfo info,
+                                    boolean defaultEfficiencyLabel, boolean defaultMobCapStatus) {
+        BlockPos pos = info.pos();
         List<Integer> ids = ClusterManager.getClusterIDAt(pos);
-        if (ids.isEmpty()) return;
+        var world = MinecraftClient.getInstance().world;
+        Map<Integer, Double> clusterEfficiencies = ids == null || ids.isEmpty() || world == null
+            ? Collections.emptyMap()
+            : computeClusterEfficiencyMap(world, ids);
 
-        FloatingTextRenderer.renderBlockNametag(
-            context,
-            pos,
-            buildClusterLabel(ids)
-        );
+        boolean efficiencyEnabled = SpawnerEfficiencyManager.isEnabled(pos, defaultEfficiencyLabel);
+        boolean mobCapLabelEnabled = SpawnerMobCapStatusManager.isEnabled(pos, defaultMobCapStatus);
+
+        String efficiencyLabel = null;
+        if (efficiencyEnabled && world != null) {
+            var result = SpawnerEfficiencyManager.evaluate(world, info);
+            if (result != null) {
+                efficiencyLabel = Text.translatable(
+                    "text.spawn_radar.efficiency",
+                    String.format(Locale.ROOT, "%.0f", result.overall())
+                ).getString();
+            }
+        }
+
+        String mobCapLabel = null;
+        if (mobCapLabelEnabled && world != null) {
+            var status = SpawnerEfficiencyManager.computeMobCapStatus(world, info);
+            if (status != null) {
+                mobCapLabel = Text.translatable(
+                    "text.spawn_radar.mob_cap_status",
+                    status.formatted()
+                ).getString();
+            }
+        }
+
+        if ((ids == null || ids.isEmpty()) && efficiencyLabel == null && mobCapLabel == null)
+            return;
+
+        StringBuilder label = new StringBuilder();
+        if (ids != null && !ids.isEmpty())
+            label.append(buildClusterLabel(ids, clusterEfficiencies));
+
+        if (efficiencyLabel != null) {
+            if (!label.isEmpty())
+                label.append("\n");
+            label.append(efficiencyLabel);
+        }
+
+        if (mobCapLabel != null) {
+            if (!label.isEmpty())
+                label.append("\n");
+            label.append(mobCapLabel);
+        }
+
+        FloatingTextRenderer.renderBlockNametag(context, pos, label.toString());
     }
 
-    private static String buildClusterLabel(List<Integer> ids) {
+    private static String buildClusterLabel(List<Integer> ids, Map<Integer, Double> efficiencyByCluster) {
         StringBuilder label = new StringBuilder();
         for (int i = 0; i < ids.size(); i++) {
-            label.append("Cluster #").append(ids.get(i));
+            int clusterId = ids.get(i);
+            label.append("Cluster #").append(clusterId);
+            Double avgEfficiency = efficiencyByCluster.get(clusterId);
+            if (avgEfficiency != null)
+                label.append(" (Avg ").append(String.format(Locale.ROOT, "%.0f%%", avgEfficiency)).append(")");
             if (i < ids.size() - 1) label.append("\n");
         }
         return label.toString();
+    }
+
+    private static Map<Integer, Double> computeClusterEfficiencyMap(net.minecraft.world.World world, List<Integer> ids) {
+        if (world == null || ids == null || ids.isEmpty())
+            return Collections.emptyMap();
+
+        Map<Integer, Double> averages = new LinkedHashMap<>();
+        for (Integer id : ids) {
+            SpawnerCluster cluster = ClusterManager.getClusterById(id);
+            if (cluster == null || cluster.spawners().size() < 2)
+                continue;
+            double value = SpawnerEfficiencyManager.computeClusterEfficiency(world, cluster);
+            if (value >= 0d)
+                averages.put(id, value);
+        }
+        return averages.isEmpty() ? Collections.emptyMap() : averages;
     }
 
     private void renderHighlightedRegions(
@@ -487,7 +569,9 @@ public class RadarClient implements ClientModInitializer {
         float alpha,
         float thickness
     ) {
-        SpawnVolume volume = computeSpawnVolume(info);
+        SpawnVolumeHelper.SpawnVolume volume = SpawnVolumeHelper.compute(info);
+        if (volume == null)
+            return;
 
         BoxOutlineRenderer.draw(
             context,
@@ -500,36 +584,6 @@ public class RadarClient implements ClientModInitializer {
             color,
             alpha,
             thickness
-        );
-    }
-
-    private static SpawnVolume computeSpawnVolume(SpawnerInfo info) {
-        BlockPos pos = info.pos();
-        double centerX = pos.getX() + 0.5;
-        double centerZ = pos.getZ() + 0.5;
-
-        double entityWidth = 0.0;
-        double entityHeight = 0.0;
-        EntityType<?> entityType = info.entityType();
-        if (entityType != null) {
-            EntityDimensions dims = entityType.getDimensions();
-            entityWidth = Math.max(0.0, dims.width());
-            entityHeight = Math.max(0.0, dims.height());
-        }
-
-        double horizontalSpan = entityWidth + 8.0;
-        double verticalSpan = entityHeight + 2.0;
-        double originY = pos.getY() - 1.0;
-        double originX = centerX - horizontalSpan / 2.0;
-        double originZ = centerZ - horizontalSpan / 2.0;
-
-        return new SpawnVolume(
-            originX,
-            originY,
-            originZ,
-            horizontalSpan,
-            verticalSpan,
-            horizontalSpan
         );
     }
 
@@ -576,6 +630,42 @@ public class RadarClient implements ClientModInitializer {
         }
     }
 
+    private void renderForcedEfficiencyLabels(
+        WorldRenderContext context,
+        boolean defaultEfficiencyLabel,
+        boolean defaultMobCapStatus,
+        Set<BlockPos> highlightedPositions
+    ) {
+        if (defaultEfficiencyLabel)
+            return;
+
+        for (BlockPos pos : SpawnerEfficiencyManager.getForcedShows()) {
+            if (highlightedPositions.contains(pos))
+                continue;
+            SpawnerInfo info = resolveSpawner(pos);
+            if (info != null)
+                renderSpawnerLabel(context, info, false, defaultMobCapStatus);
+        }
+    }
+
+    private void renderForcedMobCapStatusLabels(
+        WorldRenderContext context,
+        boolean defaultEfficiencyLabel,
+        boolean defaultMobCapStatus,
+        Set<BlockPos> highlightedPositions
+    ) {
+        if (defaultMobCapStatus)
+            return;
+
+        for (BlockPos pos : SpawnerMobCapStatusManager.getForcedShows()) {
+            if (highlightedPositions.contains(pos))
+                continue;
+            SpawnerInfo info = resolveSpawner(pos);
+            if (info != null)
+                renderSpawnerLabel(context, info, defaultEfficiencyLabel, false);
+        }
+    }
+
     private SpawnerInfo resolveSpawner(BlockPos pos) {
         SpawnerInfo info = BlockBank.get(pos);
         if (info != null) return info;
@@ -616,15 +706,6 @@ public class RadarClient implements ClientModInitializer {
             thickness
         );
     }
-
-    private record SpawnVolume(
-        double originX,
-        double originY,
-        double originZ,
-        double width,
-        double height,
-        double depth
-    ) {}
 
     private static float clamp01(float value) {
         return Math.max(0f, Math.min(1f, value));
