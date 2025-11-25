@@ -96,6 +96,7 @@
   "chat.spawn_radar.reset": "Blockbank und Spawner-Daten zurücksetzen.",
   "chat.spawn_radar.disabled": "Spawn Radar ist auf diesem Server deaktiviert.",
   "chat.spawn_radar.cluster_alert": "Cluster-Alarm: %1$s Spawner in der Nähe gefunden. Versuche /radar:scan.",
+  "chat.spawn_radar.guide_opened": "Spawn-Radar-Leitfaden geöffnet.",
 
   "button.spawn_radar.expand": ">",
   "button.spawn_radar.collapse": "v",
@@ -139,5 +140,19 @@
   "command.spawn_radar.info.teleport_label": "[Teleportieren]",
   "command.spawn_radar.info.coords_hover": "Klicken, um diese Koordinaten zu kopieren.",
   "text.spawn_radar.efficiency": "Effizienz: %s%%",
-  "text.spawn_radar.mob_cap_status": "Mob-Cap %s"
+  "text.spawn_radar.mob_cap_status": "Mob-Cap %s",
+  "text.spawn_radar.efficiency_advisor.optimal": "Die Spawner-Effizienz ist bereits optimal.",
+  "text.spawn_radar.efficiency_advisor.volume.title": "Spawn-Volumen blockiert",
+  "text.spawn_radar.efficiency_advisor.volume.detail": "Nur %s%% des Spawn-Volumens ist frei.\nEntferne Blöcke, Falltüren, Wasser und Halbblöcke im markierten Bereich, damit Mobs gültige Positionen finden.",
+  "text.spawn_radar.efficiency_advisor.light.title": "Bereich zu hell",
+  "text.spawn_radar.efficiency_advisor.light.detail": "Die Dunkelheit beträgt im Spawn-Bereich nur %s%%.\nEntferne oder verdecke Lichtquellen und blockiere Himmelslicht, bis der Bereich Lichtstufe 0 erreicht.",
+  "text.spawn_radar.efficiency_advisor.mobcap_saturated.title": "Mob-Cap ausgeschöpft",
+  "text.spawn_radar.efficiency_advisor.mobcap_crowded.title": "Mob-Cap überfüllt",
+  "text.spawn_radar.efficiency_advisor.mobcap_saturated.detail": "Im Mob-Cap befinden sich %s Mobs.\nTöte oder bewege Mobs aus dem 8-Blöcke-Würfel, damit der Spawner wieder läuft.",
+  "text.spawn_radar.efficiency_advisor.mobcap_crowded.detail": "Der Mob-Cap-Status liegt derzeit bei %s.\nBewege oder entferne Mobs in der Nähe des Spawners, um wieder Luft zu bekommen und die Effizienz zu erhöhen.",
+  "text.spawn_radar.efficiency_advisor.summary.title": "Spawner-Diagnose",
+  "text.spawn_radar.efficiency_advisor.summary.efficiency": "\\nEffizienz: %s%%",
+  "text.spawn_radar.efficiency_advisor.summary.volume": "\\nSpawn-Volumen: %s%% frei",
+  "text.spawn_radar.efficiency_advisor.summary.light": "\\nDunkelheit: %s%%",
+  "text.spawn_radar.efficiency_advisor.summary.mob_cap": "\\nMob-Cap: %s"
 }

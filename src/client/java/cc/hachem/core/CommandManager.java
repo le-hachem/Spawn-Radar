@@ -173,7 +173,7 @@ public class CommandManager
             .executes(context ->
             {
                 GuideBookManager.openGuide();
-                context.getSource().sendFeedback(Text.literal("Opened the Spawn Radar guide."));
+                context.getSource().sendFeedback(Text.translatable("chat.spawn_radar.guide_opened"));
                 return Command.SINGLE_SUCCESS;
             })
         );

@@ -100,6 +100,7 @@
   "chat.spawn_radar.reset": "Reset block bank and spawner data.",
   "chat.spawn_radar.disabled": "Spawn Radar is disabled on this server.",
   "chat.spawn_radar.cluster_alert": "Found a cluster with %1$s spawners nearby. Consider running /radar:scan.",
+  "chat.spawn_radar.guide_opened": "Opened the Spawn Radar guide.",
 
   "button.spawn_radar.expand": ">",
   "button.spawn_radar.collapse": "v",
@@ -142,5 +143,19 @@
   "command.spawn_radar.info.spawner_line": "%1$s. %2$s spawner @ ",
   "command.spawn_radar.info.teleport_label": "[Teleport]",
   "command.spawn_radar.info.coords_hover": "Click to copy these coordinates.",
-  "text.spawn_radar.mob_cap_status": "Mob Cap %s"
+  "text.spawn_radar.mob_cap_status": "Mob Cap %s",
+  "text.spawn_radar.efficiency_advisor.optimal": "Spawner efficiency is already optimal.",
+  "text.spawn_radar.efficiency_advisor.volume.title": "Spawn Volume Blocked",
+  "text.spawn_radar.efficiency_advisor.volume.detail": "Only %s%% of the spawn volume is open.\nRemove blocks, trapdoors, water, and slabs inside the highlighted volume so mobs have valid positions.",
+  "text.spawn_radar.efficiency_advisor.light.title": "Area Too Bright",
+  "text.spawn_radar.efficiency_advisor.light.detail": "Darkness is only %s%% inside the spawn area.\nBreak or cover light sources and block skylight so the volume reaches light level 0.",
+  "text.spawn_radar.efficiency_advisor.mobcap_saturated.title": "Mob Cap Saturated",
+  "text.spawn_radar.efficiency_advisor.mobcap_crowded.title": "Mob Cap Crowded",
+  "text.spawn_radar.efficiency_advisor.mobcap_saturated.detail": "The mob cap contains %s mobs.\nKill or move mobs outside the 8-block cube so the spawner can run again.",
+  "text.spawn_radar.efficiency_advisor.mobcap_crowded.detail": "The mob cap is currently %s.\nMove or remove mobs near the spawner to regain headroom and raise efficiency.",
+  "text.spawn_radar.efficiency_advisor.summary.title": "Spawner Diagnostics",
+  "text.spawn_radar.efficiency_advisor.summary.efficiency": "\\nEfficiency: %s%%",
+  "text.spawn_radar.efficiency_advisor.summary.volume": "\\nSpawn Volume: %s%% open",
+  "text.spawn_radar.efficiency_advisor.summary.light": "\\nDarkness: %s%%",
+  "text.spawn_radar.efficiency_advisor.summary.mob_cap": "\\nMob Cap: %s"
 }

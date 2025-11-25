@@ -96,6 +96,7 @@
   "chat.spawn_radar.reset": "Zresetuj bank bloków i dane spawnerów.",
   "chat.spawn_radar.disabled": "Radar Spawnerów jest wyłączony na tym serwerze.",
   "chat.spawn_radar.cluster_alert": "Alarm klastra: znaleziono %1$s spawnerów w pobliżu. Spróbuj /radar:scan.",
+  "chat.spawn_radar.guide_opened": "Otworzono przewodnik Spawn Radar.",
 
   "button.spawn_radar.expand": ">",
   "button.spawn_radar.collapse": "v",
@@ -139,5 +140,19 @@
   "command.spawn_radar.info.teleport_label": "[Teleport]",
   "command.spawn_radar.info.coords_hover": "Kliknij, aby skopiować te współrzędne.",
   "text.spawn_radar.efficiency": "Wydajność: %s%%",
-  "text.spawn_radar.mob_cap_status": "Limit mobów %s"
+  "text.spawn_radar.mob_cap_status": "Limit mobów %s",
+  "text.spawn_radar.efficiency_advisor.optimal": "Wydajność spawnera jest już optymalna.",
+  "text.spawn_radar.efficiency_advisor.volume.title": "Blokada przestrzeni spawnu",
+  "text.spawn_radar.efficiency_advisor.volume.detail": "Tylko %s%% przestrzeni spawnu jest wolne.\nUsuń bloki, zapadnie, wodę i płyty w zaznaczonym obszarze, aby moby miały prawidłowe pozycje.",
+  "text.spawn_radar.efficiency_advisor.light.title": "Zbyt jasno",
+  "text.spawn_radar.efficiency_advisor.light.detail": "Ciemność w obszarze spawnu wynosi tylko %s%%.\nUsuń lub zasłoń źródła światła i zablokuj światło dzienne, aby osiągnąć poziom 0.",
+  "text.spawn_radar.efficiency_advisor.mobcap_saturated.title": "Limit mobów pełny",
+  "text.spawn_radar.efficiency_advisor.mobcap_crowded.title": "Limit mobów przepełniony",
+  "text.spawn_radar.efficiency_advisor.mobcap_saturated.detail": "W limicie mobów znajduje się %s stworzeń.\nZabij lub przenieś moby poza sześcian 8 bloków, aby spawner znów działał.",
+  "text.spawn_radar.efficiency_advisor.mobcap_crowded.detail": "Aktualny limit mobów to %s.\nPrzesuń lub usuń moby w pobliżu spawnera, żeby odzyskać zapas i zwiększyć wydajność.",
+  "text.spawn_radar.efficiency_advisor.summary.title": "Diagnostyka spawnera",
+  "text.spawn_radar.efficiency_advisor.summary.efficiency": "\\nWydajność: %s%%",
+  "text.spawn_radar.efficiency_advisor.summary.volume": "\\nPrzestrzeń spawnu: %s%% wolne",
+  "text.spawn_radar.efficiency_advisor.summary.light": "\\nCiemność: %s%%",
+  "text.spawn_radar.efficiency_advisor.summary.mob_cap": "\\nLimit mobów: %s"
 }

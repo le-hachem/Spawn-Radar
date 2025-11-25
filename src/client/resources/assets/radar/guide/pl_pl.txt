@@ -1,0 +1,64 @@
+@centered_page
+@title Przewodnik Spawn Radar
+@author autor Hachem
+
+@page
+@centered_page
+@toc
+
+@chapter O modzie
+Mod skanuje spawnery wokół ciebie podczas generowania lub ładowania chunków, dzięki czemu możesz znajdować potencjalne miejsca na farmy bez żmudnego przeszukiwania terenu. Dostępna jest też komenda, która pokazuje dokładny obszar, w którym gracz musi stanąć, aby jednocześnie aktywować wszystkie pobliskie spawnery. Gdy mod wykryje grupę spawnerów leżących blisko siebie, automatycznie zgłasza taki klaster na podstawie konfigurowalnej minimalnej liczby spawnerów.
+
+@section Regiony spawnu
+Spawner zaczyna działać, gdy gracz znajduje się w odległości do szesnastu bloków. Jeżeli kilka spawnerów stoi blisko siebie, ich sfery aktywacji nachodzą na siebie i tworzą wspólny obszar, w którym gracz może stać, aby aktywować wszystkie naraz. Mod wyraźnie podświetla ten region, co ułatwia projektowanie farm oraz szukanie optymalnych pozycji AFK.
+
+@section Warunki spawnu
+Aby spawner przywołał moby, muszą być spełnione trzy warunki. Po pierwsze, gracz musi pozostać w promieniu 16 bloków. Po drugie, potencjalna przestrzeń spawnu musi być odpowiednia dla danego typu moba; zależy to od hitboxa i zasad spawnu i może zostać zwizualizowane bezpośrednio w świecie. Po trzecie, nie można przekroczyć lokalnego limitu mobów: każdy spawner sprawdza obszar 9x9x9 i jeśli znajduje się tam sześć lub więcej istot, przestaje generować kolejne. Mod udostępnia przełącznik, który pokazuje ten obszar, dzięki czemu od razu wiesz, dlaczego spawner nie działa.
+
+@chapter Wydajność spawnerów
+Każdy wpis w HUD-zie ma dwa przełączniki: @italic(Pokaż wydajność) oraz @italic(Pokaż limit mobów). Etykieta wydajności pojawia się nad spawnerem i na bieżąco informuje, jak otwarta jest przestrzeń spawnu, jak ciemny pozostaje obszar oraz czy limit mobów jest już zapełniony. Jeśli którykolwiek z tych czynników blokuje spawn, wartość spada poniżej 100 procent i od razu widzisz źródło problemu.
+
+Etykieta limitu mobów pokazuje aktualną liczbę stworzeń w 8-blokowym sześcianie, np. „Limit 3/6”. Od razu wiesz, czy trzeba usunąć moby, zamiast przerabiać pokój.
+
+Możesz też @italic(Shift + PPM) kliknąć spawner, aby otrzymać wskazówki kontekstowe. Doradca podaje bieżący procent wydajności i wypisuje konkretne działania, takie jak usuwanie bloków, przyciemnianie czy opróżnianie limitu, aby wrócić do 100 procent.
+
+@chapter Komendy
+@section Główne komendy
+Używaj @command(/radar:scan), gdy chcesz znaleźć spawnery i klastry w danym obszarze. Komenda otwiera HUD, w którym możesz przełączać różne podświetlenia i uzyskać przydatne informacje do budowy farm.
+
+Gdy klastrów robi się dużo, @command(/radar:toggle) pozwala skupić się na jednym projekcie. Przełączenie klastra ukrywa pozostałe podświetlenia, dzięki czemu możesz chodzić po strefie aktywacji, testować oświetlenie lub spisywać współrzędne bez wizualnego chaosu. Możesz też kliknąć wpis klastra w HUD-zie i przełączyć go bezpośrednio stamtąd.
+
+@section Przydatne komendy
+Trzymaj @command(/radar:reset) w pogotowiu, aby w każdej chwili wyczyścić stan. Komenda wyłącza wszystkie podświetlenia, regiony i HUD.
+
+@command(/radar:help) opisuje szczegóły każdej komendy wraz z argumentami obowiązkowymi i opcjonalnymi.
+
+@chapter Opcje konfiguracyjne
+@section Skanowanie i klastry
+Promień wyszukiwania chunków określa, ile chunków wokół ciebie zostanie przeskanowanych przez @command(/radar:scan) lub panelowy przycisk @italic(Rescan). Większy promień oznacza większy obszar kosztem dłuższego czasu działania.
+
+Możesz także ustawić, ile wątków mod wykorzysta podczas skanowania; wyższe wartości przyspieszają pracę na mocniejszych komputerach.
+
+Opcja @italic(Minimalna liczba spawnerów dla regionu) decyduje o tym, ile spawnerów musi się na siebie nakładać, zanim wspólna bańka aktywacji zostanie pokazana w świecie. Możesz również wybrać domyślne sortowanie, takie jak @italic(brak), @italic(bliskość) lub @italic(rozmiar), co wpływa na skany ręczne i wynik komendy.
+
+Dodatkowe ustawienia pomagają zautomatyzować działanie. @italic(Podświetl po skanowaniu) natychmiast pokazuje wszystkie klastry, gdy skan się kończy. @italic(Frustum Culling) ukrywa kształty poza ekranem, aby poprawić wydajność. Po włączeniu @italic(Buforowanych spawnerów) mod ponownie wykorzystuje dane z wcześniejszych skanów lub ładowania chunków, co znacząco przyspiesza kolejne analizy.
+
+Gdy @italic(Przetwarzanie chunków w trakcie generowania) jest aktywne, każdy chunk wczytany wokół ciebie jest skanowany w tle. Jeśli mod wykryje klaster spełniający ustawienia alarmu, wysyła powiadomienie na czacie i zapisuje wynik, aby pojawił się przy następnym skanowaniu. To, czy alert wywoła też wizualne podświetlenie, zależy od ustawień renderowania.
+
+@section Rendering i nakładki
+Przełącznik @italic(Outline) zmienia styl podświetlenia między wypełnionymi bryłami a siatką. @italic(Grubość konturu) pozwala ustawić, jak czytelne mają być krawędzie bez zasłaniania ekranu. Możesz także zdecydować, czy domyślnie mają się pojawiać przestrzenie spawnu i obszary limitu mobów; guziki w HUD-zie przełączają je potem per spawner.
+
+@italic(Automatyczne alerty podświetleń) określają, czy klastry wykryte w tle mają być natychmiast pokazane w świecie. Jeśli opcja jest włączona, każdy kwalifikujący się klaster pojawi się od razu. Po wyłączeniu nadal dostajesz wiadomości na czacie, ale wizualizację zobaczysz dopiero po ręcznym skanie. Opcja ma znaczenie tylko wtedy, gdy skanowanie chunków podczas generowania jest aktywne.
+
+@section HUD i panel
+@italic(Liczba elementów) określa, ile klastrów pojawia się na jednej stronie HUD-u. Wyższa wartość ogranicza potrzebę przełączania stron, a niższa sprawia, że panel jest bardziej kompaktowy. Suwak @italic(pionowe przesunięcie) pozwala ustawić pozycję panelu jako procent wysokości ekranu, co pomaga ominąć chat, pasek szybkiego wyboru czy inne HUD-y.
+
+Panel można wyrównać do lewej lub prawej strony. @italic(Tryb ikony spawnera) decyduje, czy wpis używa animowanych modeli mobów, czy prostych jajek spawnu. Panel odświeża się automatycznie, gdy tylko klastry ulegną zmianie.
+
+@section Opcje kolorów
+Możesz ustawić osobne kolory dla wypełnionych brył spawnerów oraz konturów. Globalny suwak @italic(Nieprzezroczystość spawnera) określa widoczność podświetleń, a @italic(Nieprzezroczystość regionu) kontroluje prześwit wspólnej strefy aktywacji.
+
+Przestrzenie spawnu i obszary limitu mobów mają własne ustawienia koloru i przezroczystości. Dotyczy to zarówno automatycznych nakładek, jak i przełączników per spawner.
+
+Wreszcie @italic(paleta kolorów klastrów) przypisuje różnym rozmiarom klastrów odmienne kolory. Małe klastry korzystają z pierwszych kolorów listy, a bardzo duże ponownie używają ostatniej pozycji. Kolory są spójne w siatkach regionów, etykietach HUD-u i innych podświetleniach, dzięki czemu cały język wizualny pozostaje czytelny.
+

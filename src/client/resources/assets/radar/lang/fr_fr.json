@@ -98,6 +98,7 @@
   "chat.spawn_radar.reset": "Réinitialisation de la banque de blocs et des spawners.",
   "chat.spawn_radar.disabled": "Spawn Radar est désactivé sur ce serveur.",
   "chat.spawn_radar.cluster_alert": "Alerte cluster : %1$s spawners détectés à proximité. Essayez /radar:scan.",
+  "chat.spawn_radar.guide_opened": "Guide Spawn Radar ouvert.",
 
   "button.spawn_radar.expand": ">",
   "button.spawn_radar.collapse": "v",
@@ -141,5 +142,19 @@
   "command.spawn_radar.info.teleport_label": "[Téléporter]",
   "command.spawn_radar.info.coords_hover": "Cliquez pour copier ces coordonnées.",
   "text.spawn_radar.efficiency": "Efficacité : %s%%",
-  "text.spawn_radar.mob_cap_status": "Limite de mobs %s"
+  "text.spawn_radar.mob_cap_status": "Limite de mobs %s",
+  "text.spawn_radar.efficiency_advisor.optimal": "L'efficacité du spawner est déjà optimale.",
+  "text.spawn_radar.efficiency_advisor.volume.title": "Volume de spawn bloqué",
+  "text.spawn_radar.efficiency_advisor.volume.detail": "Seuls %s%% du volume de spawn sont libres.\nRetirez les blocs, trappes, eau et dalles dans la zone surlignée afin d'offrir des positions valides aux créatures.",
+  "text.spawn_radar.efficiency_advisor.light.title": "Zone trop lumineuse",
+  "text.spawn_radar.efficiency_advisor.light.detail": "L'obscurité n'est que de %s%% dans la zone de spawn.\nCassez ou couvrez les sources de lumière et bloquez la lumière du ciel pour atteindre un niveau 0.",
+  "text.spawn_radar.efficiency_advisor.mobcap_saturated.title": "Limite de mobs saturée",
+  "text.spawn_radar.efficiency_advisor.mobcap_crowded.title": "Limite de mobs encombrée",
+  "text.spawn_radar.efficiency_advisor.mobcap_saturated.detail": "La limite de mobs contient %s entités.\nTuez ou éloignez les mobs hors du cube de 8 blocs pour relancer le spawner.",
+  "text.spawn_radar.efficiency_advisor.mobcap_crowded.detail": "La limite de mobs est actuellement de %s.\nDéplacez ou retirez les mobs proches du spawner pour récupérer de la marge et augmenter l'efficacité.",
+  "text.spawn_radar.efficiency_advisor.summary.title": "Diagnostic du spawner",
+  "text.spawn_radar.efficiency_advisor.summary.efficiency": "\\nEfficacité : %s%%",
+  "text.spawn_radar.efficiency_advisor.summary.volume": "\\nVolume de spawn : %s%% ouvert",
+  "text.spawn_radar.efficiency_advisor.summary.light": "\\nObscurité : %s%%",
+  "text.spawn_radar.efficiency_advisor.summary.mob_cap": "\\nLimite de mobs : %s"
 }

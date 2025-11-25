@@ -1,0 +1,64 @@
+@centered_page
+@title Guide Spawn Radar
+@author par Hachem
+
+@page
+@centered_page
+@toc
+
+@chapter À propos du mod
+Le mod scanne les spawners autour de vous lorsque vous générez ou chargez des chunks, ce qui permet de repérer des emplacements de ferme sans fouiller manuellement. Il fournit aussi une commande qui visualise la zone exacte dans laquelle un joueur doit se tenir pour activer simultanément tous les spawners proches. Dès qu'un groupe de spawners suffisamment serrés forme un cluster, le mod vous en informe automatiquement selon un seuil configurable.
+
+@section Régions de spawn
+Un spawner s'active lorsque le joueur se trouve à moins de seize blocs. Lorsque plusieurs spawners sont proches les uns des autres, leurs sphères d'activation se chevauchent et créent une zone commune où le joueur peut se placer pour tout activer. Le mod met cette zone en évidence, ce qui facilite la conception des fermes et la recherche de positions AFK optimales.
+
+@section Conditions de spawn
+Pour qu'un spawner invoque des créatures, trois conditions doivent être réunies. Premièrement, le joueur doit rester dans le rayon d'activation de 16 blocs. Deuxièmement, le volume potentiel d'apparition doit être valide pour le type de mob ; ce volume dépend de la hitbox et des règles de spawn, et le mod peut le visualiser directement dans le monde. Troisièmement, la limite locale de mobs ne doit pas être dépassée : chaque spawner vérifie une zone de 9x9x9 blocs et cesse de fonctionner si six entités ou plus s'y trouvent. Un bouton permet d'afficher cette zone afin de diagnostiquer immédiatement pourquoi un spawner ne produit rien.
+
+@chapter Efficacité des spawners
+Chaque entrée du HUD propose deux bascules : @italic(Afficher l'efficacité) et @italic(Afficher la limite de mobs). L'étiquette d'efficacité apparaît au-dessus du spawner et se met à jour en temps réel, indiquant l'ouverture du volume de spawn, le niveau d'obscurité et l'état de la limite de mobs voisine. Dès qu'un facteur bloque l'apparition, la valeur passe sous 100 %, ce qui vous montre instantanément le problème.
+
+L'étiquette de limite de mobs indique le nombre d'entités présentes dans la zone de huit blocs, par exemple « Limite 3/6 ». Vous savez ainsi quand vider des mobs plutôt que de modifier la salle.
+
+Vous pouvez aussi @italic(Shift + clic droit) sur un spawner pour recevoir des conseils contextuels. Le conseiller affiche le pourcentage d'efficacité actuel et détaille les actions à entreprendre, comme dégager des blocs, réduire la lumière ou vider la limite de mobs pour revenir vers 100 %.
+
+@chapter Commandes
+@section Commandes principales
+Utilisez @command(/radar:scan) pour localiser des spawners et des clusters dans une zone donnée. La commande ouvre un HUD qui permet de basculer différentes surbrillances et fournit les informations utiles à la construction de fermes.
+
+Lorsque les clusters s'accumulent, @command(/radar:toggle) est le moyen le plus rapide de se concentrer sur une seule ferme. Basculer un cluster masque toutes les autres surbrillances, ce qui facilite les tests d'éclairage, les déplacements dans la zone active ou la récupération de coordonnées sans bruit visuel. Vous pouvez également cliquer directement sur le cluster correspondant dans le HUD pour le basculer.
+
+@section Commandes utiles
+Gardez @command(/radar:reset) à portée de main pour remettre l'état à zéro. La commande coupe toutes les surbrillances, régions et l'HUD.
+
+La commande @command(/radar:help) décrit en détail chaque commande avec ses arguments obligatoires et facultatifs.
+
+@chapter Options de configuration
+@section Scan et clusters
+Le rayon de recherche des chunks définit combien de chunks autour de vous seront analysés via @command(/radar:scan) ou le bouton @italic(Rescan) du panneau. Augmenter ce rayon permet de couvrir plus de terrain mais demande plus de temps.
+
+Vous pouvez aussi choisir le nombre de threads utilisés pendant le scan ; des valeurs plus élevées accélèrent la recherche sur les machines puissantes.
+
+Le réglage @italic(Nombre minimal de spawners pour la région) fixe combien de spawners doivent se chevaucher avant que leur bulle commune apparaisse. Vous pouvez également sélectionner un tri par défaut comme @italic(aucun), @italic(proximité) ou @italic(taille), ce qui influence les scans manuels et la sortie des commandes.
+
+Des options supplémentaires automatisent le processus. @italic(Surligner après le scan) affiche automatiquement tous les clusters dès qu'un scan se termine. @italic(Frustum Culling) masque les formes rendues hors écran pour améliorer les performances. Si vous activez @italic(Spawner en cache), le mod réutilise les spawners découverts lors de scans précédents ou du chargement des chunks, ce qui accélère les analyses répétées.
+
+Si @italic(Traiter les chunks pendant la génération) est activé, chaque chunk chargé autour de vous est scanné en arrière-plan. Lorsqu'un cluster correspondant à vos alertes est détecté, une notification de chat est envoyée et le résultat est mémorisé pour le prochain scan manuel. L'affichage immédiat ou non des surbrillances dépend de vos paramètres graphiques.
+
+@section Rendu et superpositions
+La bascule @italic(Outline) passe des boîtes pleines aux fils de fer. Vous pouvez ajuster l'@italic(épaisseur du contour) pour garder les zones lisibles sans obstruer l'écran. Il est également possible de choisir si les volumes de spawn et les zones de limite de mobs apparaissent par défaut ; les boutons du HUD permettent ensuite de les activer ou non pour chaque spawner.
+
+@italic(Alertes automatiques) détermine si les clusters détectés en arrière-plan apparaissent immédiatement dans le monde. Si l'option est active, tout cluster valide est affiché dès sa découverte. Sinon, vous recevez encore une alerte dans le chat mais aucune visualisation avant un scan manuel. Cette option n'a d'effet que si les scans à la génération sont activés.
+
+@section HUD et panneau
+@italic(Nombre d'éléments) définit combien de clusters figurent par page dans le HUD. Une valeur élevée réduit la navigation, tandis qu'une valeur faible rend le panneau plus compact. Le curseur @italic(décalage vertical) ajuste la position du panneau en pourcentage de la hauteur d'écran, ce qui aide à contourner le chat, la barre d'objets ou les HUD d'autres mods.
+
+Vous pouvez ancrer le panneau à gauche ou à droite. Le @italic(mode d'icône des spawners) permet de choisir entre des modèles 3D animés et de simples œufs d'apparition. Le panneau se met automatiquement à jour dès que les clusters changent, sans action manuelle.
+
+@section Options de couleur
+Vous pouvez configurer des couleurs distinctes pour les boîtes pleines et les contours filaires des spawners. Un curseur global @italic(opacité des spawners) contrôle la visibilité des surbrillances, tandis que @italic(opacité des régions) ajuste la transparence de la zone d'activation partagée.
+
+Les volumes de spawn et les zones de limite de mobs possèdent chacun leurs propres réglages de couleur et d'opacité. Ils s'appliquent aux superpositions automatiques ainsi qu'aux bascules par spawner.
+
+Enfin, la @italic(palette de couleurs des clusters) associe des couleurs différentes aux tailles de cluster. Les petits clusters utilisent les premières couleurs de la liste, tandis que les plus grands réemploient la dernière entrée. Ces couleurs restent cohérentes entre les meshes de région, les étiquettes HUD et les autres surbrillances pour garder un langage visuel clair.
+

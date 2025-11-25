@@ -1,0 +1,64 @@
+@centered_page
+@title Spawn Radar Guide
+@author by Hachem
+
+@page
+@centered_page
+@toc
+
+@chapter About the Mod
+The mod scans for spawners around you as you generate or load chunks, allowing you to discover potential farm locations without manually searching. It also provides a command that visualises the exact region a player must stand within to activate all nearby spawners simultaneously. When the mod detects a group of spawners close enough to form a cluster, it notifies you automatically based on a configurable minimum spawner count.
+
+@section Spawn Regions
+A mob spawner becomes active when the player is within sixteen blocks of it. When multiple spawners are located near one another, their activation spheres overlap, creating a combined region where the player can stand to activate the entire group. The mod highlights this region clearly, making it easier to design farms and identify optimal AFK positions for maximum efficiency.
+
+@section Spawn Conditions
+For a spawner to summon mobs, three conditions must be met. First, the player must remain within the 16 block activation radius. Second, the possible spawn area must be valid for the mob type; this volume depends on the mob’s hitbox and spawn rules, and the mod can visualise it directly in the world. Third, the local mob cap must not be exceeded: each spawner checks a 9x9x9 region around itself, and if six or more entities are present, it will not spawn additional mobs. The mod provides a toggle that displays this region, allowing you to diagnose why a spawner may not be producing mobs.
+
+@chapter Spawner Efficiency
+Each spawner entry in the HUD includes two toggles: @italic(Show Efficiency) and @italic(Show Mob Cap Status). The efficiency label appears above the spawner and updates live, showing how open the spawn volume is, how dark the spawn area remains, and whether the nearby mob cap is full. If any of these factors prevent spawning, the label drops below 100 percent so you can see the problem at a glance.
+
+The mob-cap status label displays the current number of entities inside the 8 block mob cap region, for example “Mob Cap 3/6.” This makes it clear when you need to clear mobs rather than adjust the spawn space itself.
+
+You can also @italic(Shift + Right-Click) a spawner to receive contextual tips. The advisor reports the latest efficiency percentage and lists the specific fixes such as clearing blocks, reducing light, or emptying the mob cap so the reading moves back toward 100 percent.
+
+@chapter Commands
+@section Main Commands
+Use @command(/radar:scan) whenever you want to locate spawners and clusters in a given area. It opens a HUD which allows you to toggle different highlights and provides useful information for farm building.
+
+When clusters start piling up, @command(/radar:toggle) is the fastest way to focus on one farm. Toggling a cluster hides every other highlight so you can walk the activation zone, test lighting fixes, or grab coordinates without visual noise. You can also click on a corresponding cluster in the HUD and toggle it from there.
+
+@section Useful Commands
+Keep @command(/radar:reset) handy for resetting and untoggling the state. It turns off all highlights, regions, and the HUD.
+
+The @command(/radar:help) command is useful to see the functionality of each command in detail with their corresponding arguments, both optional and mandatory.
+
+@chapter Config Options
+@section Scanning & Clusters
+The chunk search radius sets how many chunks around you will be scanned when using @command(/radar:scan) or the panel’s @italic(Rescan) button. Raising the radius lets you search larger areas but takes more time.
+
+You can also choose how many threads the mod uses when scanning; higher values make scans finish faster on stronger machines.
+
+The @italic(Minimum Spawners for Region) setting decides how many spawners must overlap before their shared activation bubble is displayed in the world. You can also choose a default sorting method such as @italic(none), @italic(proximity), or @italic(size), and this affects both manual scans and the command output.
+
+Additional options help automate scanning. @italic(Highlight After Scan) automatically shows all clusters the moment a scan finishes. @italic(Frustum Culling) hides rendered shapes that are outside your screen to improve performance. If you enable @italic(Cached Spawners), the mod can reuse spawner data gathered from earlier scans or from chunk loading, making repeated scans much faster.
+
+If @italic(Process Chunks on Generation) is active, any chunk that loads around you is scanned automatically in the background. When the mod detects a cluster that matches your alert settings, it sends a chat notification and stores it so it appears the next time you run a scan. Whether these alerts also trigger visual highlights depends on your rendering settings.
+
+@section Rendering & Overlays
+The @italic(Outline) toggle switches the highlight style between filled boxes and wireframes. You can adjust the @italic(outline thickness) to keep highlighted areas readable without covering too much of your screen. You can also choose whether spawn volumes and mob-cap regions should appear by default; the buttons in the HUD simply toggle these on or off per spawner.
+
+@italic(Automatic Highlight Alerts) determines whether clusters detected in the background are shown immediately in the world. If enabled, any qualifying cluster will appear as soon as it is found. If disabled, you still receive chat alerts but will not see visuals until you perform a manual scan. This option only matters if chunk-generation scanning is enabled.
+
+@section HUD & Panel
+@italic(Element Count) determines how many clusters appear per page in the HUD. Increasing it reduces how often you need to switch pages, while lowering it makes the panel more compact. The @italic(vertical offset) slider lets you adjust the panel’s position by a percentage of your screen height, making it easier to place around chat, the hotbar, or other mods’ HUDs.
+
+You can align the panel to either the left or the right side of the screen. The @italic(Spawner Icon Mode) lets you choose whether each entry uses animated mob models or simple spawn-egg icons. The panel updates automatically whenever clusters change, so it will always reflect the current state without needing manual refresh.
+
+@section Colour Options
+You can configure separate colours for filled spawner boxes and wireframe outlines. A global @italic(spawner opacity) slider controls how visible spawner highlights appear in the world, and a separate @italic(region opacity) slider adjusts how transparent the shared activation region looks.
+
+Spawn-volume and mob-cap regions each have their own colour and opacity settings. These affect both the automatic overlays and the per-spawner overrides you can toggle from the HUD.
+
+Finally, the @italic(cluster colour palette) maps different cluster sizes to different colours. Smaller clusters use the earlier colours in the list, while very large clusters reuse the last entry. These colours are applied consistently across the activation-region mesh, HUD labels, and other highlights, keeping the visual language clear no matter how many spawners you are working with.
+

@@ -1,0 +1,64 @@
+@centered_page
+@title Spawn Radar Leitfaden
+@author von Hachem
+
+@page
+@centered_page
+@toc
+
+@chapter Über die Mod
+Die Mod durchsucht beim Generieren oder Laden von Chunks automatisch die Umgebung nach Spawnern, sodass du potenzielle Farmplätze findest, ohne jeden Block manuell absuchen zu müssen. Außerdem stellt sie einen Befehl bereit, der genau zeigt, wo du stehen musst, um alle nahegelegenen Spawner gleichzeitig zu aktivieren. Sobald die Mod eine Gruppe von Spawnern erkennt, die nah genug beieinander liegt, meldet sie den Cluster automatisch anhand eines konfigurierbaren Mindestwerts.
+
+@section Spawn-Regionen
+Ein Spawner ist aktiv, sobald der Spieler sich im Abstand von sechzehn Blöcken befindet. Liegen mehrere Spawner dicht beisammen, überlappen sich ihre Aktivierungssphären und bilden einen gemeinsamen Bereich, in dem du stehen kannst, um alle gleichzeitig zu aktivieren. Die Mod hebt diesen Bereich deutlich hervor, wodurch sich AFK-Punkte und Farmlayouts viel leichter planen lassen.
+
+@section Spawn-Bedingungen
+Damit ein Spawner Mobs erzeugt, müssen drei Bedingungen erfüllt sein. Erstens muss der Spieler innerhalb des 16-Block-Radius bleiben. Zweitens muss das mögliche Spawn-Volumen für den jeweiligen Mob frei sein; Größe und Form hängen von Hitbox und Spawnregeln ab und können direkt im Spiel visualisiert werden. Drittens darf der lokale Mob-Cap nicht überschritten werden: Jeder Spawner prüft einen Bereich von 9x9x9 Blöcken und stoppt, sobald sich sechs oder mehr Entitäten darin befinden. Ein zusätzlicher Schalter blendet dieses Volumen ein, damit du sofort erkennst, warum ein Spawner nichts produziert.
+
+@chapter Spawner-Effizienz
+Jeder Eintrag im HUD besitzt zwei Schalter: @italic(Effizienz anzeigen) und @italic(Mob-Cap-Status anzeigen). Das Effizienzlabel erscheint über dem Spawner und wird live aktualisiert. Es zeigt, wie frei das Spawn-Volumen ist, wie dunkel der Bereich bleibt und ob der Mob-Cap ausgelastet ist. Sobald einer dieser Faktoren Probleme macht, fällt der Wert unter 100 Prozent und du erkennst den Engpass auf einen Blick.
+
+Die Mob-Cap-Anzeige zeigt, wie viele Entitäten sich aktuell im acht Blöcke großen Kontrollwürfel befinden, zum Beispiel „Mob-Cap 3/6“. So siehst du sofort, ob du eher Mobs entfernen musst, anstatt den Spawnraum umzubauen.
+
+Mit @italic(Shift + Rechtsklick) auf einen Spawner erhältst du kontextbezogene Tipps. Der Ratgeber meldet den aktuellen Effizienzwert und listet konkrete Maßnahmen wie Blöcke entfernen, Licht reduzieren oder den Mob-Cap leeren, damit der Wert wieder Richtung 100 Prozent steigt.
+
+@chapter Befehle
+@section Wichtige Befehle
+Nutze @command(/radar:scan), wenn du Spawner und Cluster in einem Gebiet finden möchtest. Der Befehl öffnet ein HUD, in dem du Hervorhebungen ein- oder ausschalten kannst und alle Informationen für den Farmbau erhältst.
+
+Wenn viele Cluster zusammenkommen, hilft @command(/radar:toggle), dich auf ein Projekt zu konzentrieren. Durch das Umschalten blendest du alle anderen Highlights aus, kannst den Aktivierungsbereich ablaufen, Lichttests durchführen oder Koordinaten aufnehmen, ohne dass dich andere Markierungen stören. Im HUD lässt sich derselbe Cluster ebenfalls anklicken und umschalten.
+
+@section Nützliche Befehle
+Bewahre @command(/radar:reset) als schnellen Notruf auf: Der Befehl entfernt alle Hervorhebungen, Regionen und das HUD.
+
+Mit @command(/radar:help) erhältst du für jeden Befehl eine Beschreibung samt obligatorischer und optionaler Argumente.
+
+@chapter Konfigurationsoptionen
+@section Scannen & Cluster
+Der Chunk-Suchradius bestimmt, wie viele Chunks um dich herum beim @command(/radar:scan) oder über den @italic(Rescan)-Button des Panels analysiert werden. Ein größerer Radius durchsucht mehr Gebiet, benötigt aber länger.
+
+Du kannst außerdem festlegen, wie viele Threads die Mod beim Scannen nutzt; leistungsstarke Rechner profitieren von höheren Werten.
+
+Die Einstellung @italic(Minimale Spawner für Region) legt fest, wie viele Spawner sich überlappen müssen, bevor ihre gemeinsame Aktivierungsblase eingeblendet wird. Zusätzlich kannst du eine Standardsortierung wie @italic(keine), @italic(Nähe) oder @italic(Größe) wählen. Diese wirkt sich sowohl auf manuelle Scans als auch auf die Befehlsausgabe aus.
+
+Weitere Optionen automatisieren den Ablauf. @italic(Nach dem Scan hervorheben) zeigt jeden Cluster sofort an, sobald ein Scan beendet ist. @italic(Frustum Culling) versteckt Formen außerhalb des Bildschirms und verbessert so die Performance. Mit @italic(Gecachte Spawner) nutzt die Mod bereits entdeckte Spawner erneut, statt denselben Bereich mehrfach zu prüfen.
+
+Ist @italic(Chunks beim Generieren verarbeiten) aktiv, werden neu geladene Chunks im Hintergrund gescannt. Erkennt die Mod dabei einen Cluster, der deinen Alarmkriterien entspricht, erhältst du eine Chat-Nachricht und der Fund wird gespeichert, bis du den nächsten Scan startest. Ob diese Alarme auch visuelle Highlights auslösen, hängt von deinen Rendering-Einstellungen ab.
+
+@section Darstellung & Overlays
+Der @italic(Outline)-Schalter wechselt zwischen gefüllten Boxen und Drahtgittern. Über die @italic(Linienbreite) stellst du ein, wie kräftig die Konturen erscheinen. Außerdem kannst du festlegen, ob Spawn-Volumen und Mob-Cap-Bereiche standardmäßig eingeblendet werden; die HUD-Schaltflächen schalten sie dann pro Spawner um.
+
+@italic(Automatische Highlight-Alarme) steuern, ob im Hintergrund entdeckte Cluster sofort sichtbar sind. Ist die Option aktiv, erscheint jeder passende Fund direkt. Wenn sie deaktiviert ist, erhältst du weiterhin Chatmeldungen, siehst die Markierungen aber erst nach einem manuellen Scan. Die Option greift nur, wenn Chunk-Scans beim Generieren aktiv sind.
+
+@section HUD & Panel
+@italic(Anzahl der Einträge) legt fest, wie viele Cluster pro HUD-Seite erscheinen. Höhere Werte reduzieren das Blättern, geringere Werte machen das Panel kompakter. Mit dem Schieberegler @italic(vertikaler Versatz) verschiebst du das Panel prozentual an eine andere Bildschirmposition, um Chat, Hotbar oder andere HUDs freizuhalten.
+
+Du kannst das Panel links oder rechts ausrichten. Über den @italic(Spawner-Icon-Modus) entscheidest du, ob jeder Eintrag animierte Mob-Modelle oder einfache Spawn-Eier nutzt. Das Panel aktualisiert sich automatisch, sobald sich Cluster ändern.
+
+@section Farboptionen
+Du kannst getrennte Farben für gefüllte Spawnerboxen und Drahtkonturen festlegen. Ein globaler @italic(Spawner-Deckkraft)-Regler bestimmt die Sichtbarkeit der Highlights, während @italic(Regions-Deckkraft) die Transparenz der Aktivierungszone steuert.
+
+Spawn-Volumen und Mob-Cap-Bereiche besitzen jeweils eigene Farb- und Deckkraftwerte. Diese gelten sowohl für automatische Overlays als auch für die pro Spawner zuschaltbaren Anzeigen.
+
+Die @italic(Farbpalette für Cluster) ordnet unterschiedlichen Clustergrößen verschiedene Farben zu. Kleine Cluster nutzen die frühen Farben der Liste, sehr große wiederholen den letzten Eintrag. Diese Farben tauchen konsistent im Regions-Mesh, in HUD-Beschriftungen und anderen Markierungen auf, damit das visuelle System klar bleibt.
+

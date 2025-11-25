@@ -10,7 +10,6 @@ import net.minecraft.util.Formatting;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 public final class EfficiencyAdviceBook
 {
@@ -44,19 +43,20 @@ public final class EfficiencyAdviceBook
                                          SpawnerEfficiencyManager.MobCapStatus mobCapStatus)
     {
         MutableText summary = Text.empty()
-            .append(Text.literal("Spawner Diagnostics").formatted(Formatting.DARK_PURPLE, Formatting.BOLD, Formatting.UNDERLINE))
+            .append(Text.translatable("text.spawn_radar.efficiency_advisor.summary.title")
+                .formatted(Formatting.DARK_PURPLE, Formatting.BOLD, Formatting.UNDERLINE))
             .append(Text.literal("\n\n\n"))
-            .append(Text.literal(String.format(Locale.ROOT,
-                "\nEfficiency: %.0f%%", result.overall())).formatted(Formatting.GOLD))
-            .append(Text.literal(String.format(Locale.ROOT,
-                "\nSpawn Volume: %.0f%% open", result.volumeScore())).formatted(Formatting.GRAY))
-            .append(Text.literal(String.format(Locale.ROOT,
-                "\nDarkness: %.0f%%", result.lightScore())).formatted(Formatting.GRAY));
+            .append(Text.translatable("text.spawn_radar.efficiency_advisor.summary.efficiency",
+                Math.round(result.overall())).formatted(Formatting.GOLD))
+            .append(Text.translatable("text.spawn_radar.efficiency_advisor.summary.volume",
+                Math.round(result.volumeScore())).formatted(Formatting.GRAY))
+            .append(Text.translatable("text.spawn_radar.efficiency_advisor.summary.light",
+                Math.round(result.lightScore())).formatted(Formatting.GRAY));
 
         if (mobCapStatus != null)
         {
-            summary.append(Text.literal(String.format(Locale.ROOT,
-                "\nMob Cap: %s", mobCapStatus.formatted())).formatted(Formatting.RED));
+            summary.append(Text.translatable("text.spawn_radar.efficiency_advisor.summary.mob_cap",
+                mobCapStatus.formatted()).formatted(Formatting.RED));
         }
 
         return summary;

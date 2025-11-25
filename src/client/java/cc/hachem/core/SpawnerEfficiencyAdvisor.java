@@ -12,7 +12,6 @@ import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 public final class SpawnerEfficiencyAdvisor
 {
@@ -44,7 +43,7 @@ public final class SpawnerEfficiencyAdvisor
 
             if (isPerfect(result.overall()) && !mobCapIssue)
             {
-                player.sendMessage(Text.literal("Spawner efficiency is already optimal."), false);
+                player.sendMessage(Text.translatable("text.spawn_radar.efficiency_advisor.optimal"), false);
                 return ActionResult.PASS;
             }
 
@@ -65,20 +64,20 @@ public final class SpawnerEfficiencyAdvisor
         if (!isPerfect(result.volumeScore()))
         {
             fixes.add(new EfficiencyAdviceBook.EfficiencyAdviceEntry(
-                Text.literal("Spawn Volume Blocked").formatted(Formatting.GOLD, Formatting.BOLD),
-                Text.literal(String.format(
-                    Locale.ROOT,
-                    "Only %.0f%% of the spawn volume is open.\nRemove blocks, trapdoors, water, and slabs inside the highlighted volume so mobs have valid positions.",
-                    result.volumeScore())).formatted(Formatting.GRAY)));
+                Text.translatable("text.spawn_radar.efficiency_advisor.volume.title").formatted(Formatting.GOLD, Formatting.BOLD),
+                Text.translatable(
+                    "text.spawn_radar.efficiency_advisor.volume.detail",
+                    Math.round(result.volumeScore())
+                ).formatted(Formatting.GRAY)));
         }
         if (!isPerfect(result.lightScore()))
         {
             fixes.add(new EfficiencyAdviceBook.EfficiencyAdviceEntry(
-                Text.literal("Area Too Bright").formatted(Formatting.YELLOW, Formatting.BOLD),
-                Text.literal(String.format(
-                    Locale.ROOT,
-                    "Darkness is only %.0f%% inside the spawn area.\nBreak or cover light sources and block skylight so the volume reaches light level 0.",
-                    result.lightScore())).formatted(Formatting.GRAY)));
+                Text.translatable("text.spawn_radar.efficiency_advisor.light.title").formatted(Formatting.YELLOW, Formatting.BOLD),
+                Text.translatable(
+                    "text.spawn_radar.efficiency_advisor.light.detail",
+                    Math.round(result.lightScore())
+                ).formatted(Formatting.GRAY)));
         }
         if (mobCapStatus != null && result.mobCapScore() < 100d)
             fixes.add(buildMobCapEntry(mobCapStatus));
@@ -93,17 +92,15 @@ public final class SpawnerEfficiencyAdvisor
     private static EfficiencyAdviceBook.EfficiencyAdviceEntry buildMobCapEntry(SpawnerEfficiencyManager.MobCapStatus status)
     {
         boolean saturated = status.mobCount() >= status.capLimit();
-        String title = saturated ? "Mob Cap Saturated" : "Mob Cap Crowded";
-        String detail = saturated
-            ? String.format(Locale.ROOT,
-                "The mob cap contains %s mobs.\nKill or move mobs outside the 8-block cube so the spawner can run again.",
-                status.formatted())
-            : String.format(Locale.ROOT,
-                "The mob cap is currently %s.\nMove or remove mobs near the spawner to regain headroom and raise efficiency.",
-                status.formatted());
+        String titleKey = saturated
+            ? "text.spawn_radar.efficiency_advisor.mobcap_saturated.title"
+            : "text.spawn_radar.efficiency_advisor.mobcap_crowded.title";
+        String detailKey = saturated
+            ? "text.spawn_radar.efficiency_advisor.mobcap_saturated.detail"
+            : "text.spawn_radar.efficiency_advisor.mobcap_crowded.detail";
         return new EfficiencyAdviceBook.EfficiencyAdviceEntry(
-            Text.literal(title).formatted(Formatting.RED, Formatting.BOLD),
-            Text.literal(detail).formatted(Formatting.GRAY));
+            Text.translatable(titleKey).formatted(Formatting.RED, Formatting.BOLD),
+            Text.translatable(detailKey, status.formatted()).formatted(Formatting.GRAY));
     }
 }
 
