@@ -12,19 +12,26 @@ The mod scans for spawners around you as you generate or load chunks, allowing y
 @section Spawn Regions
 A mob spawner becomes active when the player is within sixteen blocks of it. When multiple spawners are located near one another, their activation spheres overlap, creating a combined region where the player can stand to activate the entire group. The mod highlights this region clearly, making it easier to design farms and identify optimal AFK positions for maximum efficiency.
 
-@section Spawn conditions
+@section Spawn Conditions
 For a spawner to summon mobs, three conditions must be met. First, the player must remain within the 16 block activation radius. Second, the possible spawn area must be valid for the mob type; this volume depends on the mob’s hitbox and spawn rules, and the mod can visualize it directly in the world. Third, the local mob cap must not be exceeded: each spawner checks a 9x9x9 region around itself, and if six or more entities are present, it will not spawn additional mobs. The mod provides a toggle that displays this region, allowing you to diagnose why a spawner may not be producing mobs.
 
+@chapter Spawner Efficiency
+Each spawner entry in the HUD includes two toggles: @italic(Show Efficiency) and @italic(Show Mob Cap Status). The efficiency label appears above the spawner and updates live, showing how open the spawn volume is, how dark the spawn area remains, and whether the nearby mob cap is full. If any of these factors prevent spawning, the label drops below 100 percent so you can see the problem at a glance.
+
+The mob-cap status label displays the current number of entities inside the 8 block mob cap region, for example “Mob Cap 3/6.” This makes it clear when you need to clear mobs rather than adjust the spawn space itself.
+
+You can also @italic(Shift + Right-Click) a spawner to receive contextual tips. The advisor reports the latest efficiency percentage and lists the specific fixes such as clearing blocks, reducing light, or emptying the mob cap so the reading moves back toward 100 percent.
+
 @chapter Commands
-@section Main commands
-Use @command(/radar:scan) whenever you want to locate spawners and clusters in a given area. It opens a HUD which allows you to to toggle different highlights and provides useful information for farm building.
+@section Main Commands
+Use @command(/radar:scan) whenever you want to locate spawners and clusters in a given area. It opens a HUD which allows you to toggle different highlights and provides useful information for farm building.
 
-When clusters start piling up, @command(/radar:toggle) is the fastest way to focus on one farm. Toggling a cluster hides every other highlight, so you can walk the activation zone, test lighting fixes, or grab coordinates without visual noise. You can also just click on a corresponding cluster in the HUD and toggle it from there.
+When clusters start piling up, @command(/radar:toggle) is the fastest way to focus on one farm. Toggling a cluster hides every other highlight so you can walk the activation zone, test lighting fixes, or grab coordinates without visual noise. You can also click on a corresponding cluster in the HUD and toggle it from there.
 
-@section Useful commands
-Keep @command(/radar:reset) handy for resetting and untoggling the state. It turns off all highlights, regions and the HUD.
+@section Useful Commands
+Keep @command(/radar:reset) handy for resetting and untoggling the state. It turns off all highlights, regions, and the HUD.
 
-The @command(/radar:help) is useful to know the functionality of each command in detail with their corresponding arguments, both optional and mandatory.
+The @command(/radar:help) command is useful to see the functionality of each command in detail with their corresponding arguments, both optional and mandatory.
 
 @chapter Config Options
 @section Scanning & Clusters
