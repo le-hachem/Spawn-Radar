@@ -1,6 +1,7 @@
 package cc.hachem.core;
 
 import cc.hachem.RadarClient;
+import cc.hachem.core.ClusterManager;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientChunkEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.block.entity.MobSpawnerBlockEntity;
@@ -162,9 +163,10 @@ public final class ChunkProcessingManager
         Set<Long> removed = chunkSpawners.remove(key);
         if (removed == null || removed.isEmpty())
             return;
-        Set<BlockPos> positions = removed.stream().map(BlockPos::fromLong).collect(Collectors.toSet());
-        BlockBank.removeAll(positions);
-        invalidateAlerts(removed);
+                Set<BlockPos> positions = removed.stream().map(BlockPos::fromLong).collect(Collectors.toSet());
+                BlockBank.removeAll(positions);
+                ClusterManager.removeBackgroundHighlights(removed);
+                invalidateAlerts(removed);
     }
 
     private static void invalidateAlerts(Set<Long> removedPositions)
@@ -253,8 +255,10 @@ public final class ChunkProcessingManager
                     continue;
                 if (!isClusterWithinRange(cluster, origin.pos(), proximitySq))
                     continue;
-                if (!shouldAlert(cluster))
-                    continue;
+                        if (!shouldAlert(cluster))
+                            continue;
+                        if (config.autoHighlightAlertedClusters)
+                            ClusterManager.addBackgroundHighlights(cluster.spawners());
                 sendAlert(cluster, player);
             }
         }

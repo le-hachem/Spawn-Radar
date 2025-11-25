@@ -67,10 +67,9 @@ public class BlockBank
             List<ChunkOffset> batch = batches.get(i);
             if (batch.isEmpty())
                 continue;
-            final int workerIndex = i;
             Thread thread = new Thread(() ->
                 scanChunkBatch(player, batch, playerChunkX, playerChunkZ, foundSpawners),
-                "SpawnerScanner-" + workerIndex);
+                "SpawnerScanner-" + i);
             workers.add(thread);
             thread.start();
         }
@@ -133,7 +132,7 @@ public class BlockBank
     private static List<List<ChunkOffset>> partitionOffsets(List<ChunkOffset> offsets, int partitions)
     {
         List<List<ChunkOffset>> batches = new ArrayList<>(partitions);
-        if (partitions <= 0)
+        if (partitions == 0)
         {
             batches.add(offsets);
             return batches;
@@ -184,8 +183,8 @@ public class BlockBank
         if (configured <= 1 || workSize <= 1)
             return 1;
 
-        int desired = ensureEven(Math.max(2, Math.min(16, configured)));
-        int limited = Math.min(desired, Math.max(2, workSize));
+        int desired = ensureEven(Math.min(16, configured));
+        int limited = Math.min(desired, workSize);
         if ((limited & 1) != 0)
             limited = Math.max(2, limited - 1);
         return Math.max(2, limited);

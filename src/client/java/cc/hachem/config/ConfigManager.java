@@ -80,7 +80,7 @@ public class ConfigManager
     public boolean autoHighlightAlertedClusters = false;
     public boolean processChunksOnGeneration = false;
     public int backgroundClusterAlertThreshold = 4;
-    public int backgroundClusterProximity = 48;
+    public int backgroundClusterProximity = 0;
 
     public List<Integer> clusterColors = defaultClusterColors();
 

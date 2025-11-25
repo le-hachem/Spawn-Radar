@@ -9,6 +9,7 @@ public class ClusterManager
 {
     private static final Set<Integer> highlightedClusterIds = new HashSet<>();
     private static List<SpawnerCluster> clusters = new ArrayList<>();
+    private static final Set<Long> backgroundHighlightSpawners = Collections.synchronizedSet(new HashSet<>());
 
     private ClusterManager() {}
 
@@ -34,16 +35,10 @@ public class ClusterManager
 
     public static void toggleAllClusters()
     {
-        if (highlightedClusterIds.size() == clusters.size())
-        {
-            unhighlightAllClusters();
-            RadarClient.LOGGER.info("Toggled all clusters: now all un-highlighted.");
-        }
-        else
-        {
+        if (highlightedClusterIds.isEmpty())
             highlightAllClusters();
-            RadarClient.LOGGER.info("Toggled all clusters: now all highlighted.");
-        }
+        else
+            unhighlightAllClusters();
     }
 
     public static void toggleHighlightCluster(int clusterId)
@@ -90,18 +85,42 @@ public class ClusterManager
 
     public static List<SpawnerInfo> getHighlights()
     {
-        if (highlightedClusterIds.isEmpty())
+        Set<Long> seen = new HashSet<>();
+        List<SpawnerInfo> highlights = new ArrayList<>();
+        highlights.addAll(getBackgroundHighlightInfos(seen));
+
+        if (!highlightedClusterIds.isEmpty())
         {
-            if (BlockBank.hasManualResults())
-                return BlockBank.getAll();
-            return Collections.emptyList();
+            for (SpawnerCluster c : clusters)
+                if (highlightedClusterIds.contains(c.id()))
+                    addUnique(c.spawners(), highlights, seen);
+            return highlights;
         }
 
-        List<SpawnerInfo> activeHighlights = new ArrayList<>();
-        for (SpawnerCluster c : clusters)
-            if (highlightedClusterIds.contains(c.id()))
-                activeHighlights.addAll(c.spawners());
-        return activeHighlights;
+        if (BlockBank.hasManualResults())
+            addUnique(BlockBank.getAll(), highlights, seen);
+
+        return highlights;
+    }
+
+    public static void addBackgroundHighlights(List<SpawnerInfo> spawners)
+    {
+        if (spawners == null || spawners.isEmpty() || !isBackgroundHighlightingEnabled())
+            return;
+        for (SpawnerInfo info : spawners)
+            backgroundHighlightSpawners.add(info.pos().asLong());
+    }
+
+    public static void removeBackgroundHighlights(Set<Long> positions)
+    {
+        if (positions == null || positions.isEmpty())
+            return;
+        backgroundHighlightSpawners.removeIf(positions::contains);
+    }
+
+    public static void clearBackgroundHighlights()
+    {
+        backgroundHighlightSpawners.clear();
     }
 
     private static boolean isValidClusterId(int clusterId)
@@ -112,5 +131,46 @@ public class ClusterManager
     public static boolean isHighlighted(int clusterId)
     {
         return highlightedClusterIds.contains(clusterId);
+    }
+
+    private static List<SpawnerInfo> getBackgroundHighlightInfos(Set<Long> seen)
+    {
+        if (!isBackgroundHighlightingEnabled())
+        {
+            if (!backgroundHighlightSpawners.isEmpty())
+                backgroundHighlightSpawners.clear();
+            return Collections.emptyList();
+        }
+
+        List<SpawnerInfo> highlights = new ArrayList<>();
+        synchronized (backgroundHighlightSpawners)
+        {
+            backgroundHighlightSpawners.removeIf(packed ->
+            {
+                SpawnerInfo info = BlockBank.get(BlockPos.fromLong(packed));
+                if (info == null)
+                    return true;
+                if (seen.add(packed))
+                    highlights.add(info);
+                return false;
+            });
+        }
+
+        return highlights;
+    }
+
+    private static void addUnique(List<SpawnerInfo> source, List<SpawnerInfo> target, Set<Long> seen)
+    {
+        for (SpawnerInfo info : source)
+        {
+            long key = info.pos().asLong();
+            if (seen.add(key))
+                target.add(info);
+        }
+    }
+
+    private static boolean isBackgroundHighlightingEnabled()
+    {
+        return RadarClient.config != null && RadarClient.config.autoHighlightAlertedClusters;
     }
 }

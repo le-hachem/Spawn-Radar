@@ -256,6 +256,7 @@ public class RadarClient implements ClientModInitializer {
 
     private static void clearClientState() {
         ClusterManager.unhighlightAllClusters();
+        ClusterManager.clearBackgroundHighlights();
         ClusterManager.getClusters().clear();
         BlockHighlightRenderer.clearRegionMeshCache();
         BoxOutlineRenderer.clearMeshCache();
@@ -299,7 +300,9 @@ public class RadarClient implements ClientModInitializer {
         );
 
         if (config.autoHighlightAlertedClusters) {
+            int alertThreshold = Math.max(2, config.backgroundClusterAlertThreshold);
             for (SpawnerCluster cluster : clusters) {
+                if (cluster.spawners().size() < alertThreshold) continue;
                 if (
                     ChunkProcessingManager.consumeAlertForCluster(cluster)
                 ) ClusterManager.highlightCluster(cluster.id());

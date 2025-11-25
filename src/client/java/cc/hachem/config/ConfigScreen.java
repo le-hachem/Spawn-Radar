@@ -2,6 +2,7 @@ package cc.hachem.config;
 
 import cc.hachem.RadarClient;
 import cc.hachem.core.ChunkProcessingManager;
+import cc.hachem.core.ClusterManager;
 import cc.hachem.core.SpawnerCluster;
 import cc.hachem.hud.HudRenderer;
 import cc.hachem.hud.PanelWidget;
@@ -189,7 +190,12 @@ public class ConfigScreen
         rendering.addEntry(entries.startBooleanToggle(
                 text("option.spawn_radar.auto_highlight_alerts"),
                 config.autoHighlightAlertedClusters)
-            .setSaveConsumer(value -> config.autoHighlightAlertedClusters = value)
+            .setSaveConsumer(value ->
+            {
+                config.autoHighlightAlertedClusters = value;
+                if (!value)
+                    ClusterManager.clearBackgroundHighlights();
+            })
             .setDefaultValue(ConfigManager.DEFAULT.autoHighlightAlertedClusters)
             .setTooltip(text("option.spawn_radar.auto_highlight_alerts.tooltip"))
             .build());
