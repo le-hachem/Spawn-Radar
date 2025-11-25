@@ -1,7 +1,6 @@
 package cc.hachem.core;
 
 import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
@@ -223,12 +222,13 @@ public final class SpawnerEfficiencyManager
             return new MobCapStatus(0, 6);
 
         EntityType<?> entityType = info.entityType();
-        SpawnGroup spawnGroup = entityType != null ? entityType.getSpawnGroup() : SpawnGroup.MONSTER;
+        if (entityType == null)
+            return new MobCapStatus(0, 6);
 
         double centerX = info.pos().getX() + 0.5;
         double centerY = info.pos().getY() + 0.5;
         double centerZ = info.pos().getZ() + 0.5;
-        double radius = 8.0;
+        double radius = 4.0;
         Box mobCapBox = new Box(
             centerX - radius, centerY - radius, centerZ - radius,
             centerX + radius, centerY + radius, centerZ + radius);
@@ -236,9 +236,7 @@ public final class SpawnerEfficiencyManager
         List<LivingEntity> nearby = world.getEntitiesByClass(
             LivingEntity.class,
             mobCapBox,
-            entity -> entity.isAlive()
-                && entity.getType() != null
-                && entity.getType().getSpawnGroup() == spawnGroup);
+            entity -> entity.isAlive() && entity.getType() == entityType);
 
         return new MobCapStatus(Math.min(nearby.size(), 6), 6);
     }
