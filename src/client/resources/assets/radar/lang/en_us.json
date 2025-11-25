@@ -5,6 +5,7 @@
   "key.spawn_radar.reset": "Reset data",
 
   "option.spawn_radar.title": "Spawn Radar",
+  "option.spawn_radar.category.general": "General",
   "option.spawn_radar.category.scanning": "Scanning & Clusters",
   "option.spawn_radar.category.rendering": "Rendering & Overlays",
   "option.spawn_radar.category.hud": "HUD & Panel",
@@ -24,6 +25,8 @@
   "option.spawn_radar.show_efficiency_label.tooltip": "Display the calculated efficiency percentage above highlighted spawners.",
   "option.spawn_radar.show_mob_cap_status": "Show mob-cap status label",
   "option.spawn_radar.show_mob_cap_status.tooltip": "Show how many mobs are currently inside the mob-cap check volume (for example 3/6).",
+  "option.spawn_radar.show_welcome_message": "Show welcome message on join",
+  "option.spawn_radar.show_welcome_message.tooltip": "Show a Spawn Radar reminder about /radar:guide each time you join a compatible world.",
   "option.spawn_radar.outline_thickness": "Spawner outline thickness (px)",
   "option.spawn_radar.outline_thickness.tooltip": "Pixel thickness of the outline when outline highlighting is enabled.",
   "option.spawn_radar.frustum_culling": "Enable frustum culling",
@@ -100,6 +103,7 @@
   "chat.spawn_radar.reset": "Reset block bank and spawner data.",
   "chat.spawn_radar.disabled": "Spawn Radar is disabled on this server.",
   "chat.spawn_radar.cluster_alert": "Found a cluster with %1$s spawners nearby. Consider running /radar:scan.",
+  "chat.spawn_radar.welcome": "You have Spawn Radar %s installed! Run /radar:guide to open the usage guide. Disable this reminder in the config if you prefer.",
   "chat.spawn_radar.guide_opened": "Opened the Spawn Radar guide.",
 
   "button.spawn_radar.expand": ">",

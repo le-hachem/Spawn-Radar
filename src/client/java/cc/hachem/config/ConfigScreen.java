@@ -25,11 +25,13 @@ public class ConfigScreen
             .setParentScreen(parent);
 
         ConfigEntryBuilder entries = builder.entryBuilder();
+        ConfigCategory general = builder.getOrCreateCategory(text("option.spawn_radar.category.general"));
         ConfigCategory scanning = builder.getOrCreateCategory(text("option.spawn_radar.category.scanning"));
         ConfigCategory rendering = builder.getOrCreateCategory(text("option.spawn_radar.category.rendering"));
         ConfigCategory hud = builder.getOrCreateCategory(text("option.spawn_radar.category.hud"));
         ConfigCategory colors = builder.getOrCreateCategory(text("option.spawn_radar.colors"));
 
+        addGeneralEntries(general, entries);
         addScanningEntries(scanning, entries);
         addRenderingEntries(rendering, entries);
         addHudEntries(hud, entries);
@@ -70,14 +72,6 @@ public class ConfigScreen
             .setSaveConsumer(value -> config.minimumSpawnersForRegion = value)
             .setDefaultValue(ConfigManager.DEFAULT.minimumSpawnersForRegion)
             .setTooltip(text("option.spawn_radar.min_spawners.tooltip"))
-            .build());
-
-        scanning.addEntry(entries.startBooleanToggle(
-                text("option.spawn_radar.highlight_after_scan"),
-                config.highlightAfterScan)
-            .setSaveConsumer(value -> config.highlightAfterScan = value)
-            .setDefaultValue(ConfigManager.DEFAULT.highlightAfterScan)
-            .setTooltip(text("option.spawn_radar.highlight_after_scan.tooltip"))
             .build());
 
         scanning.addEntry(entries
@@ -121,42 +115,6 @@ public class ConfigScreen
             .setTooltip(text("option.spawn_radar.frustum_culling.tooltip"))
             .build());
 
-        scanning.addEntry(entries.startBooleanToggle(
-                text("option.spawn_radar.use_cached_spawners"),
-                config.useCachedSpawnersForScan)
-            .setSaveConsumer(value -> config.useCachedSpawnersForScan = value)
-            .setDefaultValue(ConfigManager.DEFAULT.useCachedSpawnersForScan)
-            .setTooltip(text("option.spawn_radar.use_cached_spawners.tooltip"))
-            .build());
-
-        scanning.addEntry(entries.startBooleanToggle(
-                text("option.spawn_radar.background_processing"),
-                config.processChunksOnGeneration)
-            .setSaveConsumer(value ->
-            {
-                config.processChunksOnGeneration = value;
-                if (value)
-                    ChunkProcessingManager.rescanCurrentWorld();
-            })
-            .setDefaultValue(ConfigManager.DEFAULT.processChunksOnGeneration)
-            .setTooltip(text("option.spawn_radar.background_processing.tooltip"))
-            .build());
-
-        scanning.addEntry(entries.startIntField(
-                text("option.spawn_radar.background_alert_threshold"),
-                config.backgroundClusterAlertThreshold)
-            .setSaveConsumer(value -> config.backgroundClusterAlertThreshold = Math.max(2, value))
-            .setDefaultValue(ConfigManager.DEFAULT.backgroundClusterAlertThreshold)
-            .setTooltip(text("option.spawn_radar.background_alert_threshold.tooltip"))
-            .build());
-
-        scanning.addEntry(entries.startIntField(
-                text("option.spawn_radar.background_proximity"),
-                config.backgroundClusterProximity)
-            .setSaveConsumer(value -> config.backgroundClusterProximity = Math.max(8, value))
-            .setDefaultValue(ConfigManager.DEFAULT.backgroundClusterProximity)
-            .setTooltip(text("option.spawn_radar.background_proximity.tooltip"))
-            .build());
     }
 
     private static void addRenderingEntries(ConfigCategory rendering, ConfigEntryBuilder entries)
@@ -287,6 +245,64 @@ public class ConfigScreen
                 config.spawnerIconMode = value == null ? ConfigManager.DEFAULT.spawnerIconMode : value;
                 PanelWidget.refresh();
             })
+            .build());
+    }
+
+    private static void addGeneralEntries(ConfigCategory general, ConfigEntryBuilder entries)
+    {
+        var config = RadarClient.config;
+
+        general.addEntry(entries.startBooleanToggle(
+                text("option.spawn_radar.show_welcome_message"),
+                Boolean.TRUE.equals(config.showWelcomeMessage))
+            .setSaveConsumer(value -> config.showWelcomeMessage = value)
+            .setDefaultValue(Boolean.TRUE.equals(ConfigManager.DEFAULT.showWelcomeMessage))
+            .setTooltip(text("option.spawn_radar.show_welcome_message.tooltip"))
+            .build());
+
+        general.addEntry(entries.startBooleanToggle(
+                text("option.spawn_radar.highlight_after_scan"),
+                config.highlightAfterScan)
+            .setSaveConsumer(value -> config.highlightAfterScan = value)
+            .setDefaultValue(ConfigManager.DEFAULT.highlightAfterScan)
+            .setTooltip(text("option.spawn_radar.highlight_after_scan.tooltip"))
+            .build());
+
+        general.addEntry(entries.startBooleanToggle(
+                text("option.spawn_radar.use_cached_spawners"),
+                config.useCachedSpawnersForScan)
+            .setSaveConsumer(value -> config.useCachedSpawnersForScan = value)
+            .setDefaultValue(ConfigManager.DEFAULT.useCachedSpawnersForScan)
+            .setTooltip(text("option.spawn_radar.use_cached_spawners.tooltip"))
+            .build());
+
+        general.addEntry(entries.startBooleanToggle(
+                text("option.spawn_radar.background_processing"),
+                config.processChunksOnGeneration)
+            .setSaveConsumer(value ->
+            {
+                config.processChunksOnGeneration = value;
+                if (value)
+                    ChunkProcessingManager.rescanCurrentWorld();
+            })
+            .setDefaultValue(ConfigManager.DEFAULT.processChunksOnGeneration)
+            .setTooltip(text("option.spawn_radar.background_processing.tooltip"))
+            .build());
+
+        general.addEntry(entries.startIntField(
+                text("option.spawn_radar.background_alert_threshold"),
+                config.backgroundClusterAlertThreshold)
+            .setSaveConsumer(value -> config.backgroundClusterAlertThreshold = Math.max(2, value))
+            .setDefaultValue(ConfigManager.DEFAULT.backgroundClusterAlertThreshold)
+            .setTooltip(text("option.spawn_radar.background_alert_threshold.tooltip"))
+            .build());
+
+        general.addEntry(entries.startIntField(
+                text("option.spawn_radar.background_proximity"),
+                config.backgroundClusterProximity)
+            .setSaveConsumer(value -> config.backgroundClusterProximity = Math.max(8, value))
+            .setDefaultValue(ConfigManager.DEFAULT.backgroundClusterProximity)
+            .setTooltip(text("option.spawn_radar.background_proximity.tooltip"))
             .build());
     }
 

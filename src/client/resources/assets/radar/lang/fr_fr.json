@@ -5,6 +5,7 @@
   "key.spawn_radar.reset": "Réinitialiser les données",
 
   "option.spawn_radar.title": "Spawn Radar",
+  "option.spawn_radar.category.general": "Général",
   "option.spawn_radar.category.scanning": "Analyse et clusters",
   "option.spawn_radar.category.rendering": "Rendu et superpositions",
   "option.spawn_radar.category.hud": "HUD et panneau",
@@ -22,6 +23,8 @@
   "option.spawn_radar.show_efficiency_label.tooltip": "Affiche le pourcentage d'efficacité calculé au-dessus des spawners surlignés.",
   "option.spawn_radar.show_mob_cap_status": "Afficher l'état du mob-cap",
   "option.spawn_radar.show_mob_cap_status.tooltip": "Indique combien de mobs se trouvent dans le volume de mob-cap (par ex. 3/6).",
+  "option.spawn_radar.show_welcome_message": "Afficher le message de bienvenue",
+  "option.spawn_radar.show_welcome_message.tooltip": "Affiche un rappel /radar:guide à chaque fois que vous rejoignez un monde compatible.",
   "option.spawn_radar.outline_thickness": "Épaisseur du contour des spawners (px)",
   "option.spawn_radar.outline_thickness.tooltip": "Épaisseur du contour lorsque le mode contour est actif.",
   "option.spawn_radar.min_spawners": "Nombre minimum de spawners pour surligner un cluster",
@@ -98,6 +101,7 @@
   "chat.spawn_radar.reset": "Réinitialisation de la banque de blocs et des spawners.",
   "chat.spawn_radar.disabled": "Spawn Radar est désactivé sur ce serveur.",
   "chat.spawn_radar.cluster_alert": "Alerte cluster : %1$s spawners détectés à proximité. Essayez /radar:scan.",
+  "chat.spawn_radar.welcome": "Vous utilisez Spawn Radar %s ! Exécutez /radar:guide pour ouvrir le guide. Vous pouvez désactiver ce message dans la configuration.",
   "chat.spawn_radar.guide_opened": "Guide Spawn Radar ouvert.",
 
   "button.spawn_radar.expand": ">",

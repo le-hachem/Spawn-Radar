@@ -73,6 +73,7 @@ public class ConfigManager
 
     public boolean highlightAfterScan = false;
     public boolean frustumCullingEnabled = true;
+    public Boolean showWelcomeMessage = true;
 
     public double verticalPanelOffset = 0.1;
     public int panelElementCount = 5;
@@ -93,6 +94,8 @@ public class ConfigManager
         ensureScanThreadCount();
         ensureSpawnerIconMode();
         ensureBackgroundProcessing();
+        if (showWelcomeMessage == null)
+            showWelcomeMessage = DEFAULT.showWelcomeMessage;
     }
 
     public void ensureColorPalette()

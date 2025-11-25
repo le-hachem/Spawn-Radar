@@ -5,6 +5,7 @@
   "key.spawn_radar.reset": "Resetuj dane",
 
   "option.spawn_radar.title": "Radar Spawnerów",
+  "option.spawn_radar.category.general": "Ogólne",
   "option.spawn_radar.category.scanning": "Skanowanie i klastry",
   "option.spawn_radar.category.rendering": "Renderowanie i nakładki",
   "option.spawn_radar.category.hud": "HUD i panel",
@@ -22,6 +23,8 @@
   "option.spawn_radar.show_efficiency_label.tooltip": "Wyświetla obliczony procent wydajności nad podświetlonymi spawnerami.",
   "option.spawn_radar.show_mob_cap_status": "Pokaż status limitu mobów",
   "option.spawn_radar.show_mob_cap_status.tooltip": "Pokazuje ilu mobów znajduje się obecnie w obszarze limitu (np. 3/6).",
+  "option.spawn_radar.show_welcome_message": "Pokaż wiadomość powitalną przy dołączeniu",
+  "option.spawn_radar.show_welcome_message.tooltip": "Wyświetla przypomnienie o /radar:guide za każdym razem, gdy dołączasz do kompatybilnego świata.",
   "option.spawn_radar.outline_thickness": "Grubość konturu spawnerów (px)",
   "option.spawn_radar.outline_thickness.tooltip": "Grubość konturu spawnera w trybie konturu.",
   "option.spawn_radar.frustum_culling": "Włącz frustum culling",
@@ -96,6 +99,7 @@
   "chat.spawn_radar.reset": "Zresetuj bank bloków i dane spawnerów.",
   "chat.spawn_radar.disabled": "Radar Spawnerów jest wyłączony na tym serwerze.",
   "chat.spawn_radar.cluster_alert": "Alarm klastra: znaleziono %1$s spawnerów w pobliżu. Spróbuj /radar:scan.",
+  "chat.spawn_radar.welcome": "Masz zainstalowany Spawn Radar %s! Uruchom /radar:guide, aby otworzyć poradnik. Tę wiadomość możesz wyłączyć w konfiguracji.",
   "chat.spawn_radar.guide_opened": "Otworzono przewodnik Spawn Radar.",
 
   "button.spawn_radar.expand": ">",

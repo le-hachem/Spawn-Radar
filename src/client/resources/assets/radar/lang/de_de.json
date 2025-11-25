@@ -5,6 +5,7 @@
   "key.spawn_radar.reset": "Daten zurücksetzen",
 
   "option.spawn_radar.title": "Spawn Radar",
+  "option.spawn_radar.category.general": "Allgemein",
   "option.spawn_radar.category.scanning": "Scannen & Cluster",
   "option.spawn_radar.category.rendering": "Darstellung & Overlays",
   "option.spawn_radar.category.hud": "HUD & Panel",
@@ -22,6 +23,8 @@
   "option.spawn_radar.show_efficiency_label.tooltip": "Zeigt den berechneten Effizienzwert über hervorgehobenen Spawnern an.",
   "option.spawn_radar.show_mob_cap_status": "Mob-Cap-Status anzeigen",
   "option.spawn_radar.show_mob_cap_status.tooltip": "Zeigt an, wie viele Mobs sich aktuell im Mob-Cap-Bereich befinden (z. B. 3/6).",
+  "option.spawn_radar.show_welcome_message": "Begrüßungsnachricht beim Beitritt anzeigen",
+  "option.spawn_radar.show_welcome_message.tooltip": "Zeigt bei jedem Beitritt zu einer kompatiblen Welt einen Hinweis auf /radar:guide.",
   "option.spawn_radar.outline_thickness": "Linienstärke der Spawner-Kontur (px)",
   "option.spawn_radar.outline_thickness.tooltip": "Linienstärke der Kontur im Umrissmodus.",
   "option.spawn_radar.frustum_culling": "Frustum-Culling aktivieren",
@@ -96,6 +99,7 @@
   "chat.spawn_radar.reset": "Blockbank und Spawner-Daten zurücksetzen.",
   "chat.spawn_radar.disabled": "Spawn Radar ist auf diesem Server deaktiviert.",
   "chat.spawn_radar.cluster_alert": "Cluster-Alarm: %1$s Spawner in der Nähe gefunden. Versuche /radar:scan.",
+  "chat.spawn_radar.welcome": "Du verwendest Spawn Radar %s! Führe /radar:guide aus, um den Leitfaden zu öffnen. Diese Nachricht lässt sich in der Konfiguration deaktivieren.",
   "chat.spawn_radar.guide_opened": "Spawn-Radar-Leitfaden geöffnet.",
 
   "button.spawn_radar.expand": ">",

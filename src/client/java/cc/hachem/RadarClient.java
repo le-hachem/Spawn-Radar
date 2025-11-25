@@ -32,10 +32,12 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.text.Text;
@@ -51,6 +53,9 @@ public class RadarClient implements ClientModInitializer {
     public static ConfigManager config;
     private static volatile boolean serverSupportsRadar = false;
     private static final double ACTIVATION_RADIUS = 16.0;
+    private static volatile boolean welcomeMessagePending = false;
+    private static volatile boolean welcomeMessageSent = false;
+    private static String cachedVersionString;
 
     public static ClientPlayerEntity getPlayer() {
         MinecraftClient client = MinecraftClient.getInstance();
@@ -219,6 +224,7 @@ public class RadarClient implements ClientModInitializer {
         WorldRenderEvents.END_MAIN.register(this::onRender);
         registerHandshakeReceiver();
         registerConnectionCallbacks();
+        ClientTickEvents.END_CLIENT_TICK.register(RadarClient::handleClientTick);
     }
 
     private void registerHandshakeReceiver() {
@@ -226,11 +232,12 @@ public class RadarClient implements ClientModInitializer {
             RadarHandshakePayload.ID,
             (payload, context) ->
                 MinecraftClient.getInstance().execute(() -> {
-                serverSupportsRadar = true;
+                    serverSupportsRadar = true;
                     LOGGER.info(
                         "Spawn Radar features enabled on the current server."
                     );
-            })
+                    scheduleWelcomeMessage(MinecraftClient.getInstance());
+                })
         );
     }
 
@@ -246,14 +253,19 @@ public class RadarClient implements ClientModInitializer {
             serverSupportsRadar = false;
             MobPuppetRenderer.clearCache();
             ChunkProcessingManager.clear();
+            resetWelcomeMessageState();
         });
     }
 
     private static void handleJoinEvent(MinecraftClient client) {
+        resetWelcomeMessageState();
         if (!client.isIntegratedServerRunning()) {
             ClientPlayNetworking.send(RadarHandshakePayload.INSTANCE);
             LOGGER.debug("Requested Spawn Radar handshake from server.");
-        } else serverSupportsRadar = true;
+        } else {
+            serverSupportsRadar = true;
+            scheduleWelcomeMessage(client);
+        }
 
         clearClientState();
         LOGGER.info("Reset initial data.");
@@ -709,6 +721,55 @@ public class RadarClient implements ClientModInitializer {
 
     private static float clamp01(float value) {
         return Math.max(0f, Math.min(1f, value));
+    }
+
+    private static void handleClientTick(MinecraftClient client) {
+        if (!welcomeMessagePending)
+            return;
+        if (!isWelcomeMessageEnabled()) {
+            welcomeMessagePending = false;
+            return;
+        }
+        if (welcomeMessageSent)
+            return;
+        if (!client.isIntegratedServerRunning() && !serverSupportsRadar)
+            return;
+        ClientPlayerEntity player = client.player;
+        if (player == null)
+            return;
+        welcomeMessagePending = false;
+        welcomeMessageSent = true;
+        player.sendMessage(Text.translatable("chat.spawn_radar.welcome", getVersionString()), false);
+    }
+
+    private static void scheduleWelcomeMessage(MinecraftClient client) {
+        if (!isWelcomeMessageEnabled() || welcomeMessageSent)
+            return;
+        welcomeMessagePending = true;
+        if (client != null && client.player != null)
+            handleClientTick(client);
+    }
+
+    private static void resetWelcomeMessageState() {
+        welcomeMessagePending = false;
+        welcomeMessageSent = false;
+    }
+
+    private static boolean isWelcomeMessageEnabled() {
+        return RadarClient.config != null && Boolean.TRUE.equals(RadarClient.config.showWelcomeMessage);
+    }
+
+    private static String getVersionString() {
+        if (cachedVersionString == null) {
+            cachedVersionString = FabricLoader.getInstance()
+                .getModContainer(RadarMod.MOD_ID)
+                .map(container -> container.getMetadata().getVersion().getFriendlyString())
+                .orElseGet(() ->
+                    RadarClient.class.getPackage() != null && RadarClient.class.getPackage().getImplementationVersion() != null
+                        ? RadarClient.class.getPackage().getImplementationVersion()
+                        : "dev");
+        }
+        return cachedVersionString;
     }
 
     public static double getActivationRadius() {
