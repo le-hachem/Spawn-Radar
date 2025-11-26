@@ -4,22 +4,17 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.LightType;
 import net.minecraft.world.World;
 
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class SpawnerEfficiencyManager
 {
-    private static final double VOLUME_WEIGHT = 0.5;
-    private static final double LIGHT_WEIGHT = 0.3;
-    private static final double MOB_CAP_WEIGHT = 0.2;
 
     private static final Set<BlockPos> FORCE_SHOW = ConcurrentHashMap.newKeySet();
     private static final Set<BlockPos> FORCE_HIDE = ConcurrentHashMap.newKeySet();
@@ -77,18 +72,15 @@ public final class SpawnerEfficiencyManager
         if (volume == null)
             return null;
 
-        VolumeLimits limits = buildLimits(world, volume);
-        if (limits == null)
-            return new EfficiencyResult(100d, 100d, 100d, 100d);
+        SpawnVolumeHelper.VolumeBounds bounds = SpawnVolumeHelper.computeBlockBounds(world, volume);
+        if (bounds == null)
+            return new EfficiencyResult(1d, 1d, 1d, 1d);
 
-        double volumeScore = computeVolumeScore(world, limits);
-        double lightScore = computeLightScore(world, limits);
+        double volumeScore = computeVolumeScore(world, bounds, info.pos());
+        double lightScore = computeLightScore(world, bounds);
         double mobCapScore = computeMobCapPenalty(world, info);
-        double blended = volumeScore * VOLUME_WEIGHT
-            + lightScore * LIGHT_WEIGHT
-            + mobCapScore * MOB_CAP_WEIGHT;
-        double overall = clampScore(Math.min(blended, mobCapScore));
-
+        
+        double overall = volumeScore * lightScore * mobCapScore;
         return new EfficiencyResult(overall, volumeScore, lightScore, mobCapScore);
     }
 
@@ -110,42 +102,21 @@ public final class SpawnerEfficiencyManager
         return counted == 0 ? -1d : total / counted;
     }
 
-    private static VolumeLimits buildLimits(World world, SpawnVolumeHelper.SpawnVolume volume)
-    {
-        int minX = MathHelper.floor(volume.originX());
-        int minY = MathHelper.floor(volume.originY());
-        int minZ = MathHelper.floor(volume.originZ());
-        int maxX = MathHelper.floor(volume.maxX() - 1e-3);
-        int maxY = MathHelper.floor(volume.maxY() - 1e-3);
-        int maxZ = MathHelper.floor(volume.maxZ() - 1e-3);
-
-        if (maxX < minX || maxY < minY || maxZ < minZ)
-            return null;
-
-        int worldBottom = world.getBottomY();
-        int worldTop = world.getHeight() - 1;
-        minY = Math.max(worldBottom, minY);
-        maxY = Math.min(worldTop, maxY);
-
-        if (maxY < minY)
-            return null;
-
-        return new VolumeLimits(minX, maxX, minY, maxY, minZ, maxZ);
-    }
-
-    private static double computeVolumeScore(World world, VolumeLimits limits)
+    private static double computeVolumeScore(World world, SpawnVolumeHelper.VolumeBounds bounds, BlockPos spawnerPos)
     {
         long total = 0;
         long open = 0;
         BlockPos.Mutable mutable = new BlockPos.Mutable();
 
-        for (int x = limits.minX; x <= limits.maxX; x++)
+        for (int x = bounds.minX(); x <= bounds.maxX(); x++)
         {
-            for (int y = limits.minY; y <= limits.maxY; y++)
+            for (int y = bounds.minY(); y <= bounds.maxY(); y++)
             {
-                for (int z = limits.minZ; z <= limits.maxZ; z++)
+                for (int z = bounds.minZ(); z <= bounds.maxZ(); z++)
                 {
                     mutable.set(x, y, z);
+                    if (mutable.equals(spawnerPos))
+                        continue;
                     total++;
                     if (world.getBlockState(mutable).isAir())
                         open++;
@@ -154,58 +125,49 @@ public final class SpawnerEfficiencyManager
         }
 
         if (total == 0)
-            return 100d;
+            return 1d;
 
         double ratio = (double) open / (double) total;
-        return clampScore(ratio * 100d);
+        return clamp01(ratio);
     }
 
-    private static double computeLightScore(World world, VolumeLimits limits)
+    private static double computeLightScore(World world, SpawnVolumeHelper.VolumeBounds bounds)
     {
         long total = 0;
-        double accumulated = 0d;
+        long zeroLightBlocks = 0;
         BlockPos.Mutable mutable = new BlockPos.Mutable();
 
-        for (int x = limits.minX; x <= limits.maxX; x++)
+        for (int x = bounds.minX(); x <= bounds.maxX(); x++)
         {
-            for (int y = limits.minY; y <= limits.maxY; y++)
+            for (int y = bounds.minY(); y <= bounds.maxY(); y++)
             {
-                for (int z = limits.minZ; z <= limits.maxZ; z++)
+                for (int z = bounds.minZ(); z <= bounds.maxZ(); z++)
                 {
                     mutable.set(x, y, z);
                     int blockLight = world.getLightLevel(LightType.BLOCK, mutable);
                     int skyLight = world.getLightLevel(LightType.SKY, mutable);
                     int combined = Math.min(15, Math.max(blockLight, skyLight));
-                    accumulated += 1d - (combined / 15d);
+                    if (combined <= 0)
+                        zeroLightBlocks++;
                     total++;
                 }
             }
         }
 
         if (total == 0)
-            return 100d;
+            return 1d;
 
-        double average = accumulated / (double) total;
-        return clampScore(average * 100d);
+        double ratio = (double) zeroLightBlocks / (double) total;
+        return clamp01(ratio);
     }
 
-    private record VolumeLimits(int minX, int maxX, int minY, int maxY, int minZ, int maxZ) {}
-
-    private static double clampScore(double value)
+    private static double clamp01(double value)
     {
-        return Math.max(0d, Math.min(100d, value));
+        return Math.max(0d, Math.min(1d, value));
     }
 
     public record EfficiencyResult(double overall, double volumeScore, double lightScore, double mobCapScore)
     {
-        public Map<String, Double> toBreakdown()
-        {
-            Map<String, Double> breakdown = new LinkedHashMap<>();
-            breakdown.put("volume", volumeScore);
-            breakdown.put("light", lightScore);
-            breakdown.put("mobCap", mobCapScore);
-            return breakdown;
-        }
     }
 
     public record MobCapStatus(int mobCount, int capLimit)
@@ -245,13 +207,15 @@ public final class SpawnerEfficiencyManager
     {
         MobCapStatus status = computeMobCapStatus(world, info);
         int mobCount = status.mobCount();
-        int cap = status.capLimit();
-        if (mobCount <= 1)
-            return 100d;
-        if (mobCount >= cap)
-            return 0d;
-        double score = 100d * (1d - ((mobCount - 1d) / (double) (cap - 1)));
-        return clampScore(score);
+        double excess = Math.max(mobCount - 2d, 0d);
+        double score = 1d - (excess / 4d);
+        return Math.max(0d, score);
+    }
+
+    public static String formatPercentage(double ratio)
+    {
+        double value = clamp01(ratio) * 100d;
+        return String.format(Locale.ROOT, "%.1f", value);
     }
 }
 

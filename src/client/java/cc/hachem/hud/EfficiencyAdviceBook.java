@@ -50,17 +50,17 @@ public final class EfficiencyAdviceBook
         summary = appendMetric(summary,
             "text.spawn_radar.efficiency_advisor.summary.efficiency",
             Formatting.GOLD,
-            Math.round(result.overall()));
+            SpawnerEfficiencyManager.formatPercentage(result.overall()));
 
         summary = appendMetric(summary,
             "text.spawn_radar.efficiency_advisor.summary.volume",
             Formatting.GRAY,
-            Math.round(result.volumeScore()));
+            SpawnerEfficiencyManager.formatPercentage(result.volumeScore()));
 
         summary = appendMetric(summary,
             "text.spawn_radar.efficiency_advisor.summary.light",
             Formatting.GRAY,
-            Math.round(result.lightScore()));
+            SpawnerEfficiencyManager.formatPercentage(result.lightScore()));
 
         if (mobCapStatus != null)
         {

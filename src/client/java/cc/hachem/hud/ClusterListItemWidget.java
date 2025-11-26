@@ -7,6 +7,7 @@ import cc.hachem.core.SpawnerCluster;
 import cc.hachem.core.SpawnerInfo;
 import cc.hachem.core.SpawnerEfficiencyManager;
 import cc.hachem.core.SpawnerMobCapStatusManager;
+import cc.hachem.core.SpawnerLightLevelManager;
 import cc.hachem.core.VolumeHighlightManager;
 import cc.hachem.renderer.ItemTextureRenderer;
 import cc.hachem.renderer.MobPuppetRenderer;
@@ -114,10 +115,12 @@ public class ClusterListItemWidget extends Widget
                 ButtonWidget mobCapToggle = createMobCapToggleButton(row);
                 ButtonWidget efficiencyToggle = createEfficiencyToggleButton(row);
                 ButtonWidget mobCapStatusToggle = createMobCapStatusToggleButton(row);
+                ButtonWidget lightLevelToggle = createLightLevelToggleButton(row);
                 row.setSpawnToggle(spawnToggle);
                 row.setMobCapToggle(mobCapToggle);
                 row.setEfficiencyToggle(efficiencyToggle);
                 row.setMobCapStatusToggle(mobCapStatusToggle);
+                row.setLightLevelToggle(lightLevelToggle);
                 syncToggleColors(row);
             }
             childRows.add(row);
@@ -369,6 +372,20 @@ public class ClusterListItemWidget extends Widget
         return holder[0];
     }
 
+    private ButtonWidget createLightLevelToggleButton(ChildRow row)
+    {
+        final ButtonWidget[] holder = new ButtonWidget[1];
+        holder[0] = new ButtonWidget(0, 0, "Show Light Levels", TOGGLE_INACTIVE_COLOR, () ->
+        {
+            if (!row.hoverActive())
+                return;
+            boolean enabled = SpawnerLightLevelManager.toggle(row.spawner().pos(), RadarClient.config.showSpawnerLightLevels);
+            holder[0].setColor(enabled ? Colors.YELLOW : TOGGLE_INACTIVE_COLOR);
+        });
+        holder[0].setDecorated(false);
+        return holder[0];
+    }
+
     private int toggleBlockWidth(ChildRow row)
     {
         if (!row.supportsVolumeToggles())
@@ -498,6 +515,11 @@ public class ClusterListItemWidget extends Widget
             boolean statusEnabled = SpawnerMobCapStatusManager.isEnabled(pos, RadarClient.config.showSpawnerMobCapStatus);
             row.mobCapStatusToggle().setColor(statusEnabled ? Colors.CYAN : TOGGLE_INACTIVE_COLOR);
         }
+        if (row.lightLevelToggle() != null)
+        {
+            boolean lightLevelsEnabled = SpawnerLightLevelManager.isEnabled(pos, RadarClient.config.showSpawnerLightLevels);
+            row.lightLevelToggle().setColor(lightLevelsEnabled ? Colors.YELLOW : TOGGLE_INACTIVE_COLOR);
+        }
     }
 
     private boolean isRowActive(ChildRow row)
@@ -559,6 +581,7 @@ public class ClusterListItemWidget extends Widget
         private ButtonWidget mobCapToggle;
         private ButtonWidget efficiencyToggle;
         private ButtonWidget mobCapStatusToggle;
+        private ButtonWidget lightLevelToggle;
         private boolean hoverActive;
         private int treeMinX;
         private int treeMaxX;
@@ -620,6 +643,11 @@ public class ClusterListItemWidget extends Widget
             this.mobCapStatusToggle = mobCapStatusToggle;
         }
 
+        void setLightLevelToggle(ButtonWidget lightLevelToggle)
+        {
+            this.lightLevelToggle = lightLevelToggle;
+        }
+
         ButtonWidget spawnToggle()
         {
             return spawnToggle;
@@ -640,6 +668,11 @@ public class ClusterListItemWidget extends Widget
             return mobCapStatusToggle;
         }
 
+        ButtonWidget lightLevelToggle()
+        {
+            return lightLevelToggle;
+        }
+
         List<ButtonWidget> activeToggles()
         {
             List<ButtonWidget> toggles = new ArrayList<>();
@@ -651,6 +684,8 @@ public class ClusterListItemWidget extends Widget
                 toggles.add(efficiencyToggle);
             if (mobCapStatusToggle != null)
                 toggles.add(mobCapStatusToggle);
+            if (lightLevelToggle != null)
+                toggles.add(lightLevelToggle);
             return toggles;
         }
 

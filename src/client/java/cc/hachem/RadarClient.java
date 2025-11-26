@@ -14,6 +14,7 @@ import cc.hachem.core.SpawnVolumeHelper;
 import cc.hachem.core.SpawnerEfficiencyAdvisor;
 import cc.hachem.core.SpawnerEfficiencyManager;
 import cc.hachem.core.SpawnerMobCapStatusManager;
+import cc.hachem.core.SpawnerLightLevelManager;
 import cc.hachem.core.VolumeHighlightManager;
 import cc.hachem.hud.HudRenderer;
 import cc.hachem.hud.PanelWidget;
@@ -28,7 +29,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import net.fabricmc.api.ClientModInitializer;
@@ -42,6 +42,8 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.LightType;
+import net.minecraft.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -285,6 +287,7 @@ public class RadarClient implements ClientModInitializer {
         VolumeHighlightManager.clear();
         SpawnerEfficiencyManager.clear();
         SpawnerMobCapStatusManager.clear();
+        SpawnerLightLevelManager.clear();
         MobPuppetRenderer.clearCache();
         ChunkProcessingManager.clear();
         PanelWidget.refresh();
@@ -398,6 +401,7 @@ public class RadarClient implements ClientModInitializer {
         boolean defaultMobCapVolume = config.showSpawnerMobCapVolume;
         boolean defaultEfficiencyLabel = config.showSpawnerEfficiencyLabel;
         boolean defaultMobCapStatus = config.showSpawnerMobCapStatus;
+        boolean defaultLightLevels = config.showSpawnerLightLevels;
         int outlineColor = config.spawnerOutlineColor;
         float outlineThickness = Math.max(
             0.05f,
@@ -460,9 +464,11 @@ public class RadarClient implements ClientModInitializer {
                 config.spawnerHighlightColor,
                 alpha
             );
+            renderLightLevelOverlay(context, info, defaultLightLevels);
             renderSpawnerLabel(context, info, defaultEfficiencyLabel, defaultMobCapStatus);
         }
         renderManualVolumes(context, defaultSpawnVolume, defaultMobCapVolume);
+        renderForcedLightLevelOverlays(context, defaultLightLevels, highlightedPositions);
         renderForcedEfficiencyLabels(context, defaultEfficiencyLabel, defaultMobCapStatus, highlightedPositions);
         renderForcedMobCapStatusLabels(context, defaultEfficiencyLabel, defaultMobCapStatus, highlightedPositions);
     }
@@ -485,7 +491,7 @@ public class RadarClient implements ClientModInitializer {
             if (result != null) {
                 efficiencyLabel = Text.translatable(
                     "text.spawn_radar.efficiency",
-                    String.format(Locale.ROOT, "%.0f", result.overall())
+                    SpawnerEfficiencyManager.formatPercentage(result.overall())
                 ).getString();
             }
         }
@@ -530,7 +536,7 @@ public class RadarClient implements ClientModInitializer {
             label.append("Cluster #").append(clusterId);
             Double avgEfficiency = efficiencyByCluster.get(clusterId);
             if (avgEfficiency != null)
-                label.append(" (Avg ").append(String.format(Locale.ROOT, "%.0f%%", avgEfficiency)).append(")");
+                label.append(" (Avg ").append(SpawnerEfficiencyManager.formatPercentage(avgEfficiency)).append("%)");
             if (i < ids.size() - 1) label.append("\n");
         }
         return label.toString();
@@ -642,6 +648,23 @@ public class RadarClient implements ClientModInitializer {
         }
     }
 
+    private void renderForcedLightLevelOverlays(
+        WorldRenderContext context,
+        boolean defaultLightLevels,
+        Set<BlockPos> highlightedPositions
+    ) {
+        if (defaultLightLevels)
+            return;
+
+        for (BlockPos pos : SpawnerLightLevelManager.getForcedShows()) {
+            if (highlightedPositions.contains(pos))
+                continue;
+            SpawnerInfo info = resolveSpawner(pos);
+            if (info != null)
+                renderLightLevelOverlay(context, info, false);
+        }
+    }
+
     private void renderForcedEfficiencyLabels(
         WorldRenderContext context,
         boolean defaultEfficiencyLabel,
@@ -717,6 +740,59 @@ public class RadarClient implements ClientModInitializer {
             alpha,
             thickness
         );
+    }
+
+    private void renderLightLevelOverlay(WorldRenderContext context, SpawnerInfo info, boolean defaultLightLevels) {
+        if (!SpawnerLightLevelManager.isEnabled(info.pos(), defaultLightLevels))
+            return;
+
+        MinecraftClient client = MinecraftClient.getInstance();
+        World world = client.world;
+        if (world == null)
+            return;
+
+        SpawnVolumeHelper.SpawnVolume volume = SpawnVolumeHelper.compute(info);
+        if (volume == null)
+            return;
+
+        SpawnVolumeHelper.VolumeBounds bounds = SpawnVolumeHelper.computeBlockBounds(world, volume);
+        if (bounds == null)
+            return;
+
+        BlockPos.Mutable mutable = new BlockPos.Mutable();
+        for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
+            for (int y = bounds.minY(); y <= bounds.maxY(); y++) {
+                for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
+                    mutable.set(x, y, z);
+                    int lightLevel = computeCombinedLightLevel(world, mutable);
+                    int color = selectLightLevelColor(lightLevel);
+                    FloatingTextRenderer.render(
+                        context,
+                        mutable,
+                        Integer.toString(lightLevel),
+                        0.0125f,
+                        color,
+                        0.5f,
+                        0.55f,
+                        0.5f
+                    );
+                }
+            }
+        }
+    }
+
+    private static int computeCombinedLightLevel(World world, BlockPos pos) {
+        int blockLight = world.getLightLevel(LightType.BLOCK, pos);
+        int skyLight = world.getLightLevel(LightType.SKY, pos);
+        return Math.min(15, Math.max(blockLight, skyLight));
+    }
+
+    private static int selectLightLevelColor(int lightLevel) {
+        if (lightLevel <= 0)
+            return 0xFF4CAF50;
+        if (lightLevel <= 7)
+            return 0xFFFFC107;
+        return 0xFFF44336;
     }
 
     private static float clamp01(float value) {

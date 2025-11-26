@@ -30,12 +30,14 @@ public class ConfigScreen
         ConfigCategory rendering = builder.getOrCreateCategory(text("option.spawn_radar.category.rendering"));
         ConfigCategory hud = builder.getOrCreateCategory(text("option.spawn_radar.category.hud"));
         ConfigCategory colors = builder.getOrCreateCategory(text("option.spawn_radar.colors"));
+        ConfigCategory debug = builder.getOrCreateCategory(text("option.spawn_radar.category.debug"));
 
         addGeneralEntries(general, entries);
         addScanningEntries(scanning, entries);
         addRenderingEntries(rendering, entries);
         addHudEntries(hud, entries);
         addColorEntries(colors, entries);
+        addDebugEntries(debug, entries);
 
         return builder.build();
     }
@@ -394,6 +396,19 @@ public class ConfigScreen
             .setSaveConsumer(value -> config.regionHighlightOpacity = value)
             .setDefaultValue(ConfigManager.DEFAULT.regionHighlightOpacity)
             .setTextGetter(value -> Text.of(value + "%"))
+            .build());
+    }
+
+    private static void addDebugEntries(ConfigCategory debug, ConfigEntryBuilder entries)
+    {
+        var config = RadarClient.config;
+
+        debug.addEntry(entries.startBooleanToggle(
+                text("option.spawn_radar.show_light_levels"),
+                config.showSpawnerLightLevels)
+            .setSaveConsumer(value -> config.showSpawnerLightLevels = value)
+            .setDefaultValue(ConfigManager.DEFAULT.showSpawnerLightLevels)
+            .setTooltip(text("option.spawn_radar.show_light_levels.tooltip"))
             .build());
     }
 
