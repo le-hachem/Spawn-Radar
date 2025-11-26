@@ -67,6 +67,7 @@ public class ConfigManager
     public boolean showSpawnerEfficiencyLabel = false;
     public boolean showSpawnerMobCapStatus = false;
     public boolean showSpawnerLightLevels = false;
+    public boolean useDualPageBookUi = true;
     public int mobCapVolumeColor = 0xFFAA00;
     public int mobCapVolumeOpacity = 25;
     public int spawnerOutlineColor = 0xFFFFFF;

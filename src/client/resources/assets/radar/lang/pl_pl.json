@@ -54,6 +54,8 @@
   "option.spawn_radar.mob_cap_volume_opacity": "Przezroczystość objętości limitu mobów",
   "option.spawn_radar.show_light_levels": "Show spawn volume light levels",
   "option.spawn_radar.show_light_levels.tooltip": "Render floating numbers for the combined light level at every block inside the spawn volume. Useful for debugging spawn-proofing.",
+  "option.spawn_radar.use_dual_page_book": "Użyj interfejsu księgi z dwiema stronami",
+  "option.spawn_radar.use_dual_page_book.tooltip": "Przełączaj między niestandardowym podglądem dwóch stron a standardową książką Minecrafta.",
   "option.spawn_radar.colors": "Opcje kolorów",
   "option.spawn_radar.spawner_color": "Kolor podświetlenia spawnerów",
   "option.spawn_radar.outline_color": "Kolor konturu spawnerów",

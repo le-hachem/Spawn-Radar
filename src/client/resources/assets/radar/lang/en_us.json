@@ -56,6 +56,8 @@
   "option.spawn_radar.mob_cap_volume_opacity": "Mob-cap volume opacity",
   "option.spawn_radar.show_light_levels": "Show spawn volume light levels",
   "option.spawn_radar.show_light_levels.tooltip": "Render floating numbers for the combined light level at every block inside the spawn volume. Useful for debugging spawn-proofing.",
+  "option.spawn_radar.use_dual_page_book": "Use dual-page book UI",
+  "option.spawn_radar.use_dual_page_book.tooltip": "Toggle between the custom dual-page reader and the vanilla book screen.",
   "option.spawn_radar.colors": "Color Options",
   "option.spawn_radar.spawner_color": "Spawner highlight color",
   "option.spawn_radar.outline_color": "Spawner outline color",

@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"id": "spawn-radar",
-	"version": "1.4_beta4",
+	"version": "1.4_beta5",
 	"name": "Spawn Radar",
 	"description": "A mod designed to locate spawners.",
 	"authors": [

@@ -1,5 +1,6 @@
 package cc.hachem.hud;
 
+import cc.hachem.RadarClient;
 import cc.hachem.core.SpawnerEfficiencyManager;
 import cc.hachem.core.SpawnerInfo;
 import net.minecraft.client.MinecraftClient;
@@ -35,7 +36,8 @@ public final class EfficiencyAdviceBook
         if (pages.isEmpty())
             return;
 
-        client.setScreen(new BookScreen(new BookScreen.Contents(pages)));
+        Text title = Text.translatable("text.spawn_radar.efficiency_advisor.summary.title");
+        openBook(client, title, pages);
     }
 
     private static Text buildSummaryPage(SpawnerInfo info,
@@ -86,6 +88,19 @@ public final class EfficiencyAdviceBook
         return base
             .append(Text.literal("\n"))
             .append(Text.translatable(translationKey, args).formatted(color));
+    }
+
+    private static void openBook(MinecraftClient client, Text title, List<Text> pages)
+    {
+        boolean useDual = RadarClient.config == null || RadarClient.config.useDualPageBookUi;
+        if (useDual)
+        {
+            client.setScreen(new DualPageBookScreen(title, pages));
+        }
+        else
+        {
+            client.setScreen(new BookScreen(new BookScreen.Contents(pages)));
+        }
     }
 }
 

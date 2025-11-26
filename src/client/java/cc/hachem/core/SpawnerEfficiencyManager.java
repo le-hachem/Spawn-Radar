@@ -79,7 +79,7 @@ public final class SpawnerEfficiencyManager
         double volumeScore = computeVolumeScore(world, bounds, info.pos());
         double lightScore = computeLightScore(world, bounds);
         double mobCapScore = computeMobCapPenalty(world, info);
-        
+
         double overall = volumeScore * lightScore * mobCapScore;
         return new EfficiencyResult(overall, volumeScore, lightScore, mobCapScore);
     }

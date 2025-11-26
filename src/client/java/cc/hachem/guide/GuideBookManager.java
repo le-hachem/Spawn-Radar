@@ -8,6 +8,7 @@ import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
+import cc.hachem.hud.DualPageBookScreen;
 
 import java.io.InputStream;
 import java.util.List;
@@ -30,7 +31,7 @@ public final class GuideBookManager
                 return;
             if (client == null || client.isPaused())
                 return;
-            client.setScreen(new BookScreen(new BookScreen.Contents(getGuidePages())));
+            openGuideScreen(client);
         });
     }
 
@@ -93,6 +94,17 @@ public final class GuideBookManager
             .append(Text.literal("\n\nGuide data could not be loaded.\nAdd an assets/radar/guide/<lang>.txt file or reinstall the mod.")
                 .formatted(Formatting.GRAY));
         return List.of(fallback);
+    }
+
+    private static void openGuideScreen(MinecraftClient client)
+    {
+        List<Text> pages = getGuidePages();
+        Text title = Text.literal("Spawn Radar Guide");
+        boolean useDual = RadarClient.config == null || RadarClient.config.useDualPageBookUi;
+        if (useDual)
+            client.setScreen(new DualPageBookScreen(title, pages));
+        else
+            client.setScreen(new BookScreen(new BookScreen.Contents(pages)));
     }
 }
 

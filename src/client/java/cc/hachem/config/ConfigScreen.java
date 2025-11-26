@@ -410,6 +410,14 @@ public class ConfigScreen
             .setDefaultValue(ConfigManager.DEFAULT.showSpawnerLightLevels)
             .setTooltip(text("option.spawn_radar.show_light_levels.tooltip"))
             .build());
+
+        debug.addEntry(entries.startBooleanToggle(
+                text("option.spawn_radar.use_dual_page_book"),
+                config.useDualPageBookUi)
+            .setSaveConsumer(value -> config.useDualPageBookUi = value)
+            .setDefaultValue(ConfigManager.DEFAULT.useDualPageBookUi)
+            .setTooltip(text("option.spawn_radar.use_dual_page_book.tooltip"))
+            .build());
     }
 
     private static Text text(String key)
