@@ -73,7 +73,7 @@ public final class SpawnerEfficiencyAdvisor
         if (!isPerfect(result.lightScore()))
         {
             fixes.add(new EfficiencyAdviceBook.EfficiencyAdviceEntry(
-                Text.translatable("text.spawn_radar.efficiency_advisor.light.title").formatted(Formatting.YELLOW, Formatting.BOLD),
+                Text.translatable("text.spawn_radar.efficiency_advisor.light.title").formatted(Formatting.LIGHT_PURPLE, Formatting.BOLD),
                 Text.translatable(
                     "text.spawn_radar.efficiency_advisor.light.detail",
                     SpawnerEfficiencyManager.formatPercentage(result.lightScore())
@@ -86,7 +86,7 @@ public final class SpawnerEfficiencyAdvisor
 
     private static boolean isPerfect(double score)
     {
-        return score >= 0.999d;
+        return score >= 0.995d;
     }
 
     private static EfficiencyAdviceBook.EfficiencyAdviceEntry buildMobCapEntry(SpawnerEfficiencyManager.MobCapStatus status)
