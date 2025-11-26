@@ -38,17 +38,15 @@ public final class SpawnerEfficiencyAdvisor
             if (result == null)
                 return ActionResult.PASS;
 
+            if (result.overall() == 1d)
+                {
+                    player.sendMessage(Text.translatable("text.spawn_radar.efficiency_advisor.optimal"), false);
+                    return ActionResult.PASS;
+                }
+                
             var mobCapStatus = SpawnerEfficiencyManager.computeMobCapStatus(world, info);
-            boolean mobCapIssue = result.mobCapScore() < 1d;
-
-            if (isPerfect(result.overall()) && !mobCapIssue)
-            {
-                player.sendMessage(Text.translatable("text.spawn_radar.efficiency_advisor.optimal"), false);
-                return ActionResult.PASS;
-            }
-
             List<EfficiencyAdviceBook.EfficiencyAdviceEntry> adviceEntries = buildAdviceEntries(result, mobCapStatus);
-            if (adviceEntries.isEmpty() && !mobCapIssue)
+            if (adviceEntries.isEmpty())
                 return ActionResult.PASS;
 
             EfficiencyAdviceBook.open(info, result, mobCapStatus, adviceEntries);
@@ -58,10 +56,10 @@ public final class SpawnerEfficiencyAdvisor
     }
 
     private static List<EfficiencyAdviceBook.EfficiencyAdviceEntry> buildAdviceEntries(SpawnerEfficiencyManager.EfficiencyResult result,
-                                                                  SpawnerEfficiencyManager.MobCapStatus mobCapStatus)
+                                                                                       SpawnerEfficiencyManager.MobCapStatus mobCapStatus)
     {
         List<EfficiencyAdviceBook.EfficiencyAdviceEntry> fixes = new ArrayList<>();
-        if (!isPerfect(result.volumeScore()))
+        if (result.volumeScore() < 1d)
         {
             fixes.add(new EfficiencyAdviceBook.EfficiencyAdviceEntry(
                 Text.translatable("text.spawn_radar.efficiency_advisor.volume.title").formatted(Formatting.GOLD, Formatting.BOLD),
@@ -70,7 +68,7 @@ public final class SpawnerEfficiencyAdvisor
                     SpawnerEfficiencyManager.formatPercentage(result.volumeScore())
                 ).formatted(Formatting.GRAY)));
         }
-        if (!isPerfect(result.lightScore()))
+        if (result.lightScore() < 1d)
         {
             fixes.add(new EfficiencyAdviceBook.EfficiencyAdviceEntry(
                 Text.translatable("text.spawn_radar.efficiency_advisor.light.title").formatted(Formatting.LIGHT_PURPLE, Formatting.BOLD),
@@ -79,14 +77,9 @@ public final class SpawnerEfficiencyAdvisor
                     SpawnerEfficiencyManager.formatPercentage(result.lightScore())
                 ).formatted(Formatting.GRAY)));
         }
-        if (mobCapStatus != null && result.mobCapScore() < 1d)
+        if (mobCapStatus != null && mobCapStatus.mobCount() > 2)
             fixes.add(buildMobCapEntry(mobCapStatus));
         return fixes;
-    }
-
-    private static boolean isPerfect(double score)
-    {
-        return score >= 0.995d;
     }
 
     private static EfficiencyAdviceBook.EfficiencyAdviceEntry buildMobCapEntry(SpawnerEfficiencyManager.MobCapStatus status)
