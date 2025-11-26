@@ -7,6 +7,9 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gl.RenderPipelines;
+import net.minecraft.client.sound.PositionedSoundInstance;
+import net.minecraft.client.sound.SoundManager;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -62,11 +65,13 @@ public class DualPageBookScreen extends Screen
         prevButton = addDrawableChild(new PageArrowButton(leftButtonX, buttonY, false, this::goPrevious));
         nextButton = addDrawableChild(new PageArrowButton(rightButtonX, buttonY, true, this::goNext));
 
-        ButtonWidget doneButton = ButtonWidget.builder(Text.translatable("gui.done"), button -> close())
+        ButtonWidget doneButton = ButtonWidget.builder(Text.translatable("gui.done"), button ->
+            {
+                close();
+            })
             .dimensions(bookX + BOOK_WIDTH / 2 - 40, bookY + BOOK_HEIGHT + 8, 80, 20)
             .build();
         addDrawableChild(doneButton);
-
         updateButtonState();
     }
 
@@ -169,7 +174,21 @@ public class DualPageBookScreen extends Screen
             return Text.empty();
         return pages.get(index);
     }
-    private static class PageArrowButton extends ButtonWidget
+
+    private static class SoundlessButton extends ButtonWidget
+    {
+        SoundlessButton(int x, int y, int width, int height, Text label, Runnable action)
+        {
+            super(x, y, width, height, label, button -> action.run(), DEFAULT_NARRATION_SUPPLIER);
+        }
+
+        @Override
+        public void playDownSound(SoundManager soundManager)
+        {
+        }
+    }
+
+    private static class PageArrowButton extends SoundlessButton
     {
         private static final int WIDTH = 23;
         private static final int HEIGHT = 13;
@@ -179,10 +198,13 @@ public class DualPageBookScreen extends Screen
         private static final Identifier BACK_HIGHLIGHTED = Identifier.ofVanilla("textures/gui/sprites/widget/page_backward_highlighted.png");
 
         private final boolean forward;
-
         PageArrowButton(int x, int y, boolean forward, Runnable action)
         {
-            super(x, y, WIDTH, HEIGHT, Text.empty(), button -> action.run(), DEFAULT_NARRATION_SUPPLIER);
+            super(x, y, WIDTH, HEIGHT, Text.empty(), () ->
+            {
+                action.run();
+                playPageSound();
+            });
             this.forward = forward;
         }
 
@@ -200,6 +222,13 @@ public class DualPageBookScreen extends Screen
             context.drawTexture(RenderPipelines.GUI_TEXTURED, texture, getX(), getY(),
                 0, 0, WIDTH, HEIGHT, WIDTH, HEIGHT);
         }
+    }
+
+    private static void playPageSound()
+    {
+        var client = MinecraftClient.getInstance();
+        if (client != null)
+            client.getSoundManager().play(PositionedSoundInstance.master(SoundEvents.ITEM_BOOK_PAGE_TURN, 1.0f));
     }
 }
 
