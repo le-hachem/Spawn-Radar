@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"id": "spawn-radar",
-	"version": "1.4_beta5",
+	"version": "1.4_beta6",
 	"name": "Spawn Radar",
 	"description": "A mod designed to locate spawners.",
 	"authors": [
@@ -15,13 +15,9 @@
 	"icon": "assets/radar/icon.png",
 	"environment": "*",
 	"entrypoints": {
-		"modmenu": [ "cc.hachem.config.ModMenuIntegration" ],
-		"client": [
-			"cc.hachem.RadarClient"
-		],
-      "main": [
-        "cc.hachem.RadarMod"
-      ]
+		"modmenu": [ "cc.hachem.spawnradar.config.ModMenuIntegration" ],
+		"client": [ "cc.hachem.spawnradar.RadarClient" ],
+        "main": [ "cc.hachem.spawnradar.RadarMod" ]
     },
 	"mixins": [
 		{
@@ -35,6 +31,5 @@
 		"java": ">=21",
 		"fabric-api": "*"
 	},
-	"suggests": {
-	}
+	"suggests": { }
 }
