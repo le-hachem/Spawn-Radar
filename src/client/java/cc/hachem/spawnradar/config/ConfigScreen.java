@@ -9,8 +9,8 @@ import cc.hachem.spawnradar.hud.PanelWidget;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 
 public class ConfigScreen
 {
@@ -58,7 +58,7 @@ public class ConfigScreen
                 text("option.spawn_radar.scan_thread_count"),
                 config.scanThreadCount,
                 1, 16)
-            .setTextGetter(value -> Text.of(String.valueOf(normalizeThreadCountInput(value))))
+            .setTextGetter(value -> Component.nullToEmpty(String.valueOf(normalizeThreadCountInput(value))))
             .setSaveConsumer(value ->
             {
                 config.scanThreadCount = normalizeThreadCountInput(value);
@@ -81,7 +81,7 @@ public class ConfigScreen
                 text("option.spawn_radar.default_cluster_sort_type"),
                 SpawnerCluster.SortType.class,
                 config.defaultSortType)
-            .setEnumNameProvider(e -> Text.translatable(e.toString()))
+            .setEnumNameProvider(e -> Component.translatable(e.toString()))
             .setDefaultValue(ConfigManager.DEFAULT.defaultSortType)
             .setSaveConsumer(value -> config.defaultSortType = value)
             .setTooltip(text("option.spawn_radar.default_cluster_sort_type.tooltip"))
@@ -92,7 +92,7 @@ public class ConfigScreen
                 text("option.spawn_radar.cluster_proximity_sort_order"),
                 ConfigManager.SortOrder.class,
                 config.clusterProximitySortOrder)
-            .setEnumNameProvider(e -> Text.translatable(e.toString()))
+            .setEnumNameProvider(e -> Component.translatable(e.toString()))
             .setDefaultValue(ConfigManager.DEFAULT.clusterProximitySortOrder)
             .setSaveConsumer(value -> config.clusterProximitySortOrder = value)
             .setTooltip(text("option.spawn_radar.cluster_proximity_sort_order.tooltip"))
@@ -103,7 +103,7 @@ public class ConfigScreen
                 text("option.spawn_radar.cluster_size_sort_order"),
                 ConfigManager.SortOrder.class,
                 config.clusterSizeSortOrder)
-            .setEnumNameProvider(e -> Text.translatable(e.toString()))
+            .setEnumNameProvider(e -> Component.translatable(e.toString()))
             .setDefaultValue(ConfigManager.DEFAULT.clusterSizeSortOrder)
             .setSaveConsumer(value -> config.clusterSizeSortOrder = value)
             .setTooltip(text("option.spawn_radar.cluster_size_sort_order.tooltip"))
@@ -219,7 +219,7 @@ public class ConfigScreen
                 0,
                 100)
             .setDefaultValue((int) (ConfigManager.DEFAULT.verticalPanelOffset * 100))
-            .setTextGetter(value -> Text.of(value + "%"))
+            .setTextGetter(value -> Component.nullToEmpty(value + "%"))
             .setSaveConsumer(value ->
             {
                 config.verticalPanelOffset = value / 100f;
@@ -233,7 +233,7 @@ public class ConfigScreen
                 text("option.spawn_radar.panel_horizontal_alignment"),
                 ConfigManager.HudHorizontalAlignment.class,
                 config.panelHorizontalAlignment)
-            .setEnumNameProvider(e -> Text.translatable(e.toString()))
+            .setEnumNameProvider(e -> Component.translatable(e.toString()))
             .setDefaultValue(ConfigManager.DEFAULT.panelHorizontalAlignment)
             .setSaveConsumer(value ->
             {
@@ -248,7 +248,7 @@ public class ConfigScreen
                 text("option.spawn_radar.spawner_icon_mode"),
                 ConfigManager.SpawnerIconMode.class,
                 config.spawnerIconMode)
-            .setEnumNameProvider(e -> Text.translatable(e.toString()))
+            .setEnumNameProvider(e -> Component.translatable(e.toString()))
             .setDefaultValue(ConfigManager.DEFAULT.spawnerIconMode)
             .setTooltip(text("option.spawn_radar.spawner_icon_mode.tooltip"))
             .setSaveConsumer(value ->
@@ -317,7 +317,7 @@ public class ConfigScreen
                 64)
             .setSaveConsumer(value -> config.backgroundClusterProximity = clampBackgroundProximity(value))
             .setDefaultValue(defaultProximity)
-            .setTextGetter(value -> Text.translatable("option.spawn_radar.background_proximity.value", value))
+            .setTextGetter(value -> Component.translatable("option.spawn_radar.background_proximity.value", value))
             .setTooltip(text("option.spawn_radar.background_proximity.tooltip"))
             .build());
     }
@@ -358,7 +358,7 @@ public class ConfigScreen
                 100)
             .setSaveConsumer(value -> config.spawnVolumeOpacity = value)
             .setDefaultValue(ConfigManager.DEFAULT.spawnVolumeOpacity)
-            .setTextGetter(value -> Text.of(value + "%"))
+            .setTextGetter(value -> Component.nullToEmpty(value + "%"))
             .build());
 
         colors.addEntry(entries
@@ -377,7 +377,7 @@ public class ConfigScreen
                 100)
             .setSaveConsumer(value -> config.mobCapVolumeOpacity = value)
             .setDefaultValue(ConfigManager.DEFAULT.mobCapVolumeOpacity)
-            .setTextGetter(value -> Text.of(value + "%"))
+            .setTextGetter(value -> Component.nullToEmpty(value + "%"))
             .build());
 
         for (int i = 0; i < config.clusterColors.size(); i++)
@@ -398,7 +398,7 @@ public class ConfigScreen
                 100)
             .setSaveConsumer(value -> config.spawnerHighlightOpacity = value)
             .setDefaultValue(ConfigManager.DEFAULT.spawnerHighlightOpacity)
-            .setTextGetter(value -> Text.of(value + "%"))
+            .setTextGetter(value -> Component.nullToEmpty(value + "%"))
             .build());
 
         colors.addEntry(entries
@@ -409,7 +409,7 @@ public class ConfigScreen
                 100)
             .setSaveConsumer(value -> config.regionHighlightOpacity = value)
             .setDefaultValue(ConfigManager.DEFAULT.regionHighlightOpacity)
-            .setTextGetter(value -> Text.of(value + "%"))
+            .setTextGetter(value -> Component.nullToEmpty(value + "%"))
             .build());
     }
 
@@ -426,9 +426,9 @@ public class ConfigScreen
             .build());
     }
 
-    private static Text text(String key)
+    private static Component text(String key)
     {
-        return Text.translatable(key);
+        return Component.translatable(key);
     }
 
     private static int clampBackgroundProximity(int value)

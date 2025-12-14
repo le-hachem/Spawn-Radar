@@ -1,23 +1,12 @@
 package cc.hachem.spawnradar.core;
 
 import cc.hachem.spawnradar.RadarClient;
-import cc.hachem.spawnradar.config.ConfigManager;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.entity.MobSpawnerBlockEntity;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-
-import java.util.ArrayList;
+import cc.hachem.spawnradar.config.ConfigManager;import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;import net.minecraft.client.Minecraft;import net.minecraft.client.player.LocalPlayer;import net.minecraft.core.BlockPos;import net.minecraft.network.chat.Component;import net.minecraft.world.entity.Entity;import net.minecraft.world.entity.EntityType;import net.minecraft.world.level.Level;import net.minecraft.world.level.block.Blocks;import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
 
 public class BlockBank
 {
@@ -26,18 +15,18 @@ public class BlockBank
 
     private BlockBank() {}
 
-    public static void scanForSpawners(ClientPlayerEntity player, int chunkRadius, Runnable callback)
+    public static void scanForSpawners(LocalPlayer player, int chunkRadius, Runnable callback)
     {
         RadarClient.reset(player);
-        player.sendMessage(Text.translatable("chat.spawn_radar.searching"), false);
+        player.displayClientMessage(Component.translatable("chat.spawn_radar.searching"), false);
 
         new Thread(() -> performScan(player, chunkRadius, callback)).start();
     }
 
-    private static void performScan(ClientPlayerEntity player, int chunkRadius, Runnable callback)
+    private static void performScan(LocalPlayer player, int chunkRadius, Runnable callback)
     {
         long startTime = System.currentTimeMillis();
-        BlockPos playerPos = player.getBlockPos();
+        BlockPos playerPos = player.blockPosition();
         int playerChunkX = playerPos.getX() >> 4;
         int playerChunkZ = playerPos.getZ() >> 4;
 
@@ -50,10 +39,10 @@ public class BlockBank
         long elapsed = System.currentTimeMillis() - startTime;
         RadarClient.LOGGER.info("Spawner scan completed in {} ms. Found {} spawners.", elapsed, spawnersFound);
 
-        MinecraftClient.getInstance().execute(() -> notifyPlayer(player, callback, spawnersFound));
+        Minecraft.getInstance().execute(() -> notifyPlayer(player, callback, spawnersFound));
     }
 
-    private static List<Thread> startWorkers(ClientPlayerEntity player, int chunkRadius,
+    private static List<Thread> startWorkers(LocalPlayer player, int chunkRadius,
                                              int playerChunkX, int playerChunkZ,
                                              List<SpawnerInfo> foundSpawners)
     {
@@ -94,23 +83,23 @@ public class BlockBank
         }
     }
 
-    private static void notifyPlayer(ClientPlayerEntity player, Runnable callback, int spawnersFound)
+    private static void notifyPlayer(LocalPlayer player, Runnable callback, int spawnersFound)
     {
         markManualDataReady();
         if (spawnersFound == 0)
-            player.sendMessage(Text.translatable("chat.spawn_radar.none"), false);
+            player.displayClientMessage(Component.translatable("chat.spawn_radar.none"), false);
         else
-            player.sendMessage(Text.translatable("chat.spawn_radar.found", spawnersFound), false);
+            player.displayClientMessage(Component.translatable("chat.spawn_radar.found", spawnersFound), false);
 
         if (callback != null)
             callback.run();
     }
 
-    private static void scanChunkBatch(ClientPlayerEntity player, List<ChunkOffset> offsets,
+    private static void scanChunkBatch(LocalPlayer player, List<ChunkOffset> offsets,
                                        int playerChunkX, int playerChunkZ,
                                        List<SpawnerInfo> foundSpawners)
     {
-        var world = player.getEntityWorld();
+        var world = player.level();
         RadarClient.LOGGER.debug("{} scanning {} chunk offsets.", Thread.currentThread().getName(), offsets.size());
         for (ChunkOffset offset : offsets)
             scanChunk(world, playerChunkX + offset.dx(), playerChunkZ + offset.dz(), foundSpawners);
@@ -151,15 +140,15 @@ public class BlockBank
         return batches;
     }
 
-    private static void scanChunk(World world, int chunkX, int chunkZ, List<SpawnerInfo> foundSpawners)
+    private static void scanChunk(Level world, int chunkX, int chunkZ, List<SpawnerInfo> foundSpawners)
     {
-        if (!world.isChunkLoaded(chunkX, chunkZ))
+        if (!world.hasChunk(chunkX, chunkZ))
             return;
 
         int baseX = chunkX << 4;
         int baseZ = chunkZ << 4;
 
-        int minY = world.getBottomY();
+        int minY = world.getMinY();
         int maxY = world.getHeight();
 
         for (int y = minY; y < maxY; y++)
@@ -167,7 +156,7 @@ public class BlockBank
                 for (int z = 0; z < 16; z++)
                 {
                     BlockPos pos = new BlockPos(baseX + x, y, baseZ + z);
-                    if (world.getBlockState(pos).isOf(Blocks.SPAWNER))
+                    if (world.getBlockState(pos).is(Blocks.SPAWNER))
                     {
                         SpawnerInfo info = createSpawnerInfo(world, pos);
                         foundSpawners.add(info);
@@ -244,13 +233,13 @@ public class BlockBank
         return -1;
     }
 
-    public static SpawnerInfo createSpawnerInfo(World world, BlockPos pos)
+    public static SpawnerInfo createSpawnerInfo(Level world, BlockPos pos)
     {
         EntityType<?> entityType = null;
         try
         {
             var blockEntity = world.getBlockEntity(pos);
-            if (blockEntity instanceof MobSpawnerBlockEntity mobSpawner)
+            if (blockEntity instanceof SpawnerBlockEntity mobSpawner)
                 entityType = resolveSpawnerEntityType(world, pos, mobSpawner);
         }
         catch (Exception e)
@@ -309,9 +298,9 @@ public class BlockBank
         return result;
     }
 
-    private static EntityType<?> resolveSpawnerEntityType(World world, BlockPos pos, MobSpawnerBlockEntity mobSpawner)
+    private static EntityType<?> resolveSpawnerEntityType(Level world, BlockPos pos, SpawnerBlockEntity mobSpawner)
     {
-        Entity renderedEntity = mobSpawner.getLogic().getRenderedEntity(world, pos);
+        Entity renderedEntity = mobSpawner.getSpawner().getOrCreateDisplayEntity(world, pos);
         return renderedEntity != null ? renderedEntity.getType() : null;
     }
 }

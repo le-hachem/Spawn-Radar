@@ -1,10 +1,6 @@
 package cc.hachem.spawnradar.core;
 
-import net.minecraft.entity.EntityDimensions;
-import net.minecraft.entity.EntityType;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;import net.minecraft.util.Mth;import net.minecraft.world.entity.EntityDimensions;import net.minecraft.world.entity.EntityType;import net.minecraft.world.level.Level;
 
 public final class SpawnVolumeHelper
 {
@@ -70,22 +66,22 @@ public final class SpawnVolumeHelper
         }
     }
 
-    public static VolumeBounds computeBlockBounds(World world, SpawnVolume volume)
+    public static VolumeBounds computeBlockBounds(Level world, SpawnVolume volume)
     {
         if (world == null || volume == null)
             return null;
 
-        int minX = MathHelper.floor(volume.originX());
-        int minY = MathHelper.floor(volume.originY());
-        int minZ = MathHelper.floor(volume.originZ());
-        int maxX = MathHelper.floor(volume.maxX() - 1e-3);
-        int maxY = MathHelper.floor(volume.maxY() - 1e-3);
-        int maxZ = MathHelper.floor(volume.maxZ() - 1e-3);
+        int minX = Mth.floor(volume.originX());
+        int minY = Mth.floor(volume.originY());
+        int minZ = Mth.floor(volume.originZ());
+        int maxX = Mth.floor(volume.maxX() - 1e-3);
+        int maxY = Mth.floor(volume.maxY() - 1e-3);
+        int maxZ = Mth.floor(volume.maxZ() - 1e-3);
 
         if (maxX < minX || maxY < minY || maxZ < minZ)
             return null;
 
-        int worldBottom = world.getBottomY();
+        int worldBottom = world.getMinY();
         int worldTop = world.getHeight() - 1;
         minY = Math.max(worldBottom, minY);
         maxY = Math.min(worldTop, maxY);

@@ -2,20 +2,7 @@ package cc.hachem.spawnradar.core;
 
 import cc.hachem.spawnradar.RadarClient;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientChunkEvents;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.block.entity.MobSpawnerBlockEntity;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.chunk.ChunkStatus;
-import net.minecraft.world.chunk.WorldChunk;
-
-import java.util.ArrayList;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;import net.minecraft.ChatFormatting;import net.minecraft.client.Minecraft;import net.minecraft.client.multiplayer.ClientLevel;import net.minecraft.client.player.LocalPlayer;import net.minecraft.core.BlockPos;import net.minecraft.network.chat.Component;import net.minecraft.network.chat.MutableComponent;import net.minecraft.world.level.ChunkPos;import net.minecraft.world.level.block.entity.SpawnerBlockEntity;import net.minecraft.world.level.chunk.LevelChunk;import net.minecraft.world.level.chunk.status.ChunkStatus;import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -49,13 +36,13 @@ public final class ChunkProcessingManager
                 lastViewDistance = -1;
                 return;
             }
-            ClientPlayerEntity player = client.player;
-            ClientWorld world = client.world;
+            LocalPlayer player = client.player;
+            ClientLevel world = client.level;
             if (player == null || world == null)
                 return;
-            int chunkX = player.getChunkPos().x;
-            int chunkZ = player.getChunkPos().z;
-            int view = client.options.getViewDistance().getValue();
+            int chunkX = player.chunkPosition().x;
+            int chunkZ = player.chunkPosition().z;
+            int view = client.options.renderDistance().get();
             if (chunkX != lastChunkX || chunkZ != lastChunkZ || view != lastViewDistance)
             {
                 processLoadedChunks(world);
@@ -77,19 +64,19 @@ public final class ChunkProcessingManager
         lastViewDistance = -1;
     }
 
-    public static void processLoadedChunks(ClientWorld world)
+    public static void processLoadedChunks(ClientLevel world)
     {
         if (shouldNotProcess() || world == null)
             return;
-        MinecraftClient client = MinecraftClient.getInstance();
-        ClientPlayerEntity player = client.player;
+        Minecraft client = Minecraft.getInstance();
+        LocalPlayer player = client.player;
         if (player == null)
             return;
 
-        int viewDistance = client.options.getViewDistance().getValue();
-        int centerChunkX = player.getChunkPos().x;
-        int centerChunkZ = player.getChunkPos().z;
-        var chunkManager = world.getChunkManager();
+        int viewDistance = client.options.renderDistance().get();
+        int centerChunkX = player.chunkPosition().x;
+        int centerChunkZ = player.chunkPosition().z;
+        var chunkManager = world.getChunkSource();
 
         Set<Long> desired = new HashSet<>();
         for (int dx = -viewDistance; dx <= viewDistance; dx++)
@@ -97,11 +84,11 @@ public final class ChunkProcessingManager
             {
                 int chunkX = centerChunkX + dx;
                 int chunkZ = centerChunkZ + dz;
-                long key = ChunkPos.toLong(chunkX, chunkZ);
+                long key = ChunkPos.asLong(chunkX, chunkZ);
                 desired.add(key);
                 if (activeChunks.add(key))
                 {
-                    WorldChunk chunk = chunkManager.getChunk(chunkX, chunkZ, ChunkStatus.FULL, false);
+                    LevelChunk chunk = chunkManager.getChunk(chunkX, chunkZ, ChunkStatus.FULL, false);
                     if (chunk != null)
                         handleChunkLoad(world, chunk);
                 }
@@ -118,14 +105,14 @@ public final class ChunkProcessingManager
 
     public static void rescanCurrentWorld()
     {
-        MinecraftClient client = MinecraftClient.getInstance();
-        ClientWorld world = client.world;
+        Minecraft client = Minecraft.getInstance();
+        ClientLevel world = client.level;
         if (world == null)
             return;
         processLoadedChunks(world);
     }
 
-    private static void handleChunkLoad(ClientWorld world, WorldChunk chunk)
+    private static void handleChunkLoad(ClientLevel world, LevelChunk chunk)
     {
         if (shouldNotProcess())
             return;
@@ -148,7 +135,7 @@ public final class ChunkProcessingManager
         evaluateClusters(spawners);
     }
 
-    private static void handleChunkUnload(ClientWorld world, WorldChunk chunk)
+    private static void handleChunkUnload(ClientLevel world, LevelChunk chunk)
     {
         if (chunk == null)
             return;
@@ -162,7 +149,7 @@ public final class ChunkProcessingManager
         Set<Long> removed = chunkSpawners.remove(key);
         if (removed == null || removed.isEmpty())
             return;
-        Set<BlockPos> positions = removed.stream().map(BlockPos::fromLong).collect(Collectors.toSet());
+        Set<BlockPos> positions = removed.stream().map(BlockPos::of).collect(Collectors.toSet());
         BlockBank.removeAll(positions);
         ClusterManager.removeBackgroundHighlights(removed);
         invalidateAlerts(removed);
@@ -197,7 +184,7 @@ public final class ChunkProcessingManager
         return RadarClient.config == null || !RadarClient.config.processChunksOnGeneration;
     }
 
-    private static List<SpawnerInfo> extractSpawners(ClientWorld world, WorldChunk chunk)
+    private static List<SpawnerInfo> extractSpawners(ClientLevel world, LevelChunk chunk)
     {
         if (chunk.getBlockEntities().isEmpty())
             return Collections.emptyList();
@@ -205,7 +192,7 @@ public final class ChunkProcessingManager
         List<SpawnerInfo> found = new ArrayList<>();
         chunk.getBlockEntities().forEach((pos, blockEntity) ->
         {
-            if (blockEntity instanceof MobSpawnerBlockEntity)
+            if (blockEntity instanceof SpawnerBlockEntity)
             {
                 SpawnerInfo info = BlockBank.createSpawnerInfo(world, pos);
                 found.add(info);
@@ -219,7 +206,7 @@ public final class ChunkProcessingManager
         if (newlyFound.isEmpty())
             return;
 
-        var client = MinecraftClient.getInstance();
+        var client = Minecraft.getInstance();
         var player = client.player;
         var config = RadarClient.config;
         if (player == null || config == null)
@@ -235,7 +222,7 @@ public final class ChunkProcessingManager
         {
             List<SpawnerInfo> nearby = new ArrayList<>();
             for (SpawnerInfo info : allSpawners)
-                if (info.pos().getSquaredDistance(origin.pos()) <= proximitySq)
+                if (info.pos().distSqr(origin.pos()) <= proximitySq)
                     nearby.add(info);
 
             if (nearby.size() < threshold)
@@ -306,18 +293,18 @@ public final class ChunkProcessingManager
     private static boolean isClusterWithinRange(SpawnerCluster cluster, BlockPos origin, double proximitySq)
     {
         for (SpawnerInfo info : cluster.spawners())
-            if (info.pos().getSquaredDistance(origin) <= proximitySq)
+            if (info.pos().distSqr(origin) <= proximitySq)
                 return true;
         return false;
     }
 
-    private static void sendAlert(SpawnerCluster cluster, ClientPlayerEntity player)
+    private static void sendAlert(SpawnerCluster cluster, LocalPlayer player)
     {
-        MutableText alert = Text.translatable(
+        MutableComponent alert = Component.translatable(
             "chat.spawn_radar.cluster_alert",
             cluster.spawners().size()
-        ).formatted(Formatting.LIGHT_PURPLE);
-        player.sendMessage(alert, false);
+        ).withStyle(ChatFormatting.LIGHT_PURPLE);
+        player.displayClientMessage(alert, false);
     }
 
     private static Set<Long> clusterToSet(SpawnerCluster cluster)

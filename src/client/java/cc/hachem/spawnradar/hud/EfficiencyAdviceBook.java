@@ -2,19 +2,12 @@ package cc.hachem.spawnradar.hud;
 
 import cc.hachem.spawnradar.RadarClient;
 import cc.hachem.spawnradar.core.SpawnerEfficiencyManager;
-import cc.hachem.spawnradar.core.SpawnerInfo;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.BookScreen;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-
-import java.util.ArrayList;
-import java.util.List;
+import cc.hachem.spawnradar.core.SpawnerInfo;import java.util.ArrayList;
+import java.util.List;import net.minecraft.ChatFormatting;import net.minecraft.client.Minecraft;import net.minecraft.client.gui.screens.inventory.BookViewScreen;import net.minecraft.network.chat.Component;import net.minecraft.network.chat.MutableComponent;
 
 public final class EfficiencyAdviceBook
 {
-    public record EfficiencyAdviceEntry(Text title, Text description) {}
+    public record EfficiencyAdviceEntry(Component title, Component description) {}
 
     private EfficiencyAdviceBook() {}
 
@@ -23,11 +16,11 @@ public final class EfficiencyAdviceBook
                             SpawnerEfficiencyManager.MobCapStatus mobCapStatus,
                             List<EfficiencyAdviceEntry> entries)
     {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         if (client == null)
             return;
 
-        List<Text> pages = new ArrayList<>();
+        List<Component> pages = new ArrayList<>();
         pages.add(buildSummaryPage(info, result, mobCapStatus));
 
         for (EfficiencyAdviceEntry entry : entries)
@@ -36,61 +29,61 @@ public final class EfficiencyAdviceBook
         if (pages.isEmpty())
             return;
 
-        Text title = Text.translatable("text.spawn_radar.efficiency_advisor.summary.title");
+        Component title = Component.translatable("text.spawn_radar.efficiency_advisor.summary.title");
         openBook(client, title, pages);
     }
 
-    private static Text buildSummaryPage(SpawnerInfo info,
+    private static Component buildSummaryPage(SpawnerInfo info,
                                          SpawnerEfficiencyManager.EfficiencyResult result,
                                          SpawnerEfficiencyManager.MobCapStatus mobCapStatus)
     {
-        MutableText summary = Text.empty()
-            .append(Text.translatable("text.spawn_radar.efficiency_advisor.summary.title")
-                .formatted(Formatting.DARK_PURPLE, Formatting.BOLD, Formatting.UNDERLINE))
-            .append(Text.literal("\n\n\n"));
+        MutableComponent summary = Component.empty()
+            .append(Component.translatable("text.spawn_radar.efficiency_advisor.summary.title")
+                .withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.BOLD, ChatFormatting.UNDERLINE))
+            .append(Component.literal("\n\n\n"));
 
         summary = appendMetric(summary,
             "text.spawn_radar.efficiency_advisor.summary.efficiency",
-            Formatting.GOLD,
+            ChatFormatting.GOLD,
             SpawnerEfficiencyManager.formatPercentage(result.overall()));
 
         summary = appendMetric(summary,
             "text.spawn_radar.efficiency_advisor.summary.volume",
-            Formatting.GRAY,
+            ChatFormatting.GRAY,
             SpawnerEfficiencyManager.formatPercentage(result.volumeScore()));
 
         summary = appendMetric(summary,
             "text.spawn_radar.efficiency_advisor.summary.light",
-            Formatting.GRAY,
+            ChatFormatting.GRAY,
             SpawnerEfficiencyManager.formatPercentage(result.lightScore()));
 
         if (mobCapStatus != null)
         {
             summary = appendMetric(summary,
                 "text.spawn_radar.efficiency_advisor.summary.mob_cap",
-                Formatting.RED,
+                ChatFormatting.RED,
                 mobCapStatus.formatted());
         }
 
         return summary;
     }
 
-    private static Text buildEntryPage(EfficiencyAdviceEntry entry)
+    private static Component buildEntryPage(EfficiencyAdviceEntry entry)
     {
-        return Text.literal("")
+        return Component.literal("")
             .append(entry.title().copy())
-            .append(Text.literal("\n\n").formatted(Formatting.RESET))
+            .append(Component.literal("\n\n").withStyle(ChatFormatting.RESET))
             .append(entry.description().copy());
     }
 
-    private static MutableText appendMetric(MutableText base, String translationKey, Formatting color, Object... args)
+    private static MutableComponent appendMetric(MutableComponent base, String translationKey, ChatFormatting color, Object... args)
     {
         return base
-            .append(Text.literal("\n"))
-            .append(Text.translatable(translationKey, args).formatted(color));
+            .append(Component.literal("\n"))
+            .append(Component.translatable(translationKey, args).withStyle(color));
     }
 
-    private static void openBook(MinecraftClient client, Text title, List<Text> pages)
+    private static void openBook(Minecraft client, Component title, List<Component> pages)
     {
         boolean useDual = RadarClient.config == null || RadarClient.config.useDualPageBookUi;
         if (useDual)
@@ -99,7 +92,7 @@ public final class EfficiencyAdviceBook
         }
         else
         {
-            client.setScreen(new BookScreen(new BookScreen.Contents(pages)));
+            client.setScreen(new BookViewScreen(new BookViewScreen.BookAccess(pages)));
         }
     }
 }

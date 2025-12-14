@@ -10,19 +10,8 @@ import cc.hachem.spawnradar.core.SpawnerMobCapStatusManager;
 import cc.hachem.spawnradar.core.SpawnerLightLevelManager;
 import cc.hachem.spawnradar.core.VolumeHighlightManager;
 import cc.hachem.spawnradar.renderer.ItemTextureRenderer;
-import cc.hachem.spawnradar.renderer.MobPuppetRenderer;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ChatScreen;
-import net.minecraft.text.Text;
-import net.minecraft.util.Colors;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.SpawnEggItem;
-
-import java.util.ArrayList;
-import java.util.List;
+import cc.hachem.spawnradar.renderer.MobPuppetRenderer;import java.util.ArrayList;
+import java.util.List;import net.minecraft.client.Minecraft;import net.minecraft.client.gui.Font;import net.minecraft.client.gui.GuiGraphics;import net.minecraft.client.gui.screens.ChatScreen;import net.minecraft.core.BlockPos;import net.minecraft.network.chat.Component;import net.minecraft.util.CommonColors;import net.minecraft.world.item.ItemStack;import net.minecraft.world.item.SpawnEggItem;
 
 public class ClusterListItemWidget extends Widget
 {
@@ -45,7 +34,7 @@ public class ClusterListItemWidget extends Widget
     private static final int TOGGLE_GAP = 6;
     private static final int TOGGLE_SPACING = 4;
     private static final int TREE_HOVER_PADDING = 6;
-    private static final int TOGGLE_INACTIVE_COLOR = Colors.ALTERNATE_WHITE;
+    private static final int TOGGLE_INACTIVE_COLOR = CommonColors.LIGHTER_GRAY;
     private static final int EXPANDED_CLUSTER_GAP = 8;
     private static final String LEFT_BRANCH_EXPAND = "┏━━";
     private static final String LEFT_BRANCH_CONTINUE = "┠━━";
@@ -56,35 +45,35 @@ public class ClusterListItemWidget extends Widget
 
     public ClusterListItemWidget(SpawnerCluster cluster, int x, int y, int width)
     {
-        MinecraftClient client = MinecraftClient.getInstance();
-        TextRenderer textRenderer = client.textRenderer;
+        Minecraft client = Minecraft.getInstance();
+        Font textRenderer = client.font;
 
         this.cluster = cluster;
         this.x = x;
         this.y = y;
         this.width = width;
         this.rowWidth = width;
-        this.height = textRenderer.fontHeight + 5;
-        float baseIconSize = textRenderer.fontHeight + 2;
+        this.height = textRenderer.lineHeight + 5;
+        float baseIconSize = textRenderer.lineHeight + 2;
 
-        expandButton = new ButtonWidget(x, y, "+", Colors.WHITE, this::toggleExpanded);
+        expandButton = new ButtonWidget(x, y, "+", CommonColors.WHITE, this::toggleExpanded);
         expandButton.setDecorated(false);
 
-        baseLabel = Text.translatable("button.spawn_radar.cluster_label", cluster.spawners().size(), cluster.id()).getString();
+        baseLabel = Component.translatable("button.spawn_radar.cluster_label", cluster.spawners().size(), cluster.id()).getString();
         clusterButton = new ButtonWidget(
             x + expandButton.getWidth() + CLUSTER_GAP,
             y,
             baseLabel,
-            Colors.LIGHT_GRAY,
+            CommonColors.LIGHT_GRAY,
             () -> ClusterManager.toggleHighlightCluster(cluster.id())
         );
         clusterButton.setDecorated(false);
 
-        int leftBranchWidth = Math.max(textRenderer.getWidth(LEFT_BRANCH_END), textRenderer.getWidth(LEFT_BRANCH_CONTINUE));
-        int rightBranchWidth = Math.max(textRenderer.getWidth(RIGHT_BRANCH_END), textRenderer.getWidth(RIGHT_BRANCH_CONTINUE));
+        int leftBranchWidth = Math.max(textRenderer.width(LEFT_BRANCH_END), textRenderer.width(LEFT_BRANCH_CONTINUE));
+        int rightBranchWidth = Math.max(textRenderer.width(RIGHT_BRANCH_END), textRenderer.width(RIGHT_BRANCH_CONTINUE));
         branchGlyphWidth = Math.max(leftBranchWidth, rightBranchWidth);
 
-        requiredWidth = expandButton.getWidth() + CLUSTER_GAP + textRenderer.getWidth("[*] " + baseLabel);
+        requiredWidth = expandButton.getWidth() + CLUSTER_GAP + textRenderer.width("[*] " + baseLabel);
 
         int index = 1;
         for (SpawnerInfo spawner : cluster.spawners())
@@ -95,10 +84,10 @@ public class ClusterListItemWidget extends Widget
                 x + CHILD_INDENT,
                 y,
                 label,
-                Colors.ALTERNATE_WHITE,
+                CommonColors.LIGHTER_GRAY,
                 () -> {
                     if (client.player != null)
-                        client.player.networkHandler.sendChatCommand(
+                        client.player.connection.sendCommand(
                             String.format("tp %d %d %d", pos.getX(), pos.getY(), pos.getZ())
                         );
                 }
@@ -176,9 +165,9 @@ public class ClusterListItemWidget extends Widget
     }
 
     @Override
-    public void render(DrawContext context)
+    public void render(GuiGraphics context)
     {
-        TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
+        Font textRenderer = Minecraft.getInstance().font;
         updateClusterRow(textRenderer);
         expandButton.render(context);
         clusterButton.render(context);
@@ -217,7 +206,7 @@ public class ClusterListItemWidget extends Widget
         this.alignment = alignment == null ? ConfigManager.HudHorizontalAlignment.LEFT : alignment;
     }
 
-    private void updateClusterRow(TextRenderer textRenderer)
+    private void updateClusterRow(Font textRenderer)
     {
         expandButton.setText(expanded ? "-" : "+");
         expandButton.setY(y);
@@ -229,8 +218,8 @@ public class ClusterListItemWidget extends Widget
         clusterButton.setY(y);
 
         int accentColor = 0xFF000000 | ConfigManager.getClusterColor(cluster.spawners().size());
-        clusterButton.setColor(highlighted ? accentColor : Colors.LIGHT_GRAY);
-        int clusterTextWidth = textRenderer.getWidth(clusterText);
+        clusterButton.setColor(highlighted ? accentColor : CommonColors.LIGHT_GRAY);
+        int clusterTextWidth = textRenderer.width(clusterText);
         layoutClusterRow(clusterTextWidth);
     }
 
@@ -256,7 +245,7 @@ public class ClusterListItemWidget extends Widget
         clusterButton.setWidth(Math.max(clusterTextWidth, 80));
     }
 
-    private void renderChildren(DrawContext context, TextRenderer textRenderer)
+    private void renderChildren(GuiGraphics context, Font textRenderer)
     {
         boolean mirror = alignment == ConfigManager.HudHorizontalAlignment.RIGHT;
         int childY = y + expandButton.getHeight() + CHILD_VERTICAL_GAP;
@@ -270,11 +259,11 @@ public class ClusterListItemWidget extends Widget
             boolean rowActive = isRowActive(row);
             int rowHeight = getRowHeight(row);
             String branch = getBranchGlyph(i == childRows.size() - 1, mirror);
-            int branchWidth = textRenderer.getWidth(branch);
+            int branchWidth = textRenderer.width(branch);
             int childWidth = Math.max(child.getContentWidth(), 80);
             boolean hasIcon = row.hasMobIcon();
             int iconSpace = hasIcon ? (int) Math.ceil(row.iconSize()) + ICON_GAP : 0;
-            int branchY = childY + (rowHeight - textRenderer.fontHeight) / 2;
+            int branchY = childY + (rowHeight - textRenderer.lineHeight) / 2;
             int textY = childY + (rowHeight - child.getHeight()) / 2;
             child.setY(textY);
 
@@ -283,7 +272,7 @@ public class ClusterListItemWidget extends Widget
                 int branchX = expandButton.getX() + expandButton.getWidth() + CHILD_INDENT;
                 int childX = branchX + branchWidth + BRANCH_GAP + iconSpace;
                 child.setX(childX);
-                context.drawText(textRenderer, branch, branchX, branchY, Colors.DARK_GRAY, false);
+                context.drawString(textRenderer, branch, branchX, branchY, CommonColors.DARK_GRAY, false);
                 if (hasIcon)
                     renderSpawnerIcon(context, row, childX - iconSpace, childY + (rowHeight - Math.round(row.iconSize())) / 2);
             }
@@ -292,7 +281,7 @@ public class ClusterListItemWidget extends Widget
                 int branchX = expandButton.getX() - CHILD_INDENT - branchWidth;
                 int childX = branchX - BRANCH_GAP - iconSpace - childWidth;
                 child.setX(childX);
-                context.drawText(textRenderer, branch, branchX, branchY, Colors.DARK_GRAY, false);
+                context.drawString(textRenderer, branch, branchX, branchY, CommonColors.DARK_GRAY, false);
                 if (hasIcon)
                     renderSpawnerIcon(context, row, childX + childWidth + ICON_GAP, childY + (rowHeight - Math.round(row.iconSize())) / 2);
             }
@@ -300,7 +289,7 @@ public class ClusterListItemWidget extends Widget
             child.setWidth(childWidth);
             child.render(context);
 
-            if (rowActive && MinecraftClient.getInstance().currentScreen instanceof ChatScreen && row.supportsVolumeToggles())
+            if (rowActive && Minecraft.getInstance().screen instanceof ChatScreen && row.supportsVolumeToggles())
                 renderToggleTree(context, textRenderer, row, child, childWidth, textY, mirror);
             else
                 row.clearTreeBounds();
@@ -352,7 +341,7 @@ public class ClusterListItemWidget extends Widget
             if (!row.hoverActive())
                 return;
             boolean enabled = SpawnerEfficiencyManager.toggle(row.spawner().pos(), RadarClient.config.showSpawnerEfficiencyLabel);
-            holder[0].setColor(enabled ? Colors.GREEN : TOGGLE_INACTIVE_COLOR);
+            holder[0].setColor(enabled ? CommonColors.GREEN : TOGGLE_INACTIVE_COLOR);
         });
         holder[0].setDecorated(false);
         return holder[0];
@@ -366,7 +355,7 @@ public class ClusterListItemWidget extends Widget
             if (!row.hoverActive())
                 return;
             boolean enabled = SpawnerMobCapStatusManager.toggle(row.spawner().pos(), RadarClient.config.showSpawnerMobCapStatus);
-            holder[0].setColor(enabled ? Colors.CYAN : TOGGLE_INACTIVE_COLOR);
+            holder[0].setColor(enabled ? CommonColors.HIGH_CONTRAST_DIAMOND : TOGGLE_INACTIVE_COLOR);
         });
         holder[0].setDecorated(false);
         return holder[0];
@@ -380,7 +369,7 @@ public class ClusterListItemWidget extends Widget
             if (!row.hoverActive())
                 return;
             boolean enabled = SpawnerLightLevelManager.toggle(row.spawner().pos(), RadarClient.config.showSpawnerLightLevels);
-            holder[0].setColor(enabled ? Colors.YELLOW : TOGGLE_INACTIVE_COLOR);
+            holder[0].setColor(enabled ? CommonColors.YELLOW : TOGGLE_INACTIVE_COLOR);
         });
         holder[0].setDecorated(false);
         return holder[0];
@@ -402,7 +391,7 @@ public class ClusterListItemWidget extends Widget
         return width;
     }
 
-    private void renderToggleTree(DrawContext context, TextRenderer textRenderer, ChildRow row,
+    private void renderToggleTree(GuiGraphics context, Font textRenderer, ChildRow row,
                                   ButtonWidget child, int childWidth, int textY, boolean mirror)
     {
         List<ButtonWidget> toggles = row.activeToggles();
@@ -449,7 +438,7 @@ public class ClusterListItemWidget extends Widget
         }
     }
 
-    private ToggleBounds renderToggleRow(DrawContext context, TextRenderer textRenderer, ButtonWidget toggle,
+    private ToggleBounds renderToggleRow(GuiGraphics context, Font textRenderer, ButtonWidget toggle,
                                  ButtonWidget child, int childWidth, int startY, boolean mirror, ToggleBranchType branchType)
     {
         String branch;
@@ -467,15 +456,15 @@ public class ClusterListItemWidget extends Widget
             };
         }
 
-        int branchWidth = textRenderer.getWidth(branch);
+        int branchWidth = textRenderer.width(branch);
         int branchX;
         if (!mirror)
             branchX = child.getX() + childWidth + TOGGLE_GAP;
         else
             branchX = child.getX() - TOGGLE_GAP - branchWidth;
 
-        int branchY = startY + (toggle.getHeight() - textRenderer.fontHeight) / 2;
-        context.drawText(textRenderer, branch, branchX, branchY, Colors.DARK_GRAY, false);
+        int branchY = startY + (toggle.getHeight() - textRenderer.lineHeight) / 2;
+        context.drawString(textRenderer, branch, branchX, branchY, CommonColors.DARK_GRAY, false);
 
         int toggleX;
         if (!mirror)
@@ -490,7 +479,7 @@ public class ClusterListItemWidget extends Widget
         int minX = Math.min(branchX, toggleX);
         int maxX = Math.max(branchX + branchWidth, toggleX + toggle.getContentWidth());
         int minY = Math.min(branchY, startY);
-        int maxY = Math.max(branchY + textRenderer.fontHeight, startY + toggle.getHeight());
+        int maxY = Math.max(branchY + textRenderer.lineHeight, startY + toggle.getHeight());
         return new ToggleBounds(minX, maxX, minY, maxY);
     }
 
@@ -508,17 +497,17 @@ public class ClusterListItemWidget extends Widget
         if (row.efficiencyToggle() != null)
         {
             boolean efficiencyEnabled = SpawnerEfficiencyManager.isEnabled(pos, RadarClient.config.showSpawnerEfficiencyLabel);
-            row.efficiencyToggle().setColor(efficiencyEnabled ? Colors.GREEN : TOGGLE_INACTIVE_COLOR);
+            row.efficiencyToggle().setColor(efficiencyEnabled ? CommonColors.GREEN : TOGGLE_INACTIVE_COLOR);
         }
         if (row.mobCapStatusToggle() != null)
         {
             boolean statusEnabled = SpawnerMobCapStatusManager.isEnabled(pos, RadarClient.config.showSpawnerMobCapStatus);
-            row.mobCapStatusToggle().setColor(statusEnabled ? Colors.CYAN : TOGGLE_INACTIVE_COLOR);
+            row.mobCapStatusToggle().setColor(statusEnabled ? CommonColors.HIGH_CONTRAST_DIAMOND : TOGGLE_INACTIVE_COLOR);
         }
         if (row.lightLevelToggle() != null)
         {
             boolean lightLevelsEnabled = SpawnerLightLevelManager.isEnabled(pos, RadarClient.config.showSpawnerLightLevels);
-            row.lightLevelToggle().setColor(lightLevelsEnabled ? Colors.YELLOW : TOGGLE_INACTIVE_COLOR);
+            row.lightLevelToggle().setColor(lightLevelsEnabled ? CommonColors.YELLOW : TOGGLE_INACTIVE_COLOR);
         }
     }
 
@@ -527,7 +516,7 @@ public class ClusterListItemWidget extends Widget
         return row.hoverActive() && row.supportsVolumeToggles();
     }
 
-    private static void renderSpawnerIcon(DrawContext context, ChildRow row, int x, int y)
+    private static void renderSpawnerIcon(GuiGraphics context, ChildRow row, int x, int y)
     {
         if (!row.hasMobIcon())
             return;
@@ -554,7 +543,7 @@ public class ClusterListItemWidget extends Widget
     {
         if (spawner == null || spawner.entityType() == null)
             return ItemStack.EMPTY;
-        SpawnEggItem spawnEgg = SpawnEggItem.forEntity(spawner.entityType());
+        SpawnEggItem spawnEgg = SpawnEggItem.byId(spawner.entityType());
         return spawnEgg == null ? ItemStack.EMPTY : new ItemStack(spawnEgg);
     }
 

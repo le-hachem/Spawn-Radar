@@ -1,14 +1,7 @@
 package cc.hachem.spawnradar.guide;
 
 import cc.hachem.spawnradar.RadarClient;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.BookScreen;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-import cc.hachem.spawnradar.hud.DualPageBookScreen;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;import net.minecraft.ChatFormatting;import net.minecraft.client.Minecraft;import net.minecraft.client.gui.screens.inventory.BookViewScreen;import net.minecraft.network.chat.Component;import net.minecraft.network.chat.MutableComponent;import net.minecraft.resources.ResourceLocation;import cc.hachem.spawnradar.hud.DualPageBookScreen;
 
 import java.io.InputStream;
 import java.util.List;
@@ -18,7 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class GuideBookManager
 {
     private static final AtomicBoolean PENDING_OPEN = new AtomicBoolean(false);
-    private static List<Text> guidePages = List.of();
+    private static List<Component> guidePages = List.of();
     private static String cachedLanguageCode = "";
 
     private GuideBookManager() {}
@@ -37,14 +30,14 @@ public final class GuideBookManager
 
     public static void openGuide()
     {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         if (client == null)
             return;
         ensureGuidePages();
         PENDING_OPEN.set(true);
     }
 
-    static List<Text> getGuidePages()
+    static List<Component> getGuidePages()
     {
         ensureGuidePages();
         return guidePages;
@@ -52,10 +45,10 @@ public final class GuideBookManager
 
     private static void ensureGuidePages()
     {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         if (client == null)
             return;
-        String languageCode = client.getLanguageManager().getLanguage();
+        String languageCode = client.getLanguageManager().getSelected();
         if (languageCode == null || languageCode.isBlank())
             languageCode = "en_us";
         languageCode = languageCode.toLowerCase(Locale.ROOT);
@@ -66,13 +59,13 @@ public final class GuideBookManager
         }
     }
 
-    private static List<Text> loadGuidePages(String languageCode)
+    private static List<Component> loadGuidePages(String languageCode)
     {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         if (client == null)
             return getDefaultPages();
 
-        Identifier id = Identifier.of(RadarClient.MOD_ID, "guide/" + languageCode + ".txt");
+        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(RadarClient.MOD_ID, "guide/" + languageCode + ".txt");
         try (InputStream stream = client.getResourceManager().open(id))
         {
             return GuideScriptParser.parse(stream, GuideBookManager::getDefaultPages);
@@ -87,24 +80,24 @@ public final class GuideBookManager
         return getDefaultPages();
     }
 
-    private static List<Text> getDefaultPages()
+    private static List<Component> getDefaultPages()
     {
-        MutableText fallback = Text.literal("Spawn Radar Manual")
-            .formatted(Formatting.DARK_PURPLE, Formatting.BOLD)
-            .append(Text.literal("\n\nGuide data could not be loaded.\nAdd an assets/radar/guide/<lang>.txt file or reinstall the mod.")
-                .formatted(Formatting.GRAY));
+        MutableComponent fallback = Component.literal("Spawn Radar Manual")
+            .withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.BOLD)
+            .append(Component.literal("\n\nGuide data could not be loaded.\nAdd an assets/radar/guide/<lang>.txt file or reinstall the mod.")
+                .withStyle(ChatFormatting.GRAY));
         return List.of(fallback);
     }
 
-    private static void openGuideScreen(MinecraftClient client)
+    private static void openGuideScreen(Minecraft client)
     {
-        List<Text> pages = getGuidePages();
-        Text title = Text.literal("Spawn Radar Guide");
+        List<Component> pages = getGuidePages();
+        Component title = Component.literal("Spawn Radar Guide");
         boolean useDual = RadarClient.config == null || RadarClient.config.useDualPageBookUi;
         if (useDual)
             client.setScreen(new DualPageBookScreen(title, pages));
         else
-            client.setScreen(new BookScreen(new BookScreen.Contents(pages)));
+            client.setScreen(new BookViewScreen(new BookViewScreen.BookAccess(pages)));
     }
 }
 

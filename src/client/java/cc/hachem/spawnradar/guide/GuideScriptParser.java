@@ -1,15 +1,5 @@
 package cc.hachem.spawnradar.guide;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,7 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.function.Supplier;
+import java.util.function.Supplier;import net.minecraft.ChatFormatting;import net.minecraft.client.Minecraft;import net.minecraft.client.gui.Font;import net.minecraft.network.chat.ClickEvent;import net.minecraft.network.chat.Component;import net.minecraft.network.chat.HoverEvent;import net.minecraft.network.chat.MutableComponent;import net.minecraft.network.chat.Style;import net.minecraft.util.FormattedCharSequence;
 
 final class GuideScriptParser
 {
@@ -46,19 +36,19 @@ final class GuideScriptParser
 
     private GuideScriptParser() {}
 
-    static List<Text> parse(InputStream stream, Supplier<List<Text>> fallback) throws IOException
+    static List<Component> parse(InputStream stream, Supplier<List<Component>> fallback) throws IOException
     {
         ParseContext context = new ParseContext();
         context.parse(stream);
-        List<Text> pages = context.buildPages();
+        List<Component> pages = context.buildPages();
         if (pages.isEmpty() && fallback != null)
             return fallback.get();
         return pages;
     }
 
-    private static MutableText newline()
+    private static MutableComponent newline()
     {
-        return Text.literal("\n");
+        return Component.literal("\n");
     }
 
     private static final class ParseContext
@@ -338,35 +328,35 @@ final class GuideScriptParser
             return title.isEmpty() ? "Chapter" : title;
         }
 
-        private List<MutableText> splitIntoLines(GuideLine line)
+        private List<MutableComponent> splitIntoLines(GuideLine line)
         {
-            MinecraftClient client = MinecraftClient.getInstance();
-            TextRenderer renderer = client != null ? client.textRenderer : null;
+            Minecraft client = Minecraft.getInstance();
+            Font renderer = client != null ? client.font : null;
             if (renderer == null)
                 return List.of(line.render().copy().append(newline()));
 
-            List<OrderedText> wrapped = renderer.wrapLines(line.render(), PAGE_WIDTH);
+            List<FormattedCharSequence> wrapped = renderer.split(line.render(), PAGE_WIDTH);
             if (wrapped.isEmpty())
-                wrapped = List.of(OrderedText.EMPTY);
+                wrapped = List.of(FormattedCharSequence.EMPTY);
 
-            List<MutableText> lines = new ArrayList<>();
-            for (OrderedText ordered : wrapped)
+            List<MutableComponent> lines = new ArrayList<>();
+            for (FormattedCharSequence ordered : wrapped)
                 lines.add(orderedToText(ordered).append(newline()));
             return lines;
         }
 
-        private static MutableText orderedToText(OrderedText ordered)
+        private static MutableComponent orderedToText(FormattedCharSequence ordered)
         {
-            MutableText text = Text.empty();
+            MutableComponent text = Component.empty();
             ordered.accept((index, style, codePoint) ->
             {
-                text.append(Text.literal(String.valueOf(Character.toChars(codePoint))).setStyle(style));
+                text.append(Component.literal(String.valueOf(Character.toChars(codePoint))).setStyle(style));
                 return true;
             });
             return text;
         }
 
-        private List<Text> buildPages()
+        private List<Component> buildPages()
         {
             resetRenderedSegments();
             materializeTocPlaceholders();
@@ -377,7 +367,7 @@ final class GuideScriptParser
             Map<String, Integer> anchors = resolveAnchors(pageData);
             applyNavigationTargets(anchors);
 
-            List<Text> pages = new ArrayList<>();
+            List<Component> pages = new ArrayList<>();
             for (PageData data : pageData)
                 pages.add(data.content());
             return pages;
@@ -426,13 +416,13 @@ final class GuideScriptParser
 
         private PageBuilder appendWithOverflow(PageBuilder builder, GuideLine line, List<PageData> pages)
         {
-            List<MutableText> segments = splitIntoLines(line);
-            for (MutableText segment : segments)
+            List<MutableComponent> segments = splitIntoLines(line);
+            for (MutableComponent segment : segments)
                 builder = appendLine(builder, line, segment, pages);
             return builder;
         }
 
-        private PageBuilder appendLine(PageBuilder builder, GuideLine line, MutableText segment, List<PageData> pages)
+        private PageBuilder appendLine(PageBuilder builder, GuideLine line, MutableComponent segment, List<PageData> pages)
         {
             if (builder.tryAppend(line, segment))
                 return builder;
@@ -470,11 +460,11 @@ final class GuideScriptParser
                     : new ClickEvent.ChangePage(pageIndex + 1);
                 HoverEvent hover = pageIndex == null
                     ? null
-                    : new HoverEvent.ShowText(Text.literal("Go to chapter"));
+                    : new HoverEvent.ShowText(Component.literal("Go to chapter"));
 
-                Formatting color = pageIndex == null ? Formatting.DARK_GRAY : null;
+                ChatFormatting color = pageIndex == null ? ChatFormatting.DARK_GRAY : null;
 
-                for (MutableText segment : line.getRenderedSegments())
+                for (MutableComponent segment : line.getRenderedSegments())
                     applyInteractiveStyle(segment, click, hover, color);
             }
         }
@@ -502,7 +492,7 @@ final class GuideScriptParser
         CENTERED
     }
 
-    private record PageData(MutableText content, List<GuideLine> lines, PageMode mode) {}
+    private record PageData(MutableComponent content, List<GuideLine> lines, PageMode mode) {}
 
     private static final class TocChapter
     {
@@ -518,7 +508,7 @@ final class GuideScriptParser
 
     private static final class PageBuilder
     {
-        private final List<MutableText> lineTexts = new ArrayList<>();
+        private final List<MutableComponent> lineTexts = new ArrayList<>();
         private final List<GuideLine> lineRefs = new ArrayList<>();
         private PageMode mode;
 
@@ -532,7 +522,7 @@ final class GuideScriptParser
             return !lineTexts.isEmpty();
         }
 
-        boolean tryAppend(GuideLine line, MutableText segment)
+        boolean tryAppend(GuideLine line, MutableComponent segment)
         {
             if (lineTexts.size() >= MAX_LINES_PER_PAGE)
                 return false;
@@ -544,14 +534,14 @@ final class GuideScriptParser
 
         PageData finish()
         {
-            MutableText text = Text.empty();
+            MutableComponent text = Component.empty();
             int padding = mode == PageMode.CENTERED
                 ? Math.max(0, (MAX_LINES_PER_PAGE - lineTexts.size()) / 2)
                 : 0;
 
             for (int i = 0; i < padding; i++)
                 text.append(newline());
-            for (MutableText segment : lineTexts)
+            for (MutableComponent segment : lineTexts)
                 text.append(segment);
             PageData result = new PageData(text, new ArrayList<>(lineRefs), mode);
             mode = PageMode.NORMAL;
@@ -571,8 +561,8 @@ final class GuideScriptParser
         private final boolean centered;
         private final String anchorId;
         private final String targetId;
-        private final List<MutableText> renderedSegments = new ArrayList<>();
-        private MutableText cachedRenderable;
+        private final List<MutableComponent> renderedSegments = new ArrayList<>();
+        private MutableComponent cachedRenderable;
         private final List<InlinePiece> inlinePieces;
 
         private GuideLine(LineKind kind, String content, boolean centered, String anchorId, String targetId)
@@ -633,9 +623,9 @@ final class GuideScriptParser
         static GuideLine chapterBanner(String anchorId, String numeral, String title)
         {
             String banner = ("Chapter " + numeral).toUpperCase();
-            MutableText text = applyStyle(Text.literal(banner), Formatting.DARK_PURPLE, true, false)
+            MutableComponent text = applyStyle(Component.literal(banner), ChatFormatting.DARK_PURPLE, true, false)
                 .append(newline())
-                .append(applyStyle(Text.literal(title), Formatting.GRAY, true, false));
+                .append(applyStyle(Component.literal(title), ChatFormatting.GRAY, true, false));
             GuideLine line = new GuideLine(LineKind.TITLE_LINE, "", true, anchorId, null);
             line.cachedRenderable = text;
             return line;
@@ -646,31 +636,31 @@ final class GuideScriptParser
             renderedSegments.clear();
         }
 
-        void registerRenderedSegment(MutableText segment)
+        void registerRenderedSegment(MutableComponent segment)
         {
             renderedSegments.add(segment);
         }
 
-        List<MutableText> getRenderedSegments()
+        List<MutableComponent> getRenderedSegments()
         {
             return renderedSegments;
         }
 
-        MutableText render()
+        MutableComponent render()
         {
             if (cachedRenderable != null)
                 return cachedRenderable;
 
-            MutableText base;
+            MutableComponent base;
             switch (kind)
             {
-                case BLANK -> base = Text.literal("");
+                case BLANK -> base = Component.literal("");
                 case CHAPTER_TITLE,
                      TITLE_LINE,
-                     TOC_TITLE -> base = applyStyle(parseFormattedLine(content), Formatting.DARK_PURPLE, true, false);
-                case SECTION_BODY -> base = applyStyle(parseFormattedLine(content), Formatting.GOLD, true, false);
-                case AUTHOR_LINE -> base = applyStyle(parseFormattedLine(content), Formatting.GRAY, false, true);
-                case TOC_ENTRY -> base = Text.empty().append(parseFormattedLine(content));
+                     TOC_TITLE -> base = applyStyle(parseFormattedLine(content), ChatFormatting.DARK_PURPLE, true, false);
+                case SECTION_BODY -> base = applyStyle(parseFormattedLine(content), ChatFormatting.GOLD, true, false);
+                case AUTHOR_LINE -> base = applyStyle(parseFormattedLine(content), ChatFormatting.GRAY, false, true);
+                case TOC_ENTRY -> base = Component.empty().append(parseFormattedLine(content));
                 case INLINE_COMMAND -> base = buildInlineCommandText();
                 default -> base = parseFormattedLine(content);
             }
@@ -682,15 +672,15 @@ final class GuideScriptParser
             return cachedRenderable;
         }
 
-        private MutableText buildInlineCommandText()
+        private MutableComponent buildInlineCommandText()
         {
-            MutableText combined = Text.empty();
+            MutableComponent combined = Component.empty();
             for (InlinePiece piece : inlinePieces)
             {
-                MutableText segment = parseFormattedLine(piece.content());
+                MutableComponent segment = parseFormattedLine(piece.content());
                 segment = switch (piece.format())
                 {
-                    case COMMAND -> applyStyle(segment, Formatting.GRAY, false, true);
+                    case COMMAND -> applyStyle(segment, ChatFormatting.GRAY, false, true);
                     case ITALIC -> applyStyle(segment, null, false, true);
                     case BOLD -> applyStyle(segment, null, true, false);
                     default -> segment;
@@ -715,9 +705,9 @@ final class GuideScriptParser
         static InlinePiece formatted(String content, InlineFormat format) { return new InlinePiece(content, format); }
     }
 
-    private static MutableText applyStyle(MutableText text, Formatting color, boolean bold, boolean italic)
+    private static MutableComponent applyStyle(MutableComponent text, ChatFormatting color, boolean bold, boolean italic)
     {
-        return text.styled(style ->
+        return text.withStyle(style ->
         {
             Style result = style;
             if (color != null && result.getColor() == null)
@@ -743,18 +733,18 @@ final class GuideScriptParser
         BLANK
     }
 
-    private static MutableText centerInline(MutableText text)
+    private static MutableComponent centerInline(MutableComponent text)
     {
         String raw = text.getString().replace("\n", "");
         int paddingChars = Math.max(0, (APPROX_LINE_CHAR_WIDTH - raw.length()) / 2);
         if (paddingChars == 0)
             paddingChars = 1;
-        return Text.literal(" ".repeat(paddingChars)).append(text);
+        return Component.literal(" ".repeat(paddingChars)).append(text);
     }
 
-    private static MutableText parseFormattedLine(String raw)
+    private static MutableComponent parseFormattedLine(String raw)
     {
-        MutableText result = Text.empty();
+        MutableComponent result = Component.empty();
         StringBuilder buffer = new StringBuilder();
         Style style = Style.EMPTY;
         for (int i = 0; i < raw.length(); i++)
@@ -770,7 +760,7 @@ final class GuideScriptParser
                 }
                 if (!buffer.isEmpty())
                 {
-                    result.append(Text.literal(buffer.toString()).setStyle(style));
+                    result.append(Component.literal(buffer.toString()).setStyle(style));
                     buffer.setLength(0);
                 }
                 style = applyFormatting(style, code);
@@ -779,7 +769,7 @@ final class GuideScriptParser
             buffer.append(c);
         }
         if (!buffer.isEmpty())
-            result.append(Text.literal(buffer.toString()).setStyle(style));
+            result.append(Component.literal(buffer.toString()).setStyle(style));
         return result;
     }
 
@@ -792,13 +782,13 @@ final class GuideScriptParser
             case 'o':
                 return current.withItalic(true);
             case 'n':
-                return current.withUnderline(true);
+                return current.withUnderlined(true);
             case 'm':
                 return current.withStrikethrough(true);
             case 'r':
                 return Style.EMPTY;
             default:
-                Formatting color = Formatting.byCode(code);
+                ChatFormatting color = ChatFormatting.getByCode(code);
                 if (color != null && color.isColor())
                     return Style.EMPTY.withColor(color);
                 return current;
@@ -820,15 +810,15 @@ final class GuideScriptParser
         return String.valueOf(value);
     }
 
-    private static void applyInteractiveStyle(MutableText text, ClickEvent click, HoverEvent hover, Formatting fallbackColor)
+    private static void applyInteractiveStyle(MutableComponent text, ClickEvent click, HoverEvent hover, ChatFormatting fallbackColor)
     {
         Style base = text.getStyle();
         if (fallbackColor != null && base.getColor() == null)
             base = base.withColor(fallbackColor);
         base = base.withClickEvent(click).withHoverEvent(hover);
         text.setStyle(base);
-        for (Text sibling : text.getSiblings())
-            if (sibling instanceof MutableText mutable)
+        for (Component sibling : text.getSiblings())
+            if (sibling instanceof MutableComponent mutable)
                 applyInteractiveStyle(mutable, click, hover, fallbackColor);
     }
 }

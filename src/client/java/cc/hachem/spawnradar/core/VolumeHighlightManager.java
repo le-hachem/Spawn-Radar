@@ -1,10 +1,8 @@
 package cc.hachem.spawnradar.core;
 
-import net.minecraft.util.math.BlockPos;
-
 import java.util.Collections;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentHashMap;import net.minecraft.core.BlockPos;
 
 public final class VolumeHighlightManager
 {
@@ -17,7 +15,7 @@ public final class VolumeHighlightManager
 
     public static boolean toggleSpawnVolume(BlockPos pos, boolean defaultState)
     {
-        BlockPos immutable = pos.toImmutable();
+        BlockPos immutable = pos.immutable();
         boolean current = isSpawnVolumeEnabled(immutable, defaultState);
         boolean newValue = !current;
         applyOverride(immutable, newValue, defaultState, SPAWN_FORCE_SHOW, SPAWN_FORCE_HIDE);
@@ -26,7 +24,7 @@ public final class VolumeHighlightManager
 
     public static boolean toggleMobCapVolume(BlockPos pos, boolean defaultState)
     {
-        BlockPos immutable = pos.toImmutable();
+        BlockPos immutable = pos.immutable();
         boolean current = isMobCapVolumeEnabled(immutable, defaultState);
         boolean newValue = !current;
         applyOverride(immutable, newValue, defaultState, MOB_FORCE_SHOW, MOB_FORCE_HIDE);
@@ -48,7 +46,7 @@ public final class VolumeHighlightManager
 
     public static boolean isSpawnVolumeEnabled(BlockPos pos, boolean defaultState)
     {
-        BlockPos immutable = pos.toImmutable();
+        BlockPos immutable = pos.immutable();
         if (SPAWN_FORCE_HIDE.contains(immutable))
             return false;
         if (SPAWN_FORCE_SHOW.contains(immutable))
@@ -58,7 +56,7 @@ public final class VolumeHighlightManager
 
     public static boolean isMobCapVolumeEnabled(BlockPos pos, boolean defaultState)
     {
-        BlockPos immutable = pos.toImmutable();
+        BlockPos immutable = pos.immutable();
         if (MOB_FORCE_HIDE.contains(immutable))
             return false;
         if (MOB_FORCE_SHOW.contains(immutable))

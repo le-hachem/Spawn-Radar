@@ -1,13 +1,8 @@
 package cc.hachem.spawnradar.core;
 
 import java.util.*;
-import java.util.stream.Collectors;
-
-import cc.hachem.spawnradar.RadarClient;
-import cc.hachem.spawnradar.config.ConfigManager;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.util.math.BlockPos;
-import org.jetbrains.annotations.NotNull;
+import java.util.stream.Collectors;import net.minecraft.client.player.LocalPlayer;import net.minecraft.core.BlockPos;import cc.hachem.spawnradar.RadarClient;
+import cc.hachem.spawnradar.config.ConfigManager;import org.jetbrains.annotations.NotNull;
 
 public record SpawnerCluster(int id, List<SpawnerInfo> spawners, List<BlockPos> intersectionRegion)
 {
@@ -103,7 +98,7 @@ public record SpawnerCluster(int id, List<SpawnerInfo> spawners, List<BlockPos> 
         return filtered;
     }
 
-    public static void sortClustersByProximity(ClientPlayerEntity player, List<SpawnerCluster> clusters)
+    public static void sortClustersByProximity(LocalPlayer player, List<SpawnerCluster> clusters)
     {
         double px = player.getX(), py = player.getY(), pz = player.getZ();
 
@@ -137,7 +132,7 @@ public record SpawnerCluster(int id, List<SpawnerInfo> spawners, List<BlockPos> 
         RadarClient.LOGGER.debug("Clusters sorted by size.");
     }
 
-    public static List<SpawnerCluster> findClusters(ClientPlayerEntity player, List<SpawnerInfo> spawners, double activationRadius, SortType sortType)
+    public static List<SpawnerCluster> findClusters(LocalPlayer player, List<SpawnerInfo> spawners, double activationRadius, SortType sortType)
     {
         long startTime = System.nanoTime();
         List<SpawnerCluster> clusters = new ArrayList<>();

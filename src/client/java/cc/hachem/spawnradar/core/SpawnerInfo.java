@@ -1,9 +1,6 @@
 package cc.hachem.spawnradar.core;
 
-import net.minecraft.entity.EntityType;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import org.jetbrains.annotations.Nullable;
+import net.minecraft.core.BlockPos;import net.minecraft.resources.ResourceLocation;import net.minecraft.world.entity.EntityType;import org.jetbrains.annotations.Nullable;
 
 public record SpawnerInfo(BlockPos pos, @Nullable EntityType<?> entityType)
 {
@@ -14,12 +11,12 @@ public record SpawnerInfo(BlockPos pos, @Nullable EntityType<?> entityType)
 
     public String mobName()
     {
-        return hasKnownMob() ? entityType.getName().getString() : "Unknown";
+        return hasKnownMob() ? entityType.getDescription().getString() : "Unknown";
     }
 
-    public @Nullable Identifier mobId()
+    public @Nullable ResourceLocation mobId()
     {
-        return hasKnownMob() ? EntityType.getId(entityType) : null;
+        return hasKnownMob() ? EntityType.getKey(entityType) : null;
     }
 }
 

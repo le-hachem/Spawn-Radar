@@ -1,11 +1,6 @@
 package cc.hachem.spawnradar.hud;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.sound.SoundEvents;
-import org.lwjgl.glfw.GLFW;
+import net.minecraft.client.Minecraft;import net.minecraft.client.gui.Font;import net.minecraft.client.gui.GuiGraphics;import net.minecraft.client.resources.sounds.SimpleSoundInstance;import net.minecraft.sounds.SoundEvents;import org.lwjgl.glfw.GLFW;
 
 public class ButtonWidget extends Widget
 {
@@ -29,12 +24,12 @@ public class ButtonWidget extends Widget
     }
 
     @Override
-    public void render(DrawContext context)
+    public void render(GuiGraphics context)
     {
-        MinecraftClient client = MinecraftClient.getInstance();
-        TextRenderer textRenderer = client.textRenderer;
+        Minecraft client = Minecraft.getInstance();
+        Font textRenderer = client.font;
         int drawColor = hovered ? lightenColor(baseColor) : baseColor;
-        context.drawText(textRenderer, getDisplayText(), x, y, drawColor, true);
+        context.drawString(textRenderer, getDisplayText(), x, y, drawColor, true);
     }
 
     @Override
@@ -46,9 +41,9 @@ public class ButtonWidget extends Widget
             return;
         callback.run();
 
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         if (client.player != null)
-            client.getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0f));
+            client.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
     }
 
     @Override
@@ -78,11 +73,11 @@ public class ButtonWidget extends Widget
 
     private void recalcDimensions()
     {
-        MinecraftClient client = MinecraftClient.getInstance();
-        TextRenderer textRenderer = client.textRenderer;
-        this.contentWidth = textRenderer.getWidth(getDisplayText());
+        Minecraft client = Minecraft.getInstance();
+        Font textRenderer = client.font;
+        this.contentWidth = textRenderer.width(getDisplayText());
         this.width = contentWidth;
-        this.height = textRenderer.fontHeight;
+        this.height = textRenderer.lineHeight;
     }
 
     private String getDisplayText()

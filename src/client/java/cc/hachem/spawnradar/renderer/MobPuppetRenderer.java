@@ -1,17 +1,7 @@
 package cc.hachem.spawnradar.renderer;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityDimensions;
-import net.minecraft.entity.EntityPose;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.SpawnReason;
-
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentHashMap;import net.minecraft.client.Minecraft;import net.minecraft.client.gui.GuiGraphics;import net.minecraft.client.gui.screens.inventory.InventoryScreen;import net.minecraft.world.entity.Entity;import net.minecraft.world.entity.EntityDimensions;import net.minecraft.world.entity.EntitySpawnReason;import net.minecraft.world.entity.EntityType;import net.minecraft.world.entity.LivingEntity;import net.minecraft.world.entity.Pose;
 
 public final class MobPuppetRenderer
 {
@@ -27,7 +17,7 @@ public final class MobPuppetRenderer
         CACHE.clear();
     }
 
-    public static void render(DrawContext context, EntityType<?> entityType, int x, int y, float size)
+    public static void render(GuiGraphics context, EntityType<?> entityType, int x, int y, float size)
     {
         if (context == null || entityType == null)
             return;
@@ -45,7 +35,7 @@ public final class MobPuppetRenderer
         float referenceX = x - pixelSize * 0.6f;
         float referenceY = y - pixelSize * 0.25f;
 
-        InventoryScreen.drawEntity(context,
+        InventoryScreen.renderEntityInInventoryFollowsMouse(context,
                                    x, y,
                                    right, bottom,
                                    renderSize, focusScale,
@@ -64,13 +54,13 @@ public final class MobPuppetRenderer
 
     private static float computeHeadFocusBoost(LivingEntity entity)
     {
-        EntityPose pose = entity.getPose();
+        Pose pose = entity.getPose();
         EntityDimensions dims = entity.getDimensions(pose);
         if (isApproximatelyCube(dims))
             return 0f;
 
         float eyeHeight = entity.getEyeHeight(pose);
-        float centerHeight = entity.getHeight() * 0.5f;
+        float centerHeight = entity.getBbHeight() * 0.5f;
         float difference = eyeHeight - centerHeight;
         return difference <= 0f ? 0f : difference * 0.8f;
     }
@@ -90,18 +80,18 @@ public final class MobPuppetRenderer
 
     private static LivingEntity createInstance(EntityType<?> type)
     {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.world == null)
+        Minecraft client = Minecraft.getInstance();
+        if (client.level == null)
             return null;
 
-        Entity entity = type.create(client.world, SpawnReason.SPAWN_ITEM_USE);
+        Entity entity = type.create(client.level, EntitySpawnReason.SPAWN_ITEM_USE);
         if (!(entity instanceof LivingEntity living))
             return null;
 
-        living.setBodyYaw(180f);
-        living.setHeadYaw(180f);
-        living.setYaw(180f);
-        living.setPitch(0f);
+        living.setYBodyRot(180f);
+        living.setYHeadRot(180f);
+        living.setYRot(180f);
+        living.setXRot(0f);
         return living;
     }
 }

@@ -1,12 +1,11 @@
 package cc.hachem.spawnradar.renderer;
 
-import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.Set;import net.minecraft.core.BlockPos;
 
 public final class GreedyMesher
 {

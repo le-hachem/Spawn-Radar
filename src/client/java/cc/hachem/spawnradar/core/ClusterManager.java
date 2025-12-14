@@ -1,9 +1,6 @@
 package cc.hachem.spawnradar.core;
 
-import cc.hachem.spawnradar.RadarClient;
-import net.minecraft.util.math.BlockPos;
-
-import java.util.*;
+import cc.hachem.spawnradar.RadarClient;import java.util.*;import net.minecraft.core.BlockPos;
 
 public class ClusterManager
 {
@@ -155,7 +152,7 @@ public class ClusterManager
         {
             backgroundHighlightSpawners.removeIf(packed ->
             {
-                SpawnerInfo info = BlockBank.get(BlockPos.fromLong(packed));
+                SpawnerInfo info = BlockBank.get(BlockPos.of(packed));
                 if (info == null)
                     return true;
                 if (seen.add(packed))

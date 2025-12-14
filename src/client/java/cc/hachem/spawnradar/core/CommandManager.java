@@ -10,15 +10,14 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
-
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.MutableComponent;
 import java.util.List;
 import java.util.Locale;
 
@@ -30,14 +29,14 @@ public class CommandManager
 
     private static final SuggestionProvider<FabricClientCommandSource> SORTING_SUGGESTIONS = (context, builder) ->
     {
-        builder.suggest("proximity", Text.translatable("command.spawn_radar.scan.suggestion.proximity"));
-        builder.suggest("size", Text.translatable("command.spawn_radar.scan.suggestion.size"));
+        builder.suggest("proximity", Component.translatable("command.spawn_radar.scan.suggestion.proximity"));
+        builder.suggest("size", Component.translatable("command.spawn_radar.scan.suggestion.size"));
         return builder.buildFuture();
     };
 
     private static final SuggestionProvider<FabricClientCommandSource> TOGGLE_SUGGESTIONS = (context, builder) ->
     {
-        builder.suggest("all", Text.translatable("command.spawn_radar.toggle.suggestion.all"));
+        builder.suggest("all", Component.translatable("command.spawn_radar.toggle.suggestion.all"));
         List<SpawnerCluster> clusters = ClusterManager.getClusters();
         for (int i = 1; i <= clusters.size(); i++)
             builder.suggest(String.valueOf(i));
@@ -85,7 +84,7 @@ public class CommandManager
         RadarClient.LOGGER.info("CommandManager initialized and commands registered.");
     }
 
-    private static void registerCommands(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess)
+    private static void registerCommands(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandBuildContext registryAccess)
     {
         registerScanCommand(dispatcher);
         registerToggleCommand(dispatcher);
@@ -149,7 +148,7 @@ public class CommandManager
                     String target = StringArgumentType.getString(context, "target").toLowerCase();
                     if (RadarClient.toggleCluster(context.getSource().getPlayer(), target))
                     {
-                        context.getSource().sendFeedback(Text.translatable("chat.spawn_radar.toggle", target));
+                        context.getSource().sendFeedback(Component.translatable("chat.spawn_radar.toggle", target));
                         return Command.SINGLE_SUCCESS;
                     }
                     return 0;
@@ -192,7 +191,7 @@ public class CommandManager
                 if (RadarClient.reset(context.getSource().getPlayer()))
                 {
                     RadarClient.LOGGER.info("Radar reset via command.");
-                    context.getSource().sendFeedback(Text.translatable("chat.spawn_radar.reset"));
+                    context.getSource().sendFeedback(Component.translatable("chat.spawn_radar.reset"));
                     return Command.SINGLE_SUCCESS;
                 }
                 return 0;
@@ -229,12 +228,12 @@ public class CommandManager
     {
         if (topic == null || topic.isBlank())
         {
-            source.sendFeedback(Text.literal("=== Spawn Radar ===").formatted(Formatting.GOLD));
+            source.sendFeedback(Component.literal("=== Spawn Radar ===").withStyle(ChatFormatting.GOLD));
             sendHelpBlock(source, "scan", false);
             sendHelpBlock(source, "toggle", false);
             sendHelpBlock(source, "info", false);
             sendHelpBlock(source, "reset", false);
-            source.sendFeedback(Text.translatable("command.spawn_radar.help.misc").formatted(Formatting.GRAY));
+            source.sendFeedback(Component.translatable("command.spawn_radar.help.misc").withStyle(ChatFormatting.GRAY));
             return Command.SINGLE_SUCCESS;
         }
 
@@ -250,8 +249,8 @@ public class CommandManager
 
         if (!handled)
         {
-            source.sendFeedback(Text.translatable("command.spawn_radar.help.unknown", topic).formatted(Formatting.RED));
-            source.sendFeedback(Text.translatable("command.spawn_radar.help.misc").formatted(Formatting.GRAY));
+            source.sendFeedback(Component.translatable("command.spawn_radar.help.unknown", topic).withStyle(ChatFormatting.RED));
+            source.sendFeedback(Component.translatable("command.spawn_radar.help.misc").withStyle(ChatFormatting.GRAY));
             return 0;
         }
 
@@ -261,12 +260,12 @@ public class CommandManager
     private static void sendHelpBlock(FabricClientCommandSource source, String key, boolean detailed)
     {
         String base = "command.spawn_radar.help." + key;
-        source.sendFeedback(Text.translatable(base + ".title").formatted(Formatting.YELLOW));
-        source.sendFeedback(Text.translatable(base));
+        source.sendFeedback(Component.translatable(base + ".title").withStyle(ChatFormatting.YELLOW));
+        source.sendFeedback(Component.translatable(base));
         if (detailed)
-            source.sendFeedback(Text.translatable(base + ".detail").formatted(Formatting.WHITE));
-        source.sendFeedback(Text.translatable(base + ".usage").formatted(Formatting.GRAY));
-        source.sendFeedback(Text.literal(""));
+            source.sendFeedback(Component.translatable(base + ".detail").withStyle(ChatFormatting.WHITE));
+        source.sendFeedback(Component.translatable(base + ".usage").withStyle(ChatFormatting.GRAY));
+        source.sendFeedback(Component.literal(""));
     }
 
     private static int executeScan(FabricClientCommandSource source, String sortingArg, int radius, boolean forceRescan)
@@ -275,7 +274,7 @@ public class CommandManager
         RadarClient.reset(source.getPlayer());
         if (RadarClient.generateClusters(source.getPlayer(), radius, sorting, forceRescan))
         {
-            source.sendFeedback(Text.translatable("chat.spawn_radar.scan_started"));
+            source.sendFeedback(Component.translatable("chat.spawn_radar.scan_started"));
             return Command.SINGLE_SUCCESS;
         }
         return 0;
@@ -286,20 +285,20 @@ public class CommandManager
         List<SpawnerCluster> clusters = ClusterManager.getClusters();
         if (clusters == null || clusters.isEmpty())
         {
-            source.sendFeedback(Text.translatable("chat.spawn_radar.invalid_id").formatted(Formatting.RED));
+            source.sendFeedback(Component.translatable("chat.spawn_radar.invalid_id").withStyle(ChatFormatting.RED));
             return 0;
         }
 
         if (id < 1)
         {
-            source.sendFeedback(Text.translatable("chat.spawn_radar.invalid_id").formatted(Formatting.RED));
+            source.sendFeedback(Component.translatable("chat.spawn_radar.invalid_id").withStyle(ChatFormatting.RED));
             return 0;
         }
 
         SpawnerCluster cluster = ClusterManager.getClusterById(id);
         if (cluster == null)
         {
-            source.sendFeedback(Text.translatable("chat.spawn_radar.invalid_id").formatted(Formatting.RED));
+            source.sendFeedback(Component.translatable("chat.spawn_radar.invalid_id").withStyle(ChatFormatting.RED));
             return 0;
         }
         sendClusterSummary(source, cluster);
@@ -322,37 +321,37 @@ public class CommandManager
         List<SpawnerCluster> clusters = ClusterManager.getClusters();
         if (clusters == null || clusters.isEmpty())
         {
-            source.sendFeedback(Text.translatable("chat.spawn_radar.invalid_id").formatted(Formatting.RED));
+            source.sendFeedback(Component.translatable("chat.spawn_radar.invalid_id").withStyle(ChatFormatting.RED));
             return 0;
         }
 
         if (clusterId < 1)
         {
-            source.sendFeedback(Text.translatable("chat.spawn_radar.invalid_id").formatted(Formatting.RED));
+            source.sendFeedback(Component.translatable("chat.spawn_radar.invalid_id").withStyle(ChatFormatting.RED));
             return 0;
         }
 
         SpawnerCluster cluster = ClusterManager.getClusterById(clusterId);
         if (cluster == null)
         {
-            source.sendFeedback(Text.translatable("chat.spawn_radar.invalid_id").formatted(Formatting.RED));
+            source.sendFeedback(Component.translatable("chat.spawn_radar.invalid_id").withStyle(ChatFormatting.RED));
             return 0;
         }
         if (spawnerIndex < 1 || spawnerIndex > cluster.spawners().size())
         {
-            source.sendFeedback(Text.translatable("chat.spawn_radar.invalid_spawner_id").formatted(Formatting.RED));
+            source.sendFeedback(Component.translatable("chat.spawn_radar.invalid_spawner_id").withStyle(ChatFormatting.RED));
             return 0;
         }
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client == null || client.world == null)
+        Minecraft client = Minecraft.getInstance();
+        if (client == null || client.level == null)
         {
-            source.sendFeedback(Text.translatable("chat.spawn_radar.info.no_efficiency_data").formatted(Formatting.RED));
+            source.sendFeedback(Component.translatable("chat.spawn_radar.info.no_efficiency_data").withStyle(ChatFormatting.RED));
             return 0;
         }
 
         SpawnerInfo spawner = cluster.spawners().get(spawnerIndex - 1);
-        SpawnerEfficiencyAdvisor.AdviceResult result = SpawnerEfficiencyAdvisor.openAdviceBook(client.world, spawner);
+        SpawnerEfficiencyAdvisor.AdviceResult result = SpawnerEfficiencyAdvisor.openAdviceBook(client.level, spawner);
 
         switch (result)
         {
@@ -362,12 +361,12 @@ public class CommandManager
             }
             case NO_ADVICE ->
             {
-                source.sendFeedback(Text.translatable("chat.spawn_radar.info.no_suggestions").formatted(Formatting.GRAY));
+                source.sendFeedback(Component.translatable("chat.spawn_radar.info.no_suggestions").withStyle(ChatFormatting.GRAY));
                 return Command.SINGLE_SUCCESS;
             }
             case NO_DATA ->
             {
-                source.sendFeedback(Text.translatable("chat.spawn_radar.info.no_efficiency_data").formatted(Formatting.RED));
+                source.sendFeedback(Component.translatable("chat.spawn_radar.info.no_efficiency_data").withStyle(ChatFormatting.RED));
                 return 0;
             }
             default ->
@@ -380,69 +379,69 @@ public class CommandManager
     private static void sendClusterSummary(FabricClientCommandSource source, SpawnerCluster cluster)
     {
         source.sendFeedback(
-            Text.translatable("command.spawn_radar.info.header", cluster.id(), cluster.spawners().size())
-                .formatted(Formatting.GOLD)
+            Component.translatable("command.spawn_radar.info.header", cluster.id(), cluster.spawners().size())
+                .withStyle(ChatFormatting.GOLD)
         );
 
         boolean highlighted = ClusterManager.isHighlighted(cluster.id());
         String key = highlighted
             ? "command.spawn_radar.info.highlighted.on"
             : "command.spawn_radar.info.highlighted.off";
-        source.sendFeedback(Text.translatable(key).formatted(highlighted ? Formatting.GREEN : Formatting.GRAY));
+        source.sendFeedback(Component.translatable(key).withStyle(highlighted ? ChatFormatting.GREEN : ChatFormatting.GRAY));
 
-        MutableText actions = Text.translatable("command.spawn_radar.info.actions").formatted(Formatting.DARK_GRAY)
-            .append(Text.literal(" "))
+        MutableComponent actions = Component.translatable("command.spawn_radar.info.actions").withStyle(ChatFormatting.DARK_GRAY)
+            .append(Component.literal(" "))
             .append(createCommandButton(
                 "command.spawn_radar.info.toggle_label",
                 "/radar:toggle " + cluster.id(),
-                Formatting.AQUA,
+                ChatFormatting.AQUA,
                 "command.spawn_radar.info.toggle_hover"
             ));
 
         source.sendFeedback(actions);
-        source.sendFeedback(Text.literal(""));
+        source.sendFeedback(Component.literal(""));
     }
 
     private static void sendSpawnerLine(FabricClientCommandSource source, int index, SpawnerInfo spawner)
     {
         BlockPos pos = spawner.pos();
-        MutableText line = Text.translatable("command.spawn_radar.info.spawner_line", index, spawner.mobName())
-            .formatted(Formatting.GREEN)
+        MutableComponent line = Component.translatable("command.spawn_radar.info.spawner_line", index, spawner.mobName())
+            .withStyle(ChatFormatting.GREEN)
             .append(createCoordinateComponent(pos))
-            .append(Text.literal(" "))
+            .append(Component.literal(" "))
             .append(createTeleportButton(pos));
         source.sendFeedback(line);
     }
 
-    private static MutableText createCommandButton(String labelKey, String command, Formatting color, String hoverKey)
+    private static MutableComponent createCommandButton(String labelKey, String command, ChatFormatting color, String hoverKey)
     {
-        return Text.translatable(labelKey)
-            .formatted(color)
-            .styled(style -> style
+        return Component.translatable(labelKey)
+            .withStyle(color)
+            .withStyle(style -> style
                 .withClickEvent(new ClickEvent.RunCommand(command))
-                .withHoverEvent(new HoverEvent.ShowText(Text.translatable(hoverKey)))
+                .withHoverEvent(new HoverEvent.ShowText(Component.translatable(hoverKey)))
             );
     }
 
-    private static MutableText createTeleportButton(BlockPos pos)
+    private static MutableComponent createTeleportButton(BlockPos pos)
     {
         String cmd = String.format("/tp %d %d %d", pos.getX(), pos.getY(), pos.getZ());
-        return Text.translatable("command.spawn_radar.info.teleport_label")
-            .formatted(Formatting.AQUA)
-            .styled(style -> style
+        return Component.translatable("command.spawn_radar.info.teleport_label")
+            .withStyle(ChatFormatting.AQUA)
+            .withStyle(style -> style
                 .withClickEvent(new ClickEvent.RunCommand(cmd))
-                .withHoverEvent(new HoverEvent.ShowText(Text.translatable("command.spawn_radar.teleport_hover")))
+                .withHoverEvent(new HoverEvent.ShowText(Component.translatable("command.spawn_radar.teleport_hover")))
             );
     }
 
-    private static MutableText createCoordinateComponent(BlockPos pos)
+    private static MutableComponent createCoordinateComponent(BlockPos pos)
     {
         String coords = String.format("%d, %d, %d", pos.getX(), pos.getY(), pos.getZ());
-        return Text.literal("[" + coords + "]")
-            .formatted(Formatting.YELLOW)
-            .styled(style -> style
+        return Component.literal("[" + coords + "]")
+            .withStyle(ChatFormatting.YELLOW)
+            .withStyle(style -> style
                 .withClickEvent(new ClickEvent.CopyToClipboard(coords))
-                .withHoverEvent(new HoverEvent.ShowText(Text.translatable("command.spawn_radar.info.coords_hover")))
+                .withHoverEvent(new HoverEvent.ShowText(Component.translatable("command.spawn_radar.info.coords_hover")))
             );
     }
 

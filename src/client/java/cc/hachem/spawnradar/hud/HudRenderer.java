@@ -2,15 +2,15 @@ package cc.hachem.spawnradar.hud;
 
 import cc.hachem.spawnradar.RadarClient;
 import cc.hachem.spawnradar.config.ConfigManager;
+import com.mojang.blaze3d.platform.Window;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ChatScreen;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.util.Window;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.resources.ResourceLocation;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -35,7 +35,7 @@ public class HudRenderer
     private static void registerHudElement()
     {
         HudElementRegistry.attachElementAfter(VanillaHudElements.CHAT,
-            Identifier.of(RadarClient.MOD_ID, "hud"), HudRenderer::render);
+            ResourceLocation.fromNamespaceAndPath(RadarClient.MOD_ID, "hud"), HudRenderer::render);
     }
 
     private static void registerClientTickHandler()
@@ -43,7 +43,7 @@ public class HudRenderer
         ClientTickEvents.END_CLIENT_TICK.register(HudRenderer::handleClientTick);
     }
 
-    private static void handleClientTick(MinecraftClient client)
+    private static void handleClientTick(Minecraft client)
     {
         if (client == null)
             return;
@@ -52,22 +52,22 @@ public class HudRenderer
         if (!shouldProcessInput(client))
             return;
 
-        double scaleFactor = client.getWindow().getScaleFactor();
-        int mx = (int) (client.mouse.getX() / scaleFactor);
-        int my = (int) (client.mouse.getY() / scaleFactor);
+        double scaleFactor = client.getWindow().getGuiScale();
+        int mx = (int) (client.mouseHandler.xpos() / scaleFactor);
+        int my = (int) (client.mouseHandler.ypos() / scaleFactor);
 
         onMouseMove(mx, my);
         processMouseButtons(client, mx, my);
     }
 
-    private static boolean shouldProcessInput(MinecraftClient client)
+    private static boolean shouldProcessInput(Minecraft client)
     {
-        return client.currentScreen instanceof ChatScreen;
+        return client.screen instanceof ChatScreen;
     }
 
-    private static void processMouseButtons(MinecraftClient client, int mx, int my)
+    private static void processMouseButtons(Minecraft client, int mx, int my)
     {
-        long handle = client.getWindow().getHandle();
+        long handle = client.getWindow().handle();
 
         boolean nowLeft = GLFW.glfwGetMouseButton(handle, GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
         boolean nowRight = GLFW.glfwGetMouseButton(handle, GLFW.GLFW_MOUSE_BUTTON_RIGHT) == GLFW.GLFW_PRESS;
@@ -92,9 +92,9 @@ public class HudRenderer
         if (panel == null || RadarClient.config == null)
             return;
 
-        var client = MinecraftClient.getInstance();
-        int screenHeight = client.getWindow().getScaledHeight();
-        int screenWidth = client.getWindow().getScaledWidth();
+        var client = Minecraft.getInstance();
+        int screenHeight = client.getWindow().getGuiScaledHeight();
+        int screenWidth = client.getWindow().getGuiScaledWidth();
 
         int yOffset = (int) (RadarClient.config.verticalPanelOffset * screenHeight);
         panel.setY(50 + yOffset);
@@ -104,16 +104,16 @@ public class HudRenderer
 
     public static void build()
     {
-        var client = MinecraftClient.getInstance();
-        int yOffset = (int) (RadarClient.config.verticalPanelOffset * client.getWindow().getScaledHeight());
+        var client = Minecraft.getInstance();
+        int yOffset = (int) (RadarClient.config.verticalPanelOffset * client.getWindow().getGuiScaledHeight());
 
         children.removeIf(widget -> widget instanceof PanelWidget);
         PanelWidget.dispose();
 
         children.add(new PanelWidget(10, 50 + yOffset));
         Window window = client.getWindow();
-        lastScreenWidth = window.getScaledWidth();
-        lastScreenHeight = window.getScaledHeight();
+        lastScreenWidth = window.getGuiScaledWidth();
+        lastScreenHeight = window.getGuiScaledHeight();
         PanelWidget.refresh();
     }
 
@@ -132,12 +132,12 @@ public class HudRenderer
         children.forEach(child -> child.onMouseRelease(mx, my, mouseButton));
     }
 
-    private static void render(DrawContext context, RenderTickCounter tickCounter)
+    private static void render(GuiGraphics context, DeltaTracker tickCounter)
     {
         children.forEach(child -> child.render(context));
     }
 
-    private static void handleWindowResize(MinecraftClient client)
+    private static void handleWindowResize(Minecraft client)
     {
         var panel = PanelWidget.getInstance();
         if (panel == null)
@@ -148,8 +148,8 @@ public class HudRenderer
         }
 
         Window window = client.getWindow();
-        int width = window.getScaledWidth();
-        int height = window.getScaledHeight();
+        int width = window.getGuiScaledWidth();
+        int height = window.getGuiScaledHeight();
 
         if (width != lastScreenWidth || height != lastScreenHeight)
         {

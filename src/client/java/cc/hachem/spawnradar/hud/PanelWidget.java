@@ -4,14 +4,13 @@ import cc.hachem.spawnradar.RadarClient;
 import cc.hachem.spawnradar.config.ConfigManager;
 import cc.hachem.spawnradar.core.ClusterManager;
 import cc.hachem.spawnradar.core.SpawnerCluster;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
-import net.minecraft.util.Colors;
-
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.CommonColors;
 
 public class PanelWidget extends Widget
 {
@@ -35,39 +34,39 @@ public class PanelWidget extends Widget
 
     public PanelWidget(int x, int y)
     {
-        MinecraftClient client = MinecraftClient.getInstance();
-        TextRenderer textRenderer = client.textRenderer;
+        Minecraft client = Minecraft.getInstance();
+        Font textRenderer = client.font;
         String placeholder = "[(xxx) Cluster#xxx]";
 
         this.x = x;
         this.y = y;
-        this.width = textRenderer.getWidth(placeholder) + 10;
-        this.height = (textRenderer.fontHeight + 6) * elementCount;
+        this.width = textRenderer.width(placeholder) + 10;
+        this.height = (textRenderer.lineHeight + 6) * elementCount;
 
         initializeButtons(x, y, client);
         instance = this;
     }
 
-    private void initializeButtons(int x, int y, MinecraftClient client)
+    private void initializeButtons(int x, int y, Minecraft client)
     {
         previousPageWidget = new ButtonWidget(
             x, y - 20,
-            Text.translatable("button.spawn_radar.prev_page").getString(),
-            Colors.WHITE,
+            Component.translatable("button.spawn_radar.prev_page").getString(),
+            CommonColors.WHITE,
             PanelWidget::previousPage
         );
 
         nextPageWidget = new ButtonWidget(
             x + 100, y - 20,
-            Text.translatable("button.spawn_radar.next_page").getString(),
-            Colors.WHITE,
+            Component.translatable("button.spawn_radar.next_page").getString(),
+            CommonColors.WHITE,
             PanelWidget::nextPage
         );
 
         toggleAllButton = new ButtonWidget(
             x, y - 40,
-            Text.translatable("button.spawn_radar.toggle_all_off").getString(),
-            Colors.GREEN,
+            Component.translatable("button.spawn_radar.toggle_all_off").getString(),
+            CommonColors.GREEN,
             () ->
             {
                 ClusterManager.toggleAllClusters();
@@ -77,15 +76,15 @@ public class PanelWidget extends Widget
 
         rescanButton = new ButtonWidget(
             x, y - 40,
-            Text.translatable("button.spawn_radar.rescan").getString(),
-            Colors.CYAN,
+            Component.translatable("button.spawn_radar.rescan").getString(),
+            CommonColors.HIGH_CONTRAST_DIAMOND,
             PanelWidget::triggerRescan
         );
 
         resetButton = new ButtonWidget(
             x, y - 40,
-            Text.translatable("button.spawn_radar.reset").getString(),
-            Colors.LIGHT_RED,
+            Component.translatable("button.spawn_radar.reset").getString(),
+            CommonColors.SOFT_RED,
             () ->
             {
                 if (client.player != null && RadarClient.reset(client.player))
@@ -135,13 +134,13 @@ public class PanelWidget extends Widget
 
     private static void updatePages()
     {
-        MinecraftClient client = MinecraftClient.getInstance();
-        TextRenderer textRenderer = client.textRenderer;
+        Minecraft client = Minecraft.getInstance();
+        Font textRenderer = client.font;
 
         PanelWidget panel = getInstance();
 
         pageText = String.format("%d/%d", currentPage + 1, pageCount);
-        int pageTextWidth = textRenderer.getWidth(pageText);
+        int pageTextWidth = textRenderer.width(pageText);
         int paginationY = panel.y - 20;
         int listWidth = Math.max(panel.width, 140);
         int leftEdge = panel.x;
@@ -177,9 +176,9 @@ public class PanelWidget extends Widget
         boolean allHighlighted = ClusterManager.getHighlightedClusterIds().size() == ClusterManager.getClusters().size();
 
         toggleAllButton.setText(
-            Text.translatable(allHighlighted ? "button.spawn_radar.toggle_all_off" : "button.spawn_radar.toggle_all_on").getString()
+            Component.translatable(allHighlighted ? "button.spawn_radar.toggle_all_off" : "button.spawn_radar.toggle_all_on").getString()
         );
-        toggleAllButton.setColor(allHighlighted ? Colors.LIGHT_YELLOW : Colors.GREEN);
+        toggleAllButton.setColor(allHighlighted ? CommonColors.SOFT_YELLOW : CommonColors.GREEN);
 
         PanelWidget panel = getInstance();
         if (panel == null)
@@ -238,7 +237,7 @@ public class PanelWidget extends Widget
     }
 
     @Override
-    public void render(DrawContext context)
+    public void render(GuiGraphics context)
     {
         if (!ClusterManager.getClusters().isEmpty())
         {
@@ -247,8 +246,8 @@ public class PanelWidget extends Widget
             resetButton.render(context);
         }
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        TextRenderer textRenderer = client.textRenderer;
+        Minecraft client = Minecraft.getInstance();
+        Font textRenderer = client.font;
 
         int listWidth = Math.max(width, 140);
         int padding = 6;
@@ -276,7 +275,7 @@ public class PanelWidget extends Widget
         {
             previousPageWidget.render(context);
             nextPageWidget.render(context);
-            context.drawText(textRenderer, pageText, pageTextX, pageTextY, Colors.GRAY, false);
+            context.drawString(textRenderer, pageText, pageTextX, pageTextY, CommonColors.GRAY, false);
         }
     }
 
@@ -289,7 +288,7 @@ public class PanelWidget extends Widget
 
     private static void triggerRescan()
     {
-        var client = MinecraftClient.getInstance();
+        var client = Minecraft.getInstance();
         if (client.player == null)
             return;
         int radius = RadarClient.config != null ? RadarClient.config.defaultSearchRadius : ConfigManager.DEFAULT.defaultSearchRadius;

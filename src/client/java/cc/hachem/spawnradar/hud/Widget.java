@@ -1,13 +1,13 @@
 package cc.hachem.spawnradar.hud;
 
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.GuiGraphics;
 
 public abstract class Widget
 {
     protected int x, y;
     protected int width, height;
 
-    public void render(DrawContext context) { }
+    public void render(GuiGraphics context) { }
 
     public void onMouseClick(int mx, int my, int mouseButton)   { }
     public void onMouseRelease(int mx, int my, int mouseButton) { }

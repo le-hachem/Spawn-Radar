@@ -2,14 +2,7 @@ package cc.hachem.spawnradar.renderer;
 
 import cc.hachem.spawnradar.RadarClient;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Identifier;
-
-import java.util.Queue;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;import net.minecraft.client.DeltaTracker;import net.minecraft.client.gui.GuiGraphics;import net.minecraft.resources.ResourceLocation;import net.minecraft.world.item.Item;import net.minecraft.world.item.ItemStack;import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ItemTextureRenderer
@@ -23,7 +16,7 @@ public class ItemTextureRenderer
     {
         HudElementRegistry.attachElementAfter(
             VanillaHudElements.CHAT,
-            Identifier.of(RadarClient.MOD_ID, "texture"),
+            ResourceLocation.fromNamespaceAndPath(RadarClient.MOD_ID, "texture"),
             ItemTextureRenderer::flushQueue
         );
     }
@@ -49,7 +42,7 @@ public class ItemTextureRenderer
         drawQueue.add(new DrawRequest(stack.copy(), x, y, width, height));
     }
 
-    private static void flushQueue(DrawContext context, RenderTickCounter tickCounter)
+    private static void flushQueue(GuiGraphics context, DeltaTracker tickCounter)
     {
         if (drawQueue.isEmpty())
             return;
@@ -59,13 +52,13 @@ public class ItemTextureRenderer
             drawRequest(context, request);
     }
 
-    private static void drawRequest(DrawContext context, DrawRequest request)
+    private static void drawRequest(GuiGraphics context, DrawRequest request)
     {
-        var matrices = context.getMatrices();
+        var matrices = context.pose();
         matrices.pushMatrix();
         matrices.translate((float) request.x(), (float) request.y());
         matrices.scale(request.width() / DEFAULT_SIZE, request.height() / DEFAULT_SIZE);
-        context.drawItem(request.stack(), 0, 0);
+        context.renderItem(request.stack(), 0, 0);
         matrices.popMatrix();
     }
 

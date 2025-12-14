@@ -1,10 +1,8 @@
 package cc.hachem.spawnradar.core;
 
-import net.minecraft.util.math.BlockPos;
-
 import java.util.Collections;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentHashMap;import net.minecraft.core.BlockPos;
 
 public final class SpawnerMobCapStatusManager
 {
@@ -15,7 +13,7 @@ public final class SpawnerMobCapStatusManager
 
     public static boolean toggle(BlockPos pos, boolean defaultState)
     {
-        BlockPos immutable = pos.toImmutable();
+        BlockPos immutable = pos.immutable();
         boolean enabled = isEnabled(immutable, defaultState);
         boolean newValue = !enabled;
         applyOverride(immutable, newValue, defaultState);
@@ -24,7 +22,7 @@ public final class SpawnerMobCapStatusManager
 
     public static boolean isEnabled(BlockPos pos, boolean defaultState)
     {
-        BlockPos immutable = pos.toImmutable();
+        BlockPos immutable = pos.immutable();
         if (FORCE_HIDE.contains(immutable))
             return false;
         if (FORCE_SHOW.contains(immutable))

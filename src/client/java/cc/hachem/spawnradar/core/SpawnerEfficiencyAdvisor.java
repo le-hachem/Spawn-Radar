@@ -4,16 +4,15 @@ import cc.hachem.spawnradar.RadarClient;
 import cc.hachem.spawnradar.hud.EfficiencyAdviceBook;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
-import net.minecraft.block.Blocks;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ChatScreen;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -36,14 +35,14 @@ public final class SpawnerEfficiencyAdvisor
     {
         UseBlockCallback.EVENT.register((player, world, hand, hitResult) ->
         {
-            if (!world.isClient() || hand != Hand.MAIN_HAND || hitResult == null)
-                return ActionResult.PASS;
-            if (!player.isSneaking())
-                return ActionResult.PASS;
+            if (!world.isClientSide() || hand != InteractionHand.MAIN_HAND || hitResult == null)
+                return InteractionResult.PASS;
+            if (!player.isShiftKeyDown())
+                return InteractionResult.PASS;
 
             BlockPos pos = hitResult.getBlockPos();
-            if (!world.getBlockState(pos).isOf(Blocks.SPAWNER))
-                return ActionResult.PASS;
+            if (!world.getBlockState(pos).is(Blocks.SPAWNER))
+                return InteractionResult.PASS;
 
             SpawnerInfo info = BlockBank.get(pos);
             if (info == null)
@@ -51,8 +50,8 @@ public final class SpawnerEfficiencyAdvisor
 
             AdviceResult outcome = openAdviceBook(world, info);
             if (outcome == AdviceResult.OPTIMAL)
-                player.sendMessage(Text.translatable("text.spawn_radar.efficiency_advisor.optimal"), false);
-            return ActionResult.PASS;
+                player.displayClientMessage(Component.translatable("text.spawn_radar.efficiency_advisor.optimal"), false);
+            return InteractionResult.PASS;
         });
         ClientTickEvents.END_CLIENT_TICK.register(client ->
         {
@@ -61,7 +60,7 @@ public final class SpawnerEfficiencyAdvisor
             BookPayload payload = PENDING_BOOK.getAndSet(null);
             if (payload == null)
                 return;
-            if (client.currentScreen instanceof ChatScreen)
+            if (client.screen instanceof ChatScreen)
             {
                 PENDING_BOOK.compareAndSet(null, payload);
                 return;
@@ -71,7 +70,7 @@ public final class SpawnerEfficiencyAdvisor
         RadarClient.LOGGER.debug("Initialized SpawnerEfficiencyAdvisor.");
     }
 
-    public static AdviceResult openAdviceBook(World world, SpawnerInfo info)
+    public static AdviceResult openAdviceBook(Level world, SpawnerInfo info)
     {
         if (world == null || info == null)
             return AdviceResult.NO_DATA;
@@ -83,7 +82,7 @@ public final class SpawnerEfficiencyAdvisor
         var mobCapStatus = SpawnerEfficiencyManager.computeMobCapStatus(world, info);
         List<EfficiencyAdviceBook.EfficiencyAdviceEntry> adviceEntries = buildAdviceEntries(result, mobCapStatus);
 
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         if (client == null)
             return AdviceResult.NO_DATA;
 
@@ -98,20 +97,20 @@ public final class SpawnerEfficiencyAdvisor
         if (result.volumeScore() < 1d)
         {
             fixes.add(new EfficiencyAdviceBook.EfficiencyAdviceEntry(
-                Text.translatable("text.spawn_radar.efficiency_advisor.volume.title").formatted(Formatting.GOLD, Formatting.BOLD),
-                Text.translatable(
+                Component.translatable("text.spawn_radar.efficiency_advisor.volume.title").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
+                Component.translatable(
                     "text.spawn_radar.efficiency_advisor.volume.detail",
                     SpawnerEfficiencyManager.formatPercentage(result.volumeScore())
-                ).formatted(Formatting.GRAY)));
+                ).withStyle(ChatFormatting.GRAY)));
         }
         if (result.lightScore() < 1d)
         {
             fixes.add(new EfficiencyAdviceBook.EfficiencyAdviceEntry(
-                Text.translatable("text.spawn_radar.efficiency_advisor.light.title").formatted(Formatting.LIGHT_PURPLE, Formatting.BOLD),
-                Text.translatable(
+                Component.translatable("text.spawn_radar.efficiency_advisor.light.title").withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD),
+                Component.translatable(
                     "text.spawn_radar.efficiency_advisor.light.detail",
                     SpawnerEfficiencyManager.formatPercentage(result.lightScore())
-                ).formatted(Formatting.GRAY)));
+                ).withStyle(ChatFormatting.GRAY)));
         }
         if (mobCapStatus != null && mobCapStatus.mobCount() > 2)
             fixes.add(buildMobCapEntry(mobCapStatus));
@@ -128,8 +127,8 @@ public final class SpawnerEfficiencyAdvisor
             ? "text.spawn_radar.efficiency_advisor.mobcap_saturated.detail"
             : "text.spawn_radar.efficiency_advisor.mobcap_crowded.detail";
         return new EfficiencyAdviceBook.EfficiencyAdviceEntry(
-            Text.translatable(titleKey).formatted(Formatting.RED, Formatting.BOLD),
-            Text.translatable(detailKey, status.formatted()).formatted(Formatting.GRAY));
+            Component.translatable(titleKey).withStyle(ChatFormatting.RED, ChatFormatting.BOLD),
+            Component.translatable(detailKey, status.formatted()).withStyle(ChatFormatting.GRAY));
     }
 
     private record BookPayload(SpawnerInfo info,

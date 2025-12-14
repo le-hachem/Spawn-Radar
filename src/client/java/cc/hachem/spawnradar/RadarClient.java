@@ -39,12 +39,12 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.LightType;
-import net.minecraft.world.World;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LightLayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,13 +61,13 @@ public class RadarClient implements ClientModInitializer
     private static volatile boolean welcomeMessageSent = false;
     private static String cachedVersionString;
 
-    public static ClientPlayerEntity getPlayer()
+    public static LocalPlayer getPlayer()
     {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         return client.player;
     }
 
-    public static boolean generateClusters(ClientPlayerEntity source, int radius,
+    public static boolean generateClusters(LocalPlayer source, int radius,
                                            String sorting, boolean forceRescan)
     {
         if (ensureServerDisabled(source))
@@ -75,11 +75,11 @@ public class RadarClient implements ClientModInitializer
 
         if (!forceRescan && config.useCachedSpawnersForScan && BlockBank.hasCachedSpawners())
         {
-            List<SpawnerInfo> cached = BlockBank.getWithinChunkRadius(source.getBlockPos(), radius);
+            List<SpawnerInfo> cached = BlockBank.getWithinChunkRadius(source.blockPosition(), radius);
             if (!cached.isEmpty())
             {
                 List<SpawnerInfo> snapshot = new ArrayList<>(cached);
-                MinecraftClient.getInstance().execute(() -> runClusterPipeline(source, snapshot, sorting));
+                Minecraft.getInstance().execute(() -> runClusterPipeline(source, snapshot, sorting));
                 LOGGER.debug("Used cached spawner data for cluster generation ({} entries).", snapshot.size());
                 return true;
             }
@@ -90,13 +90,13 @@ public class RadarClient implements ClientModInitializer
         return true;
     }
 
-    public static void generateClustersChild(ClientPlayerEntity source, String argument)
+    public static void generateClustersChild(LocalPlayer source, String argument)
     {
         List<SpawnerInfo> spawners = new ArrayList<>(BlockBank.getAll());
         runClusterPipeline(source, spawners, argument);
     }
 
-    private static void runClusterPipeline(ClientPlayerEntity source, List<SpawnerInfo> spawners, String argument)
+    private static void runClusterPipeline(LocalPlayer source, List<SpawnerInfo> spawners, String argument)
     {
         if (!validateSpawnerResults(source, spawners))
             return;
@@ -107,7 +107,7 @@ public class RadarClient implements ClientModInitializer
         persistClusterResults(clusters, sortType);
     }
 
-    public static boolean toggleCluster(ClientPlayerEntity source,
+    public static boolean toggleCluster(LocalPlayer source,
                                         String target)
     {
         if (ensureServerDisabled(source)) return false;
@@ -117,7 +117,7 @@ public class RadarClient implements ClientModInitializer
         return toggleSpecificCluster(source, clusters, target);
     }
 
-    public static boolean reset(ClientPlayerEntity player)
+    public static boolean reset(LocalPlayer player)
     {
         if (ensureServerDisabled(player)) return false;
 
@@ -150,8 +150,8 @@ public class RadarClient implements ClientModInitializer
         }
         finally
         {
-            BlockHighlightRenderer.submit(MinecraftClient.getInstance());
-            BoxOutlineRenderer.submit(MinecraftClient.getInstance());
+            BlockHighlightRenderer.submit(Minecraft.getInstance());
+            BoxOutlineRenderer.submit(Minecraft.getInstance());
         }
     }
 
@@ -162,15 +162,15 @@ public class RadarClient implements ClientModInitializer
         LOGGER.info("Initialized successfully.");
     }
 
-    private static boolean ensureServerDisabled(ClientPlayerEntity player)
+    private static boolean ensureServerDisabled(LocalPlayer player)
     {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         if (
-            client.isIntegratedServerRunning() || serverSupportsRadar
+            client.hasSingleplayerServer() || serverSupportsRadar
         ) return false;
 
-        if (player != null) player.sendMessage(
-            Text.translatable("chat.spawn_radar.disabled"),
+        if (player != null) player.displayClientMessage(
+            Component.translatable("chat.spawn_radar.disabled"),
             false
         );
         LOGGER.warn(
@@ -213,13 +213,13 @@ public class RadarClient implements ClientModInitializer
         ClientPlayNetworking.registerGlobalReceiver(
             RadarHandshakePayload.ID,
             (payload, context) ->
-                MinecraftClient.getInstance().execute(() ->
+                Minecraft.getInstance().execute(() ->
                 {
                     serverSupportsRadar = true;
                     LOGGER.info(
                         "Spawn Radar features enabled on the current server."
                     );
-                    scheduleWelcomeMessage(MinecraftClient.getInstance());
+                    scheduleWelcomeMessage(Minecraft.getInstance());
                 })
         );
     }
@@ -227,7 +227,7 @@ public class RadarClient implements ClientModInitializer
     private void registerConnectionCallbacks()
     {
         ClientPlayConnectionEvents.INIT.register((handler, client) ->
-            serverSupportsRadar = client.isIntegratedServerRunning()
+            serverSupportsRadar = client.hasSingleplayerServer()
         );
 
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) ->
@@ -242,10 +242,10 @@ public class RadarClient implements ClientModInitializer
         });
     }
 
-    private static void handleJoinEvent(MinecraftClient client)
+    private static void handleJoinEvent(Minecraft client)
     {
         resetWelcomeMessageState();
-        if (!client.isIntegratedServerRunning())
+        if (!client.hasSingleplayerServer())
         {
             ClientPlayNetworking.send(RadarHandshakePayload.INSTANCE);
             LOGGER.debug("Requested Spawn Radar handshake from server.");
@@ -261,7 +261,7 @@ public class RadarClient implements ClientModInitializer
 
         HudRenderer.build();
         LOGGER.info("Built HudRenderer widgets.");
-        ChunkProcessingManager.processLoadedChunks(client.world);
+        ChunkProcessingManager.processLoadedChunks(client.level);
     }
 
     private static void clearClientState()
@@ -281,12 +281,12 @@ public class RadarClient implements ClientModInitializer
         PanelWidget.refresh();
     }
 
-    private static boolean validateSpawnerResults(ClientPlayerEntity source,
+    private static boolean validateSpawnerResults(LocalPlayer source,
                                                   List<SpawnerInfo> spawners)
     {
         if (!spawners.isEmpty()) return true;
 
-        source.sendMessage(Text.translatable("chat.spawn_radar.none"), false);
+        source.displayClientMessage(Component.translatable("chat.spawn_radar.none"), false);
         LOGGER.warn("No spawners found for cluster generation.");
         return false;
     }
@@ -328,13 +328,13 @@ public class RadarClient implements ClientModInitializer
         PanelWidget.refresh();
     }
 
-    private static boolean toggleAllClusters(ClientPlayerEntity source,
+    private static boolean toggleAllClusters(LocalPlayer source,
                                              List<SpawnerCluster> clusters)
     {
         if (clusters.isEmpty())
         {
-            source.sendMessage(
-                Text.translatable("chat.spawn_radar.no_clusters_to_toggle"),
+            source.displayClientMessage(
+                Component.translatable("chat.spawn_radar.no_clusters_to_toggle"),
                 false
             );
             LOGGER.warn("Attempted to toggle all clusters but none exist.");
@@ -356,7 +356,7 @@ public class RadarClient implements ClientModInitializer
         return true;
     }
 
-    private static boolean toggleSpecificCluster(ClientPlayerEntity source,
+    private static boolean toggleSpecificCluster(LocalPlayer source,
                                                  List<SpawnerCluster> clusters,
                                                  String target)
     {
@@ -365,8 +365,8 @@ public class RadarClient implements ClientModInitializer
             int clusterId = Integer.parseInt(target);
             if (clusters.stream().noneMatch(c -> c.id() == clusterId))
             {
-                source.sendMessage(
-                    Text.translatable("chat.spawn_radar.invalid_id"),
+                source.displayClientMessage(
+                    Component.translatable("chat.spawn_radar.invalid_id"),
                     false
                 );
                 LOGGER.warn(
@@ -382,8 +382,8 @@ public class RadarClient implements ClientModInitializer
         }
         catch (NumberFormatException e)
         {
-            source.sendMessage(
-                Text.translatable("chat.spawn_radar.invalid_id_number"),
+            source.displayClientMessage(
+                Component.translatable("chat.spawn_radar.invalid_id_number"),
                 false
             );
             return false;
@@ -480,7 +480,7 @@ public class RadarClient implements ClientModInitializer
     {
         BlockPos pos = info.pos();
         List<Integer> ids = ClusterManager.getClusterIDAt(pos);
-        var world = MinecraftClient.getInstance().world;
+        var world = Minecraft.getInstance().level;
         Map<Integer, Double> clusterEfficiencies = ids.isEmpty() || world == null
             ? Collections.emptyMap()
             : computeClusterEfficiencyMap(world, ids);
@@ -494,7 +494,7 @@ public class RadarClient implements ClientModInitializer
             var result = SpawnerEfficiencyManager.evaluate(world, info);
             if (result != null)
             {
-                efficiencyLabel = Text.translatable(
+                efficiencyLabel = Component.translatable(
                     "text.spawn_radar.efficiency",
                     SpawnerEfficiencyManager.formatPercentage(result.overall())
                 ).getString();
@@ -505,7 +505,7 @@ public class RadarClient implements ClientModInitializer
         if (mobCapLabelEnabled && world != null)
         {
             var status = SpawnerEfficiencyManager.computeMobCapStatus(world, info);
-            mobCapLabel = Text.translatable(
+            mobCapLabel = Component.translatable(
                 "text.spawn_radar.mob_cap_status",
                 status.formatted()
             ).getString();
@@ -551,7 +551,7 @@ public class RadarClient implements ClientModInitializer
         return label.toString();
     }
 
-    private static Map<Integer, Double> computeClusterEfficiencyMap(net.minecraft.world.World world,
+    private static Map<Integer, Double> computeClusterEfficiencyMap(net.minecraft.world.level.Level world,
                                                                     List<Integer> ids)
     {
         if (world == null || ids == null || ids.isEmpty())
@@ -763,8 +763,8 @@ public class RadarClient implements ClientModInitializer
         if (!SpawnerLightLevelManager.isEnabled(info.pos(), defaultLightLevels))
             return;
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        World world = client.world;
+        Minecraft client = Minecraft.getInstance();
+        Level world = client.level;
         if (world == null)
             return;
 
@@ -776,7 +776,7 @@ public class RadarClient implements ClientModInitializer
         if (bounds == null)
             return;
 
-        BlockPos.Mutable mutable = new BlockPos.Mutable();
+        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
         for (int x = bounds.minX(); x <= bounds.maxX(); x++)
         {
             for (int y = bounds.minY(); y <= bounds.maxY(); y++)
@@ -801,10 +801,10 @@ public class RadarClient implements ClientModInitializer
         }
     }
 
-    private static int computeCombinedLightLevel(World world, BlockPos pos)
+    private static int computeCombinedLightLevel(Level world, BlockPos pos)
     {
-        int blockLight = world.getLightLevel(LightType.BLOCK, pos);
-        int skyLight = world.getLightLevel(LightType.SKY, pos);
+        int blockLight = world.getBrightness(LightLayer.BLOCK, pos);
+        int skyLight = world.getBrightness(LightLayer.SKY, pos);
         return Math.min(15, Math.max(blockLight, skyLight));
     }
 
@@ -822,7 +822,7 @@ public class RadarClient implements ClientModInitializer
         return Math.max(0f, Math.min(1f, value));
     }
 
-    private static void handleClientTick(MinecraftClient client)
+    private static void handleClientTick(Minecraft client)
     {
         if (!welcomeMessagePending)
             return;
@@ -833,17 +833,17 @@ public class RadarClient implements ClientModInitializer
         }
         if (welcomeMessageSent)
             return;
-        if (!client.isIntegratedServerRunning() && !serverSupportsRadar)
+        if (!client.hasSingleplayerServer() && !serverSupportsRadar)
             return;
-        ClientPlayerEntity player = client.player;
+        LocalPlayer player = client.player;
         if (player == null)
             return;
         welcomeMessagePending = false;
         welcomeMessageSent = true;
-        player.sendMessage(Text.translatable("chat.spawn_radar.welcome", getVersionString()), false);
+        player.displayClientMessage(Component.translatable("chat.spawn_radar.welcome", getVersionString()), false);
     }
 
-    private static void scheduleWelcomeMessage(MinecraftClient client)
+    private static void scheduleWelcomeMessage(Minecraft client)
     {
         if (isWelcomeMessageDisabled() || welcomeMessageSent)
             return;
