@@ -271,7 +271,6 @@ public class CommandManager
     private static int executeScan(FabricClientCommandSource source, String sortingArg, int radius, boolean forceRescan)
     {
         String sorting = normalizeSorting(sortingArg);
-        RadarClient.reset(source.getPlayer());
         if (RadarClient.generateClusters(source.getPlayer(), radius, sorting, forceRescan))
         {
             source.sendFeedback(Component.translatable("chat.spawn_radar.scan_started"));
