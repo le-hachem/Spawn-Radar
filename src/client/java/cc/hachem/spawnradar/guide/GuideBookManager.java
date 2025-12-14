@@ -1,7 +1,14 @@
 package cc.hachem.spawnradar.guide;
 
 import cc.hachem.spawnradar.RadarClient;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;import net.minecraft.ChatFormatting;import net.minecraft.client.Minecraft;import net.minecraft.client.gui.screens.inventory.BookViewScreen;import net.minecraft.network.chat.Component;import net.minecraft.network.chat.MutableComponent;import net.minecraft.resources.ResourceLocation;import cc.hachem.spawnradar.hud.DualPageBookScreen;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.BookViewScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.Identifier;
+import cc.hachem.spawnradar.hud.DualPageBookScreen;
 
 import java.io.InputStream;
 import java.util.List;
@@ -30,9 +37,6 @@ public final class GuideBookManager
 
     public static void openGuide()
     {
-        Minecraft client = Minecraft.getInstance();
-        if (client == null)
-            return;
         ensureGuidePages();
         PENDING_OPEN.set(true);
     }
@@ -46,10 +50,8 @@ public final class GuideBookManager
     private static void ensureGuidePages()
     {
         Minecraft client = Minecraft.getInstance();
-        if (client == null)
-            return;
         String languageCode = client.getLanguageManager().getSelected();
-        if (languageCode == null || languageCode.isBlank())
+        if (languageCode.isBlank())
             languageCode = "en_us";
         languageCode = languageCode.toLowerCase(Locale.ROOT);
         if (!languageCode.equals(cachedLanguageCode) || guidePages.isEmpty())
@@ -62,10 +64,8 @@ public final class GuideBookManager
     private static List<Component> loadGuidePages(String languageCode)
     {
         Minecraft client = Minecraft.getInstance();
-        if (client == null)
-            return getDefaultPages();
 
-        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(RadarClient.MOD_ID, "guide/" + languageCode + ".txt");
+        Identifier id = Identifier.fromNamespaceAndPath(RadarClient.MOD_ID, "guide/" + languageCode + ".txt");
         try (InputStream stream = client.getResourceManager().open(id))
         {
             return GuideScriptParser.parse(stream, GuideBookManager::getDefaultPages);

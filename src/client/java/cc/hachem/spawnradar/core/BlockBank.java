@@ -1,12 +1,22 @@
 package cc.hachem.spawnradar.core;
 
 import cc.hachem.spawnradar.RadarClient;
-import cc.hachem.spawnradar.config.ConfigManager;import java.util.ArrayList;
+import cc.hachem.spawnradar.config.ConfigManager;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;import net.minecraft.client.Minecraft;import net.minecraft.client.player.LocalPlayer;import net.minecraft.core.BlockPos;import net.minecraft.network.chat.Component;import net.minecraft.world.entity.Entity;import net.minecraft.world.entity.EntityType;import net.minecraft.world.level.Level;import net.minecraft.world.level.block.Blocks;import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
+import java.util.concurrent.CopyOnWriteArrayList;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
 
 public class BlockBank
 {
@@ -247,11 +257,6 @@ public class BlockBank
             RadarClient.LOGGER.debug("Unable to resolve mob type for spawner at {}", pos, e);
         }
         return new SpawnerInfo(pos, entityType);
-    }
-
-    public static void remove(BlockPos pos)
-    {
-        SPAWNERS.removeIf(info -> info.pos().equals(pos));
     }
 
     public static void removeAll(Set<BlockPos> positions)

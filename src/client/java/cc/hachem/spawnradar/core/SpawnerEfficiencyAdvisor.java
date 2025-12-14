@@ -65,7 +65,7 @@ public final class SpawnerEfficiencyAdvisor
                 PENDING_BOOK.compareAndSet(null, payload);
                 return;
             }
-            EfficiencyAdviceBook.open(payload.info(), payload.result(), payload.mobCapStatus(), payload.entries());
+            EfficiencyAdviceBook.open(payload.result(), payload.mobCapStatus(), payload.entries());
         });
         RadarClient.LOGGER.debug("Initialized SpawnerEfficiencyAdvisor.");
     }
@@ -83,8 +83,6 @@ public final class SpawnerEfficiencyAdvisor
         List<EfficiencyAdviceBook.EfficiencyAdviceEntry> adviceEntries = buildAdviceEntries(result, mobCapStatus);
 
         Minecraft client = Minecraft.getInstance();
-        if (client == null)
-            return AdviceResult.NO_DATA;
 
         PENDING_BOOK.set(new BookPayload(info, result, mobCapStatus, List.copyOf(adviceEntries)));
         return AdviceResult.OPENED;

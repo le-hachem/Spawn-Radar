@@ -1,6 +1,8 @@
 package cc.hachem.spawnradar.core;
 
-import cc.hachem.spawnradar.RadarClient;import java.util.*;import net.minecraft.core.BlockPos;
+import cc.hachem.spawnradar.RadarClient;
+import java.util.*;
+import net.minecraft.core.BlockPos;
 
 public class ClusterManager
 {
@@ -91,8 +93,7 @@ public class ClusterManager
     public static List<SpawnerInfo> getHighlights()
     {
         Set<Long> seen = new HashSet<>();
-        List<SpawnerInfo> highlights = new ArrayList<>();
-        highlights.addAll(getBackgroundHighlightInfos(seen));
+        List<SpawnerInfo> highlights = new ArrayList<>(getBackgroundHighlightInfos(seen));
 
         if (!highlightedClusterIds.isEmpty())
         {
@@ -110,7 +111,7 @@ public class ClusterManager
 
     public static void addBackgroundHighlights(List<SpawnerInfo> spawners)
     {
-        if (spawners == null || spawners.isEmpty() || !isBackgroundHighlightingEnabled())
+        if (spawners == null || spawners.isEmpty() || isBackgroundHighlightingDisabled())
             return;
         for (SpawnerInfo info : spawners)
             backgroundHighlightSpawners.add(info.pos().asLong());
@@ -140,7 +141,7 @@ public class ClusterManager
 
     private static List<SpawnerInfo> getBackgroundHighlightInfos(Set<Long> seen)
     {
-        if (!isBackgroundHighlightingEnabled())
+        if (isBackgroundHighlightingDisabled())
         {
             if (!backgroundHighlightSpawners.isEmpty())
                 backgroundHighlightSpawners.clear();
@@ -174,8 +175,8 @@ public class ClusterManager
         }
     }
 
-    private static boolean isBackgroundHighlightingEnabled()
+    private static boolean isBackgroundHighlightingDisabled()
     {
-        return RadarClient.config != null && RadarClient.config.autoHighlightAlertedClusters;
+        return RadarClient.config == null || !RadarClient.config.autoHighlightAlertedClusters;
     }
 }

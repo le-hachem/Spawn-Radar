@@ -2,8 +2,14 @@ package cc.hachem.spawnradar.hud;
 
 import cc.hachem.spawnradar.RadarClient;
 import cc.hachem.spawnradar.core.SpawnerEfficiencyManager;
-import cc.hachem.spawnradar.core.SpawnerInfo;import java.util.ArrayList;
-import java.util.List;import net.minecraft.ChatFormatting;import net.minecraft.client.Minecraft;import net.minecraft.client.gui.screens.inventory.BookViewScreen;import net.minecraft.network.chat.Component;import net.minecraft.network.chat.MutableComponent;
+
+import java.util.ArrayList;
+import java.util.List;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.BookViewScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 
 public final class EfficiencyAdviceBook
 {
@@ -11,31 +17,24 @@ public final class EfficiencyAdviceBook
 
     private EfficiencyAdviceBook() {}
 
-    public static void open(SpawnerInfo info,
-                            SpawnerEfficiencyManager.EfficiencyResult result,
+    public static void open(SpawnerEfficiencyManager.EfficiencyResult result,
                             SpawnerEfficiencyManager.MobCapStatus mobCapStatus,
                             List<EfficiencyAdviceEntry> entries)
     {
         Minecraft client = Minecraft.getInstance();
-        if (client == null)
-            return;
 
         List<Component> pages = new ArrayList<>();
-        pages.add(buildSummaryPage(info, result, mobCapStatus));
+        pages.add(buildSummaryPage(result, mobCapStatus));
 
         for (EfficiencyAdviceEntry entry : entries)
             pages.add(buildEntryPage(entry));
-
-        if (pages.isEmpty())
-            return;
 
         Component title = Component.translatable("text.spawn_radar.efficiency_advisor.summary.title");
         openBook(client, title, pages);
     }
 
-    private static Component buildSummaryPage(SpawnerInfo info,
-                                         SpawnerEfficiencyManager.EfficiencyResult result,
-                                         SpawnerEfficiencyManager.MobCapStatus mobCapStatus)
+    private static Component buildSummaryPage(SpawnerEfficiencyManager.EfficiencyResult result,
+                                             SpawnerEfficiencyManager.MobCapStatus mobCapStatus)
     {
         MutableComponent summary = Component.empty()
             .append(Component.translatable("text.spawn_radar.efficiency_advisor.summary.title")

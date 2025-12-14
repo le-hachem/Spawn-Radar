@@ -344,7 +344,7 @@ public class CommandManager
         }
 
         Minecraft client = Minecraft.getInstance();
-        if (client == null || client.level == null)
+        if (client.level == null)
         {
             source.sendFeedback(Component.translatable("chat.spawn_radar.info.no_efficiency_data").withStyle(ChatFormatting.RED));
             return 0;

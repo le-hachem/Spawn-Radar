@@ -10,8 +10,18 @@ import cc.hachem.spawnradar.core.SpawnerMobCapStatusManager;
 import cc.hachem.spawnradar.core.SpawnerLightLevelManager;
 import cc.hachem.spawnradar.core.VolumeHighlightManager;
 import cc.hachem.spawnradar.renderer.ItemTextureRenderer;
-import cc.hachem.spawnradar.renderer.MobPuppetRenderer;import java.util.ArrayList;
-import java.util.List;import net.minecraft.client.Minecraft;import net.minecraft.client.gui.Font;import net.minecraft.client.gui.GuiGraphics;import net.minecraft.client.gui.screens.ChatScreen;import net.minecraft.core.BlockPos;import net.minecraft.network.chat.Component;import net.minecraft.util.CommonColors;import net.minecraft.world.item.ItemStack;import net.minecraft.world.item.SpawnEggItem;
+import cc.hachem.spawnradar.renderer.MobPuppetRenderer;
+import java.util.ArrayList;
+import java.util.List;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.CommonColors;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.SpawnEggItem;
 
 public class ClusterListItemWidget extends Widget
 {
@@ -94,7 +104,7 @@ public class ClusterListItemWidget extends Widget
             );
             childButton.setDecorated(false);
 
-            boolean knownMob = spawner != null && spawner.hasKnownMob();
+            boolean knownMob = spawner.hasKnownMob();
             float iconSize = knownMob ? baseIconSize : 0f;
             ItemStack spawnEgg = knownMob ? createSpawnEggStack(spawner) : ItemStack.EMPTY;
             ChildRow row = new ChildRow(childButton, iconSize, spawner, spawnEgg);
@@ -427,15 +437,12 @@ public class ClusterListItemWidget extends Widget
             currentY += toggle.getHeight() + TOGGLE_VERTICAL_GAP;
         }
 
-        if (combinedBounds != null)
-        {
-            row.setTreeBounds(
-                combinedBounds.minX() - TREE_HOVER_PADDING,
-                combinedBounds.maxX() + TREE_HOVER_PADDING,
-                combinedBounds.minY() - TREE_HOVER_PADDING,
-                combinedBounds.maxY() + TREE_HOVER_PADDING
-            );
-        }
+        row.setTreeBounds(
+            combinedBounds.minX() - TREE_HOVER_PADDING,
+            combinedBounds.maxX() + TREE_HOVER_PADDING,
+            combinedBounds.minY() - TREE_HOVER_PADDING,
+            combinedBounds.maxY() + TREE_HOVER_PADDING
+        );
     }
 
     private ToggleBounds renderToggleRow(GuiGraphics context, Font textRenderer, ButtonWidget toggle,

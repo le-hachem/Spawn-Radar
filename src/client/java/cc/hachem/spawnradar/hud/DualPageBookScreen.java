@@ -12,14 +12,14 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
 
 public class DualPageBookScreen extends Screen
 {
-    private static final ResourceLocation RIGHT_PAGE_TEXTURE = ResourceLocation.fromNamespaceAndPath(RadarClient.MOD_ID, "textures/gui/book_page.png");
-    private static final ResourceLocation LEFT_PAGE_TEXTURE = ResourceLocation.fromNamespaceAndPath(RadarClient.MOD_ID, "textures/gui/book_page_rotated.png");
+    private static final Identifier RIGHT_PAGE_TEXTURE = Identifier.fromNamespaceAndPath(RadarClient.MOD_ID, "textures/gui/book_page.png");
+    private static final Identifier LEFT_PAGE_TEXTURE = Identifier.fromNamespaceAndPath(RadarClient.MOD_ID, "textures/gui/book_page_rotated.png");
     private static final int PAGE_WIDTH = 146;
     private static final int PAGE_HEIGHT = 180;
     private static final int PAGE_CROP = 6;
@@ -64,10 +64,7 @@ public class DualPageBookScreen extends Screen
         prevButton = addRenderableWidget(new PageArrowButton(leftButtonX, buttonY, false, this::goPrevious));
         nextButton = addRenderableWidget(new PageArrowButton(rightButtonX, buttonY, true, this::goNext));
 
-        Button doneButton = Button.builder(Component.translatable("gui.done"), button ->
-            {
-                onClose();
-            })
+        Button doneButton = Button.builder(Component.translatable("gui.done"), button -> onClose())
             .bounds(bookX + BOOK_WIDTH / 2 - 40, bookY + BOOK_HEIGHT + 8, 80, 20)
             .build();
         addRenderableWidget(doneButton);
@@ -185,16 +182,21 @@ public class DualPageBookScreen extends Screen
         public void playDownSound(SoundManager soundManager)
         {
         }
+
+        @Override
+        protected void renderContents(GuiGraphics context, int mouseX, int mouseY, float delta)
+        {
+        }
     }
 
     private static class PageArrowButton extends SoundlessButton
     {
         private static final int WIDTH = 23;
         private static final int HEIGHT = 13;
-        private static final ResourceLocation FORWARD = ResourceLocation.withDefaultNamespace("textures/gui/sprites/widget/page_forward.png");
-        private static final ResourceLocation FORWARD_HIGHLIGHTED = ResourceLocation.withDefaultNamespace("textures/gui/sprites/widget/page_forward_highlighted.png");
-        private static final ResourceLocation BACK = ResourceLocation.withDefaultNamespace("textures/gui/sprites/widget/page_backward.png");
-        private static final ResourceLocation BACK_HIGHLIGHTED = ResourceLocation.withDefaultNamespace("textures/gui/sprites/widget/page_backward_highlighted.png");
+        private static final Identifier FORWARD = Identifier.withDefaultNamespace("textures/gui/sprites/widget/page_forward.png");
+        private static final Identifier FORWARD_HIGHLIGHTED = Identifier.withDefaultNamespace("textures/gui/sprites/widget/page_forward_highlighted.png");
+        private static final Identifier BACK = Identifier.withDefaultNamespace("textures/gui/sprites/widget/page_backward.png");
+        private static final Identifier BACK_HIGHLIGHTED = Identifier.withDefaultNamespace("textures/gui/sprites/widget/page_backward_highlighted.png");
 
         private final boolean forward;
         PageArrowButton(int x, int y, boolean forward, Runnable action)
@@ -208,9 +210,9 @@ public class DualPageBookScreen extends Screen
         }
 
         @Override
-        protected void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta)
+        protected void renderContents(GuiGraphics context, int mouseX, int mouseY, float delta)
         {
-            ResourceLocation texture;
+            Identifier texture;
             if (!active)
                 texture = forward ? FORWARD : BACK;
             else if (isHovered())
@@ -226,8 +228,7 @@ public class DualPageBookScreen extends Screen
     private static void playPageSound()
     {
         var client = Minecraft.getInstance();
-        if (client != null)
-            client.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.BOOK_PAGE_TURN, 1.0f));
+        client.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.BOOK_PAGE_TURN, 1.0f));
     }
 }
 

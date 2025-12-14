@@ -12,7 +12,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.function.Supplier;import net.minecraft.ChatFormatting;import net.minecraft.client.Minecraft;import net.minecraft.client.gui.Font;import net.minecraft.network.chat.ClickEvent;import net.minecraft.network.chat.Component;import net.minecraft.network.chat.HoverEvent;import net.minecraft.network.chat.MutableComponent;import net.minecraft.network.chat.Style;import net.minecraft.util.FormattedCharSequence;
+import java.util.function.Supplier;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.util.FormattedCharSequence;
 
 final class GuideScriptParser
 {
@@ -331,9 +340,7 @@ final class GuideScriptParser
         private List<MutableComponent> splitIntoLines(GuideLine line)
         {
             Minecraft client = Minecraft.getInstance();
-            Font renderer = client != null ? client.font : null;
-            if (renderer == null)
-                return List.of(line.render().copy().append(newline()));
+            Font renderer = client.font;
 
             List<FormattedCharSequence> wrapped = renderer.split(line.render(), PAGE_WIDTH);
             if (wrapped.isEmpty())

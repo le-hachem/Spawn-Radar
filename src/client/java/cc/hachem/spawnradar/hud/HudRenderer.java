@@ -10,7 +10,7 @@ import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.ChatScreen;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -35,7 +35,7 @@ public class HudRenderer
     private static void registerHudElement()
     {
         HudElementRegistry.attachElementAfter(VanillaHudElements.CHAT,
-            ResourceLocation.fromNamespaceAndPath(RadarClient.MOD_ID, "hud"), HudRenderer::render);
+            Identifier.fromNamespaceAndPath(RadarClient.MOD_ID, "hud"), HudRenderer::render);
     }
 
     private static void registerClientTickHandler()

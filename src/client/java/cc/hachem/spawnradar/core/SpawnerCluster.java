@@ -1,8 +1,12 @@
 package cc.hachem.spawnradar.core;
 
 import java.util.*;
-import java.util.stream.Collectors;import net.minecraft.client.player.LocalPlayer;import net.minecraft.core.BlockPos;import cc.hachem.spawnradar.RadarClient;
-import cc.hachem.spawnradar.config.ConfigManager;import org.jetbrains.annotations.NotNull;
+import java.util.stream.Collectors;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import cc.hachem.spawnradar.RadarClient;
+import cc.hachem.spawnradar.config.ConfigManager;
+import org.jetbrains.annotations.NotNull;
 
 public record SpawnerCluster(int id, List<SpawnerInfo> spawners, List<BlockPos> intersectionRegion)
 {
@@ -152,7 +156,7 @@ public record SpawnerCluster(int id, List<SpawnerInfo> spawners, List<BlockPos> 
             clusters.add(new SpawnerCluster(nextId++, candidate.members(), candidate.intersection()));
         }
 
-        nextId = appendSingletonClusters(spawners, clusters, nextId, activationRadius);
+        appendSingletonClusters(spawners, clusters, nextId, activationRadius);
         clusters = filterSubsets(clusters);
 
         long endTime = System.nanoTime();
@@ -237,7 +241,7 @@ public record SpawnerCluster(int id, List<SpawnerInfo> spawners, List<BlockPos> 
         return others;
     }
 
-    private static int appendSingletonClusters(List<SpawnerInfo> spawners, List<SpawnerCluster> clusters, int nextId, double activationRadius)
+    private static void appendSingletonClusters(List<SpawnerInfo> spawners, List<SpawnerCluster> clusters, int nextId, double activationRadius)
     {
         for (SpawnerInfo spawner : spawners)
         {
@@ -248,7 +252,6 @@ public record SpawnerCluster(int id, List<SpawnerInfo> spawners, List<BlockPos> 
 
             clusters.add(new SpawnerCluster(nextId++, List.of(spawner), generateSphere(spawner.pos(), activationRadius)));
         }
-        return nextId;
     }
 
     private static String clusterKey(List<SpawnerInfo> cluster)

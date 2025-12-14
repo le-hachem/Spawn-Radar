@@ -1,13 +1,19 @@
 package cc.hachem.spawnradar.core;
 
-import cc.hachem.spawnradar.RadarClient;import com.mojang.blaze3d.platform.InputConstants;import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;import net.minecraft.client.KeyMapping;import net.minecraft.client.player.LocalPlayer;import net.minecraft.resources.ResourceLocation;import java.util.HashMap;
+import cc.hachem.spawnradar.RadarClient;
+import com.mojang.blaze3d.platform.InputConstants;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.resources.Identifier;
+import java.util.HashMap;
 import java.util.Map;
 
 public class KeyManager
 {
     private static final Map<KeyMapping, Runnable> keyCallbacks = new HashMap<>();
-    private static final KeyMapping.Category CATEGORY = new KeyMapping.Category(ResourceLocation.fromNamespaceAndPath("spawn_radar", "title"));
+    private static final KeyMapping.Category CATEGORY = new KeyMapping.Category(Identifier.fromNamespaceAndPath("spawn_radar", "title"));
 
     private KeyManager() {}
 

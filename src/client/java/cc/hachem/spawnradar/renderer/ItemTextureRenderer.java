@@ -2,7 +2,13 @@ package cc.hachem.spawnradar.renderer;
 
 import cc.hachem.spawnradar.RadarClient;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;import net.minecraft.client.DeltaTracker;import net.minecraft.client.gui.GuiGraphics;import net.minecraft.resources.ResourceLocation;import net.minecraft.world.item.Item;import net.minecraft.world.item.ItemStack;import java.util.Queue;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ItemTextureRenderer
@@ -16,7 +22,7 @@ public class ItemTextureRenderer
     {
         HudElementRegistry.attachElementAfter(
             VanillaHudElements.CHAT,
-            ResourceLocation.fromNamespaceAndPath(RadarClient.MOD_ID, "texture"),
+            Identifier.fromNamespaceAndPath(RadarClient.MOD_ID, "texture"),
             ItemTextureRenderer::flushQueue
         );
     }
