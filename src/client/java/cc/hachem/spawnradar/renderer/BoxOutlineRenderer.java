@@ -1,7 +1,5 @@
 package cc.hachem.spawnradar.renderer;
 
-
-
 import cc.hachem.spawnradar.RadarClient;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
@@ -38,8 +36,6 @@ import org.joml.Vector4f;
 
 import org.lwjgl.system.MemoryUtil;
 
-
-
 import java.util.ArrayList;
 
 import java.util.List;
@@ -51,8 +47,6 @@ import java.util.OptionalDouble;
 import java.util.OptionalInt;
 
 import java.util.concurrent.ConcurrentHashMap;
-
-
 
 public final class BoxOutlineRenderer
 
@@ -72,21 +66,15 @@ public final class BoxOutlineRenderer
 
     );
 
-
-
     private static final ByteBufferBuilder ALLOCATOR = new ByteBufferBuilder(4_096);
 
     private static final Vector4f COLOR_MODULATOR = new Vector4f(1f, 1f, 1f, 1f);
-
-
 
     private static BufferBuilder buffer;
 
     private static MappableRingBuffer vertexBuffer;
 
     private static final Map<MeshKey, List<Quad>> MESH_CACHE = new ConcurrentHashMap<>();
-
-
 
     private static final int[][] EDGE_INDEXES = new int[][]
 
@@ -108,11 +96,7 @@ public final class BoxOutlineRenderer
 
     };
 
-
-
     private record MeshKey(double width, double height, double depth, double thickness) {}
-
-
 
     private record Quad(float x1, float y1, float z1,
 
@@ -122,11 +106,7 @@ public final class BoxOutlineRenderer
 
                         float x4, float y4, float z4) {}
 
-
-
     private BoxOutlineRenderer() {}
-
-
 
     public static void draw(WorldRenderContext context, BlockPos origin, int color, float alpha, float thickness)
 
@@ -135,8 +115,6 @@ public final class BoxOutlineRenderer
         draw(context, origin.getX(), origin.getY(), origin.getZ(), 1, 1, 1, color, alpha, thickness);
 
     }
-
-
 
     public static void draw(WorldRenderContext context,
 
@@ -152,19 +130,13 @@ public final class BoxOutlineRenderer
 
             return;
 
-
-
         AABB bounds = new AABB(originX, originY, originZ, originX + width, originY + height, originZ + depth);
 
         if (shouldCull(bounds))
 
             return;
 
-
-
         ensureBuffer();
-
-
 
         PoseStack matrices = context.matrices();
 
@@ -174,8 +146,6 @@ public final class BoxOutlineRenderer
 
         matrices.translate(-camera.x, -camera.y, -camera.z);
 
-
-
         Matrix4f matrix = matrices.last().pose();
 
         float[] rgba = decodeColor(color, alpha);
@@ -184,13 +154,9 @@ public final class BoxOutlineRenderer
 
         emitMesh(matrix, mesh, rgba, originX, originY, originZ);
 
-
-
         matrices.popPose();
 
     }
-
-
 
     public static void submit(Minecraft client)
 
@@ -200,21 +166,15 @@ public final class BoxOutlineRenderer
 
             return;
 
-
-
         MeshData builtBuffer = buffer.buildOrThrow();
 
         MeshData.DrawState drawParameters = builtBuffer.drawState();
 
         VertexFormat format = drawParameters.format();
 
-
-
         GpuBuffer vertices = upload(drawParameters, format, builtBuffer);
 
         drawPipeline(client, builtBuffer, drawParameters, vertices);
-
-
 
         if (vertexBuffer != null)
 
@@ -223,8 +183,6 @@ public final class BoxOutlineRenderer
         buffer = null;
 
     }
-
-
 
     private static void ensureBuffer()
 
@@ -236,8 +194,6 @@ public final class BoxOutlineRenderer
 
     }
 
-
-
     private static List<Quad> getOrCreateMesh(double width, double height, double depth, double thickness)
 
     {
@@ -248,8 +204,6 @@ public final class BoxOutlineRenderer
 
     }
 
-
-
     private static List<Quad> buildMesh(double width, double height, double depth, double thickness)
 
     {
@@ -258,23 +212,17 @@ public final class BoxOutlineRenderer
 
         Vec3[] corners = buildCorners(baseBounds);
 
-
-
         double diameter = Math.max(0.01, thickness / 16.0);
 
         double half = diameter * 0.5;
 
         double edgeInset = half;
 
-
-
         List<Quad> quads = new ArrayList<>();
 
         for (Vec3 corner : corners)
 
             addCornerCubeQuads(quads, corner, half);
-
-
 
         for (int[] edge : EDGE_INDEXES)
 
@@ -290,13 +238,9 @@ public final class BoxOutlineRenderer
 
         }
 
-
-
         return List.copyOf(quads);
 
     }
-
-
 
     private static void emitMesh(Matrix4f matrix, List<Quad> mesh, float[] rgba,
 
@@ -309,8 +253,6 @@ public final class BoxOutlineRenderer
             emitQuad(matrix, quad, rgba, originX, originY, originZ);
 
     }
-
-
 
     private static void emitQuad(Matrix4f matrix, Quad quad, float[] rgba,
 
@@ -342,13 +284,9 @@ public final class BoxOutlineRenderer
 
         double z4 = quad.z4 + originZ;
 
-
-
         emitDoubleSidedQuad(matrix, x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, rgba);
 
     }
-
-
 
     private static void addEdgeQuads(List<Quad> quads,
 
@@ -375,8 +313,6 @@ public final class BoxOutlineRenderer
         double minZ = Math.min(from.z, to.z);
 
         double maxZ = Math.max(from.z, to.z);
-
-
 
         if (axis == Axis.X)
 
@@ -420,8 +356,6 @@ public final class BoxOutlineRenderer
 
         }
 
-
-
         if (axis != Axis.X)
 
         {
@@ -452,13 +386,9 @@ public final class BoxOutlineRenderer
 
         }
 
-
-
         addPrismQuads(quads, minX, minY, minZ, maxX, maxY, maxZ);
 
     }
-
-
 
     private static void addCornerCubeQuads(List<Quad> quads, Vec3 corner, double halfSize)
 
@@ -476,13 +406,9 @@ public final class BoxOutlineRenderer
 
         double maxZ = corner.z + halfSize;
 
-
-
         addPrismQuads(quads, minX, minY, minZ, maxX, maxY, maxZ);
 
     }
-
-
 
     private static void addPrismQuads(List<Quad> quads,
 
@@ -505,8 +431,6 @@ public final class BoxOutlineRenderer
         addQuadVertices(quads, x0, y0, z0, x0, y0, z1, x1, y0, z1, x1, y0, z0); // bottom
 
     }
-
-
 
     private static void addQuadVertices(List<Quad> quads,
 
@@ -534,8 +458,6 @@ public final class BoxOutlineRenderer
 
     }
 
-
-
     private static void emitDoubleSidedQuad(Matrix4f matrix,
 
                                             double x1, double y1, double z1,
@@ -555,8 +477,6 @@ public final class BoxOutlineRenderer
         addQuad(matrix, x1, y1, z1, x4, y4, z4, x3, y3, z3, x2, y2, z2, rgba);
 
     }
-
-
 
     private static void addQuad(Matrix4f matrix,
 
@@ -578,8 +498,6 @@ public final class BoxOutlineRenderer
 
         buffer.addVertex(matrix, (float) x3, (float) y3, (float) z3).setColor(rgba[0], rgba[1], rgba[2], rgba[3]);
 
-
-
         buffer.addVertex(matrix, (float) x1, (float) y1, (float) z1).setColor(rgba[0], rgba[1], rgba[2], rgba[3]);
 
         buffer.addVertex(matrix, (float) x3, (float) y3, (float) z3).setColor(rgba[0], rgba[1], rgba[2], rgba[3]);
@@ -588,15 +506,11 @@ public final class BoxOutlineRenderer
 
     }
 
-
-
     private static GpuBuffer upload(MeshData.DrawState drawParameters, VertexFormat format, MeshData builtBuffer)
 
     {
 
         int vertexBufferSize = drawParameters.vertexCount() * format.getVertexSize();
-
-
 
         if (vertexBuffer == null || vertexBuffer.size() < vertexBufferSize)
 
@@ -614,11 +528,7 @@ public final class BoxOutlineRenderer
 
         }
 
-
-
         CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
-
-
 
         try (GpuBuffer.MappedView mappedView = encoder
 
@@ -634,13 +544,9 @@ public final class BoxOutlineRenderer
 
         }
 
-
-
         return vertexBuffer.currentBuffer();
 
     }
-
-
 
     private static void drawPipeline(Minecraft client,
 
@@ -658,15 +564,11 @@ public final class BoxOutlineRenderer
 
         VertexFormat.IndexType indexType = shapeIndexBuffer.type();
 
-
-
         var dynamicTransforms = RenderSystem.getDynamicUniforms()
 
             .writeTransform(RenderSystem.getModelViewMatrix(), COLOR_MODULATOR, new Vector3f(),
 
                 RenderSystem.getTextureMatrix(), 1f);
-
-
 
         try (RenderPass renderPass = RenderSystem.getDevice()
 
@@ -698,13 +600,9 @@ public final class BoxOutlineRenderer
 
         }
 
-
-
         builtBuffer.close();
 
     }
-
-
 
     public static void clearMeshCache()
 
@@ -713,8 +611,6 @@ public final class BoxOutlineRenderer
         MESH_CACHE.clear();
 
     }
-
-
 
     public static void close()
 
@@ -736,8 +632,6 @@ public final class BoxOutlineRenderer
 
     }
 
-
-
     private static boolean shouldCull(AABB box)
 
     {
@@ -749,8 +643,6 @@ public final class BoxOutlineRenderer
         return !isWithinView(box);
 
     }
-
-
 
     private static boolean isWithinView(AABB box)
 
@@ -767,8 +659,6 @@ public final class BoxOutlineRenderer
         if (camera == null)
 
             return true;
-
-
 
         Vec3 camPos = camera.getPosition();
 
@@ -790,13 +680,9 @@ public final class BoxOutlineRenderer
 
         double radius = Math.sqrt(width * width + height * height + depth * depth) * 0.5;
 
-
-
         if (distance <= 1e-3)
 
             return true;
-
-
 
         double yawRad = Math.toRadians(camera.getYRot());
 
@@ -812,15 +698,11 @@ public final class BoxOutlineRenderer
 
         ).normalize();
 
-
-
         double forwardComponent = toCenter.dot(forward);
 
         return forwardComponent + radius > 0;
 
     }
-
-
 
     private static Vec3[] buildCorners(AABB box)
 
@@ -850,8 +732,6 @@ public final class BoxOutlineRenderer
 
     }
 
-
-
     private static float[] decodeColor(int color, float alpha)
 
     {
@@ -865,8 +745,6 @@ public final class BoxOutlineRenderer
         return new float[] { r, g, b, alpha };
 
     }
-
-
 
     private static Axis determineAxis(Vec3 from, Vec3 to)
 
@@ -883,8 +761,6 @@ public final class BoxOutlineRenderer
         return Axis.Z;
 
     }
-
-
 
     private enum Axis { X, Y, Z }
 

@@ -185,7 +185,6 @@ public class ConfigScreen
             .setTooltip(text("option.spawn_radar.outline_thickness.tooltip"))
             .build());
 
-
         rendering.addEntry(entries.startBooleanToggle(
                 text("option.spawn_radar.use_dual_page_book"),
                 config.useDualPageBookUi)

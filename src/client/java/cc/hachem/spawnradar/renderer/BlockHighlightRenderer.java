@@ -1,7 +1,5 @@
 package cc.hachem.spawnradar.renderer;
 
-
-
 import java.util.*;
 import cc.hachem.spawnradar.RadarClient;
 
@@ -37,8 +35,6 @@ import org.joml.Vector4f;
 
 import org.lwjgl.system.MemoryUtil;
 
-
-
 public class BlockHighlightRenderer
 
 {
@@ -62,8 +58,6 @@ public class BlockHighlightRenderer
         }
 
     }
-
-
 
     private record QuadVertices(float x1, float y1, float z1,
 
@@ -91,8 +85,6 @@ public class BlockHighlightRenderer
 
     }
 
-
-
     private static final RenderPipeline FILLED_THROUGH_WALLS = RenderPipelines.register(
 
         RenderPipeline.builder(RenderPipelines.DEBUG_FILLED_SNIPPET)
@@ -107,13 +99,9 @@ public class BlockHighlightRenderer
 
     );
 
-
-
     private static final Vector4f COLOR_MODULATOR = new Vector4f(1f, 1f, 1f, 1f);
 
     private static final ByteBufferBuilder ALLOCATOR = new ByteBufferBuilder(16_384);
-
-
 
     private static BufferBuilder buffer;
 
@@ -121,11 +109,7 @@ public class BlockHighlightRenderer
 
     private static final Map<Integer, CachedMesh> REGION_MESH_CACHE = new HashMap<>();
 
-
-
     private record CachedMesh(int regionHash, List<GreedyMesher.Quad> quads) {}
-
-
 
     public static void draw(WorldRenderContext context, BlockPos position, int color, float a)
 
@@ -135,8 +119,6 @@ public class BlockHighlightRenderer
 
             return;
 
-
-
         Color tempColor = Color.fromHex(color);
 
         float r = tempColor.r();
@@ -145,33 +127,23 @@ public class BlockHighlightRenderer
 
         float b = tempColor.b();
 
-
-
         PoseStack matrices = context.matrices();
 
         Vec3 camera = context.worldState().cameraRenderState.pos;
-
-
 
         matrices.pushPose();
 
         matrices.translate(-camera.x, -camera.y, -camera.z);
 
-
-
         if (buffer == null)
 
             buffer = new BufferBuilder(ALLOCATOR, FILLED_THROUGH_WALLS.getVertexFormatMode(), FILLED_THROUGH_WALLS.getVertexFormat());
-
-
 
         int x = position.getX();
 
         int y = position.getY();
 
         int z = position.getZ();
-
-
 
         emitQuad(matrices, buffer, new GreedyMesher.Quad(GreedyMesher.Face.POS_X, x, y, z, 1, 1), r, g, b, a);
 
@@ -185,15 +157,9 @@ public class BlockHighlightRenderer
 
         emitQuad(matrices, buffer, new GreedyMesher.Quad(GreedyMesher.Face.NEG_Z, x, y, z, 1, 1), r, g, b, a);
 
-
-
         matrices.popPose();
 
-
-
     }
-
-
 
     public static void fillRegionMesh(WorldRenderContext context, int regionId, List<BlockPos> region, int color, float a)
 
@@ -203,15 +169,11 @@ public class BlockHighlightRenderer
 
             return;
 
-
-
         AABB bounds = computeBounds(region);
 
         if (bounds != null && isNotVisible(bounds))
 
             return;
-
-
 
         Color tempColor = Color.fromHex(color);
 
@@ -221,25 +183,17 @@ public class BlockHighlightRenderer
 
         float b = tempColor.b();
 
-
-
         PoseStack matrices = context.matrices();
 
         Vec3 camera = context.worldState().cameraRenderState.pos;
-
-
 
         matrices.pushPose();
 
         matrices.translate(-camera.x, -camera.y, -camera.z);
 
-
-
         if (buffer == null)
 
             buffer = new BufferBuilder(ALLOCATOR, FILLED_THROUGH_WALLS.getVertexFormatMode(), FILLED_THROUGH_WALLS.getVertexFormat());
-
-
 
         CachedMesh cachedMesh = getOrCreateMesh(regionId, region);
 
@@ -247,13 +201,9 @@ public class BlockHighlightRenderer
 
             emitQuad(matrices, buffer, q, r, g, b, a);
 
-
-
         matrices.popPose();
 
     }
-
-
 
     public static void clearRegionMeshCache()
 
@@ -262,8 +212,6 @@ public class BlockHighlightRenderer
         REGION_MESH_CACHE.clear();
 
     }
-
-
 
     private static void emitQuad(PoseStack matrices, BufferBuilder buffer,
 
@@ -277,8 +225,6 @@ public class BlockHighlightRenderer
 
         float height = quad.height();
 
-
-
         if (width <= 0 || height <= 0)
 
         {
@@ -287,8 +233,6 @@ public class BlockHighlightRenderer
 
         }
 
-
-
         QuadVertices vertices = buildVertices(quad);
 
         drawQuad(buffer, matrices, vertices, r, g, b, a);
@@ -296,8 +240,6 @@ public class BlockHighlightRenderer
         drawQuad(buffer, matrices, vertices.reversed(), r, g, b, a);
 
     }
-
-
 
     private static CachedMesh getOrCreateMesh(int regionId, List<BlockPos> region)
 
@@ -311,8 +253,6 @@ public class BlockHighlightRenderer
 
             return cached;
 
-
-
         Set<BlockPos> set = new HashSet<>(region);
 
         List<GreedyMesher.Quad> quads = List.copyOf(GreedyMesher.mesh(set));
@@ -324,8 +264,6 @@ public class BlockHighlightRenderer
         return cached;
 
     }
-
-
 
     private static int hashRegion(List<BlockPos> region)
 
@@ -342,8 +280,6 @@ public class BlockHighlightRenderer
         return hash;
 
     }
-
-
 
     private static void drawQuad(BufferBuilder buffer, PoseStack matrices, QuadVertices vertices,
 
@@ -365,8 +301,6 @@ public class BlockHighlightRenderer
 
     }
 
-
-
     private static QuadVertices buildVertices(GreedyMesher.Quad quad)
 
     {
@@ -381,15 +315,11 @@ public class BlockHighlightRenderer
 
         float height = quad.height();
 
-
-
         float px = x + 1;
 
         float py = y + 1;
 
         float pz = z + 1;
-
-
 
         return switch (quad.face())
 
@@ -507,10 +437,6 @@ public class BlockHighlightRenderer
 
     }
 
-
-
-
-
     private static boolean isNotVisible(AABB box)
 
     {
@@ -518,8 +444,6 @@ public class BlockHighlightRenderer
         if (RadarClient.config == null || !RadarClient.config.frustumCullingEnabled)
 
             return false;
-
-
 
         Boolean manualResult = frustumCheck(box);
 
@@ -531,8 +455,6 @@ public class BlockHighlightRenderer
 
     }
 
-
-
     private static AABB computeBounds(List<BlockPos> region)
 
     {
@@ -540,8 +462,6 @@ public class BlockHighlightRenderer
         if (region.isEmpty())
 
             return null;
-
-
 
         int minX = Integer.MAX_VALUE;
 
@@ -555,8 +475,6 @@ public class BlockHighlightRenderer
 
         int maxZ = Integer.MIN_VALUE;
 
-
-
         for (BlockPos pos : region)
 
         {
@@ -566,8 +484,6 @@ public class BlockHighlightRenderer
             int y = pos.getY();
 
             int z = pos.getZ();
-
-
 
             if (x < minX) minX = x;
 
@@ -583,13 +499,9 @@ public class BlockHighlightRenderer
 
         }
 
-
-
         return new AABB(minX, minY, minZ, maxX + 1, maxY + 1, maxZ + 1);
 
     }
-
-
 
     private static Boolean frustumCheck(AABB box)
 
@@ -601,23 +513,17 @@ public class BlockHighlightRenderer
 
             return null;
 
-
-
         var camera = client.gameRenderer.getMainCamera();
 
         if (camera == null)
 
             return null;
 
-
-
         Vec3 camPos = camera.getPosition();
 
         float yaw = camera.getYRot();
 
         float pitch = camera.getXRot();
-
-
 
         double yawRad = Math.toRadians(yaw);
 
@@ -631,8 +537,6 @@ public class BlockHighlightRenderer
 
         Vec3 forward = new Vec3(forwardX, forwardY, forwardZ).normalize();
 
-
-
         Vec3 center = new Vec3((box.minX + box.maxX) * 0.5,
 
                                  (box.minY + box.maxY) * 0.5,
@@ -643,8 +547,6 @@ public class BlockHighlightRenderer
 
         double distance = toCenter.length();
 
-
-
         double width = box.maxX - box.minX;
 
         double height = box.maxY - box.minY;
@@ -653,13 +555,9 @@ public class BlockHighlightRenderer
 
         double radius = Math.sqrt(width * width + height * height + depth * depth) * 0.5;
 
-
-
         if (distance <= 1e-3)
 
             return true;
-
-
 
         double forwardComponent = toCenter.dot(forward);
 
@@ -685,15 +583,11 @@ public class BlockHighlightRenderer
 
         var matrix = matrices.last().pose();
 
-
-
         buffer.addVertex(matrix, x1, y1, z1).setColor(r, g, b, a);
 
         buffer.addVertex(matrix, x2, y2, z2).setColor(r, g, b, a);
 
         buffer.addVertex(matrix, x3, y3, z3).setColor(r, g, b, a);
-
-
 
         buffer.addVertex(matrix, x1, y1, z1).setColor(r, g, b, a);
 
@@ -702,8 +596,6 @@ public class BlockHighlightRenderer
         buffer.addVertex(matrix, x4, y4, z4).setColor(r, g, b, a);
 
     }
-
-
 
     public static void submit(Minecraft client)
 
@@ -717,21 +609,15 @@ public class BlockHighlightRenderer
 
         }
 
-
-
         MeshData builtBuffer = buffer.buildOrThrow();
 
         MeshData.DrawState drawParams = builtBuffer.drawState();
 
         VertexFormat format = drawParams.format();
 
-
-
         GpuBuffer vertices = uploadToGPU(drawParams, format, builtBuffer);
 
         drawPipeline(client, builtBuffer, drawParams, vertices);
-
-
 
         if (vertexBuffer != null)
 
@@ -739,19 +625,13 @@ public class BlockHighlightRenderer
 
         buffer = null;
 
-
-
     }
-
-
 
     private static GpuBuffer uploadToGPU(MeshData.DrawState drawParameters, VertexFormat format, MeshData builtBuffer)
 
     {
 
         int vertexBufferSize = drawParameters.vertexCount() * format.getVertexSize();
-
-
 
         if (vertexBuffer == null || vertexBuffer.size() < vertexBufferSize)
 
@@ -769,11 +649,7 @@ public class BlockHighlightRenderer
 
         }
 
-
-
         CommandEncoder commandEncoder = RenderSystem.getDevice().createCommandEncoder();
-
-
 
         try (GpuBuffer.MappedView mappedView = commandEncoder
 
@@ -789,13 +665,9 @@ public class BlockHighlightRenderer
 
         }
 
-
-
         return vertexBuffer.currentBuffer();
 
     }
-
-
 
     private static void drawPipeline(Minecraft client, MeshData builtBuffer,
 
@@ -809,11 +681,7 @@ public class BlockHighlightRenderer
 
         VertexFormat.IndexType indexType = shapeIndexBuffer.type();
 
-
-
         var dynamicTransforms = RenderSystem.getDynamicUniforms().writeTransform(RenderSystem.getModelViewMatrix(), COLOR_MODULATOR, new Vector3f(), RenderSystem.getTextureMatrix(), 1f);
-
-
 
         try (RenderPass renderPass = RenderSystem.getDevice()
 
@@ -845,13 +713,9 @@ public class BlockHighlightRenderer
 
         }
 
-
-
         builtBuffer.close();
 
     }
-
-
 
     public static void close()
 
